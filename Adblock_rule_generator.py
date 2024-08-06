@@ -2,19 +2,17 @@ import subprocess
 import sys
 import warnings
 import os
+import importlib.util
 
 def install_packages(packages):
     """Ensure the required packages are installed."""
     for package in packages:
-        try:
-            # 尝试导入包，如果成功则说明已安装
-            __import__(package)
-            print(f"Package '{package}' is already installed.")
-        except ImportError:
-            # 如果导入失败则说明未安装，需要进行安装
+        if importlib.util.find_spec(package) is None:
             print(f"Package '{package}' is not installed. Installing...")
-            subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+            subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
             print(f"Package '{package}' installed successfully.")
+        else:
+            print(f"Package '{package}' is already installed.")
 
 # 要确保安装的包列表
 required_packages = ["requests"]
@@ -105,14 +103,11 @@ def main():
 !有效规则数目: {rule_count}
 """
 
-    print(f"Writing {len(sorted_rules)} rules to file {save_path}")
     with open(save_path, 'w', encoding='utf-8') as f:
-        # 写入文件头部信息并在之后间隔两行
+        print(f"Writing {len(sorted_rules)} rules to file {save_path}")
         f.write(header.format(rule_count=len(sorted_rules)))
         f.write('\n\n')
-        # 写入过滤规则
-        for rule in sorted_rules:
-            f.write(rule + '\n')
+        f.writelines(f"{rule}\n" for rule in sorted_rules)
 
     print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(sorted_rules)}")
