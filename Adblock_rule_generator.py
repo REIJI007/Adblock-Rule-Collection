@@ -4,9 +4,8 @@ import subprocess
 import warnings
 import importlib.util
 import logging
-import asyncio
-import aiohttp
-from collections import defaultdict
+import concurrent.futures
+import requests
 from urllib3.exceptions import InsecureRequestWarning
 
 # 设置日志
@@ -24,7 +23,7 @@ def install_packages(packages):
             logging.info(f"Package '{package}' is already installed.")
 
 # 要确保安装的包列表
-required_packages = ["aiohttp"]
+required_packages = ["requests"]
 
 # 安装所需的包
 install_packages(required_packages)
@@ -80,60 +79,64 @@ def is_valid_regex(pattern):
     except re.error:
         return False
 
-async def download_filter(session, url):
-    """异步下载单个过滤器"""
-    rules = defaultdict(set)
+def download_filter(url):
+    """下载单个过滤器"""
     try:
-        async with session.get(url, ssl=False) as response:
-            logging.info(f"Downloading from {url}")
-            if response.status == 200:
-                logging.info(f"Successfully downloaded from {url}")
-                text = await response.text()
-                lines = text.splitlines()
-                for line in lines:
-                    line = line.strip()
-                    # 过滤掉注释行和空行
-                    if line and not (line.startswith('!') or line.startswith('#')):
-                        if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-                            rules['正则表达式'].add(line)
-                        elif line.startswith("||"):
-                            rules['URL'].add(line)
-                        elif line.startswith("##") or line.startswith("#@#"):
-                            rules['CSS'].add(line)
-                        elif "$script" in line:
-                            rules['脚本过滤'].add(line)
-                        elif "$iframe" in line:
-                            rules['iframe过滤'].add(line)
-                        elif "$third-party" in line:
-                            rules['跟踪器过滤'].add(line)
-                        elif "$document" in line:
-                            rules['反广告拦截'].add(line)
-                        else:
-                            rules['普通规则'].add(line)
-            else:
-                logging.error(f"Failed to download from {url} with status code {response.status}")
-    except Exception as e:
+        logging.info(f"Downloading from {url}")
+        response = requests.get(url, verify=False)  # 禁用 SSL 证书验证
+        if response.status_code == 200:
+            logging.info(f"Successfully downloaded from {url}")
+            lines = response.text.splitlines()
+            rules = set()
+            for line in lines:
+                line = line.strip()
+                # 过滤掉注释行和空行
+                if line and not (line.startswith('!') or line.startswith('#')):
+                    if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
+                        rules.add(f"正则表达式: {line}")  # 添加正则表达式规则
+                    elif line.startswith("||"):
+                        rules.add(f"URL: {line}")  # 添加URL过滤规则
+                    elif line.startswith("##") or line.startswith("#@#"):
+                        rules.add(f"CSS: {line}")  # 添加CSS过滤规则
+                    elif "$script" in line:
+                        rules.add(f"脚本过滤: {line}")  # 添加脚本过滤规则
+                    elif "$iframe" in line:
+                        rules.add(f"iframe过滤: {line}")  # 添加iframe过滤规则
+                    elif "$third-party" in line:
+                        rules.add(f"跟踪器过滤: {line}")  # 添加跟踪器过滤规则
+                    elif "$document" in line:
+                        rules.add(f"反广告拦截: {line}")  # 添加反广告拦截规则
+                    else:
+                        rules.add(f"普通规则: {line}")  # 添加普通规则
+            return rules
+        else:
+            logging.error(f"Failed to download from {url} with status code {response.status_code}")
+            return set()
+    except requests.exceptions.RequestException as e:
         logging.error(f"Error downloading {url}: {e}")
-    return rules
+        return set()
 
-async def download_filters(urls):
+def download_filters(urls):
     """并行下载过滤器并返回所有过滤规则的集合"""
-    async with aiohttp.ClientSession() as session:
-        tasks = [download_filter(session, url) for url in urls]
-        all_rules = defaultdict(set)
-        for future in asyncio.as_completed(tasks):
-            rules = await future
-            for rule_type, rule_set in rules.items():
-                all_rules[rule_type].update(rule_set)
+    all_rules = set()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(download_filter, url): url for url in urls}
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                rules = future.result()
+                all_rules.update(rules)
+            except Exception as e:
+                logging.error(f"Error processing {url}: {e}")
     return all_rules
 
-def merge_and_sort_rules(all_rules):
-    """合并并排序所有规则"""
-    sorted_rules = {k: sorted(v) for k, v in all_rules.items()}
-    return sorted_rules
+def main():
+    """主函数，下载过滤器并生成合并后的文件"""
+    logging.info("Starting to download filters...")
+    all_rules = download_filters(filter_urls)
+    logging.info("Finished downloading filters. Sorting rules...")
+    sorted_rules = sorted(all_rules)  # 对规则进行排序
 
-def write_rules_to_file(sorted_rules, save_path):
-    """将规则写入文件"""
     # 文件头部注释信息
     header = """
 !Title: Adblock-Rule-Collection
@@ -144,33 +147,16 @@ def write_rules_to_file(sorted_rules, save_path):
 !有效规则数目: {rule_count}
 """
 
-    total_rules_count = sum(len(rules) for rules in sorted_rules.values())
     with open(save_path, 'w', encoding='utf-8') as f:
-        logging.info(f"Writing {total_rules_count} rules to file {save_path}")
-        f.write(header.format(rule_count=total_rules_count))
+        logging.info(f"Writing {len(sorted_rules)} rules to file {save_path}")
+        f.write(header.format(rule_count=len(sorted_rules)))
         f.write('\n\n')
-        for rule_type, rules in sorted_rules.items():
-            f.write(f"! {rule_type} ({len(rules)} 条规则)\n")
-            f.writelines(f"{rule}\n" for rule in rules)
-            f.write('\n')
+        f.writelines(f"{rule}\n" for rule in sorted_rules)
 
     logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {total_rules_count}")
-    for rule_type, rules in sorted_rules.items():
-        logging.info(f"{rule_type}: {len(rules)} 条规则")
-        print(f"{rule_type}: {len(rules)} 条规则")
-
+    logging.info(f"有效规则数目: {len(sorted_rules)}")
     print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {total_rules_count}")
-
-def main():
-    """主函数，下载过滤器并生成合并后的文件"""
-    logging.info("Starting to download filters...")
-    loop = asyncio.get_event_loop()
-    all_rules = loop.run_until_complete(download_filters(filter_urls))
-    logging.info("Finished downloading filters. Sorting rules...")
-    sorted_rules = merge_and_sort_rules(all_rules)
-    write_rules_to_file(sorted_rules, save_path)
+    print(f"有效规则数目: {len(sorted_rules)}")
 
 if __name__ == "__main__":
     main()
