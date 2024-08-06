@@ -1,0 +1,66 @@
+name: Generate and Push Adblock Rule Collection
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"  # 每20分钟运行一次
+  push:
+    branches:
+      - main  # 确保在main分支上运行
+  workflow_dispatch:  # 允许手动触发工作流
+
+jobs:
+  generate_and_push:
+    runs-on: ubuntu-latest  # 使用最新的Ubuntu环境
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3  # 签出仓库的代码
+
+    - name: Set up Python
+      uses: actions/setup-python@v4  # 设置Python环境
+      with:
+        python-version: '3.x'  # 指定Python版本
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip  # 升级pip
+        pip install requests  # 安装requests库
+
+    - name: Run Adblock Rule Generator
+      run: python Adblock_rule_generator.py  # 运行脚本生成广告过滤器文件
+
+    - name: Commit and push changes
+      id: push_changes  # 设置步骤ID以供后续引用
+      run: |
+        # 配置git用户信息
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 添加和提交更改
+        git add ADBLOCK_RULE_COLLECTION.txt
+        git commit -m "Update ADBLOCK_RULE_COLLECTION.txt"
+        
+        # 初始化重试计数器
+        retry_count=0
+        max_retries=5  # 最大重试次数
+        
+        # 循环尝试推送更改，若失败则重试
+        while [ $retry_count -lt $max_retries ]; do
+          if git push origin main; then
+            echo "Push succeeded"  # 推送成功时输出信息
+            break  # 跳出循环
+          else
+            echo "Push failed, retrying..."  # 推送失败时输出信息并重试
+            retry_count=$((retry_count + 1))  # 增加重试计数器
+            sleep 10  # 等待10秒后再重试
+          fi
+        done
+      env:
+        TOKEN: ${{ secrets.TOKEN }}  # 使用GitHub secret中的TOKEN
+      continue-on-error: true  # 允许步骤失败继续运行
+
+    - name: Check push result
+      if: steps.push_changes.outcome == 'failure'  # 检查推送结果是否失败
+      run: |
+        echo "Push failed after maximum retries"  # 输出推送失败信息
+        exit 1  # 退出并标记工作流失败
