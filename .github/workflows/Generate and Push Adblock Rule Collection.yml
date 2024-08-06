@@ -1,12 +1,12 @@
 name: Generate and Push Adblock Rule Collection
 
-# 定义触发工作流的事件：每20分钟运行一次，以及推送到main分支时运行
 on:
   schedule:
     - cron: "*/20 * * * *"  # 每20分钟运行一次
   push:
     branches:
       - main  # 确保在main分支上运行
+  workflow_dispatch:  # 允许手动触发工作流
 
 jobs:
   generate_and_push:
