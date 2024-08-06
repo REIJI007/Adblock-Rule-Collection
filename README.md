@@ -21,9 +21,9 @@
 <br>
 
 ## 二、本仓库使用方式如下：
-1、订阅地址一:*https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*
+1、订阅地址一: <br> *https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*
 <br>
-2、订阅地址二：*https://cdn.jsdelivr.net/gh/REIJI007/Adblock-Rule-Collection@main/ADBLOCK_RULE_COLLECTION.txt*
+2、订阅地址二：<br> *https://cdn.jsdelivr.net/gh/REIJI007/Adblock-Rule-Collection@main/ADBLOCK_RULE_COLLECTION.txt*
 <br>
 3、从release中下载ADBLOCK_RULE_COLLECTION.txt文件进行本地导入广告过滤器
 
