@@ -93,9 +93,21 @@ def download_filter(url):
                 # 过滤掉注释行和空行
                 if line and not (line.startswith('!') or line.startswith('#')):
                     if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-                        rules.add(line)  # 添加正则表达式规则
+                        rules.add(f"正则表达式: {line}")  # 添加正则表达式规则
+                    elif line.startswith("||"):
+                        rules.add(f"URL: {line}")  # 添加URL过滤规则
+                    elif line.startswith("##") or line.startswith("#@#"):
+                        rules.add(f"CSS: {line}")  # 添加CSS过滤规则
+                    elif "$script" in line:
+                        rules.add(f"脚本过滤: {line}")  # 添加脚本过滤规则
+                    elif "$iframe" in line:
+                        rules.add(f"iframe过滤: {line}")  # 添加iframe过滤规则
+                    elif "$third-party" in line:
+                        rules.add(f"跟踪器过滤: {line}")  # 添加跟踪器过滤规则
+                    elif "$document" in line:
+                        rules.add(f"反广告拦截: {line}")  # 添加反广告拦截规则
                     else:
-                        rules.add(line)  # 添加普通规则
+                        rules.add(f"普通规则: {line}")  # 添加普通规则
             return rules
         else:
             logging.error(f"Failed to download from {url} with status code {response.status_code}")
@@ -143,6 +155,7 @@ def main():
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(sorted_rules)}")
+    print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(sorted_rules)}")
 
 if __name__ == "__main__":
