@@ -19,8 +19,6 @@
 ## 一、关于Adblock-Rule-Collection，你可使用本仓库中的Adblock_rule_generator.py脚本合并去重生成广告过滤器，注意修改生成文件的保存路径与生成文件名，可按需求添加不同的上游广告过滤规则列表进行DIY定制
 
 <br>
-<br>
-<br>
 
 ## 二、本仓库使用方式如下：
 1、订阅地址一:*https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*
@@ -30,14 +28,10 @@
 3、从release中下载ADBLOCK_RULE_COLLECTION.txt文件进行本地导入广告过滤器
 
 <br>
-<br>
-<br>
 
 ## 三、适用范围
 适用于ADguard,Adblock Plus,uBlock Origin,Brave Browser,各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件等
 
-<br>
-<br>
 <br>
 
 ## 四、汇总引用规则列表有如下:
@@ -138,6 +132,7 @@
 **32、HyperADRules-DNS** <br>
 *https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt*
 
+<br>
 
 ## 五、特别鸣谢
 *1、anti-AD <br>(https://github.com/privacy-protection-tools/anti-AD)*
