@@ -1,18 +1,26 @@
-import subprocess
-import sys
-import warnings
 import os
+import sys
+import subprocess
+import warnings
 import importlib.util
+import logging
+import concurrent.futures
+import requests
+from urllib3.exceptions import InsecureRequestWarning
+
+# 设置日志
+logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 def install_packages(packages):
     """Ensure the required packages are installed."""
     for package in packages:
         if importlib.util.find_spec(package) is None:
-            print(f"Package '{package}' is not installed. Installing...")
+            logging.info(f"Package '{package}' is not installed. Installing...")
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
-            print(f"Package '{package}' installed successfully.")
+            logging.info(f"Package '{package}' installed successfully.")
         else:
-            print(f"Package '{package}' is already installed.")
+            logging.info(f"Package '{package}' is already installed.")
 
 # 要确保安装的包列表
 required_packages = ["requests"]
@@ -20,10 +28,7 @@ required_packages = ["requests"]
 # 安装所需的包
 install_packages(required_packages)
 
-import requests
-
 # 忽略不安全请求警告
-from urllib3.exceptions import InsecureRequestWarning
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
@@ -65,32 +70,42 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+def download_filter(url):
+    """下载单个过滤器"""
+    try:
+        logging.info(f"Downloading from {url}")
+        response = requests.get(url, verify=False)  # 禁用 SSL 证书验证
+        if response.status_code == 200:
+            logging.info(f"Successfully downloaded from {url}")
+            lines = response.text.splitlines()
+            rules = {line.strip() for line in lines if line and not (line.startswith('!') or line.startswith('#'))}
+            return rules
+        else:
+            logging.error(f"Failed to download from {url} with status code {response.status_code}")
+            return set()
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error downloading {url}: {e}")
+        return set()
+
 def download_filters(urls):
-    """下载过滤器并返回所有过滤规则的集合"""
-    all_rules = set()  # 使用集合去重
-    for url in urls:
-        try:
-            print(f"Downloading from {url}")
-            response = requests.get(url, verify=False)  # 禁用 SSL 证书验证
-            if response.status_code == 200:
-                print(f"Successfully downloaded from {url}")
-                lines = response.text.splitlines()
-                for line in lines:
-                    line = line.strip()
-                    # 过滤掉注释行和空行
-                    if line and not (line.startswith('!') or line.startswith('#')):
-                        all_rules.add(line)
-            else:
-                print(f"Failed to download from {url} with status code {response.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Error downloading {url}: {e}")
+    """并行下载过滤器并返回所有过滤规则的集合"""
+    all_rules = set()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_url = {executor.submit(download_filter, url): url for url in urls}
+        for future in concurrent.futures.as_completed(future_to_url):
+            url = future_to_url[future]
+            try:
+                rules = future.result()
+                all_rules.update(rules)
+            except Exception as e:
+                logging.error(f"Error processing {url}: {e}")
     return all_rules
 
 def main():
     """主函数，下载过滤器并生成合并后的文件"""
-    print("Starting to download filters...")
+    logging.info("Starting to download filters...")
     all_rules = download_filters(filter_urls)
-    print("Finished downloading filters. Sorting rules...")
+    logging.info("Finished downloading filters. Sorting rules...")
     sorted_rules = sorted(all_rules)  # 对规则进行排序
 
     # 文件头部注释信息
@@ -104,13 +119,13 @@ def main():
 """
 
     with open(save_path, 'w', encoding='utf-8') as f:
-        print(f"Writing {len(sorted_rules)} rules to file {save_path}")
+        logging.info(f"Writing {len(sorted_rules)} rules to file {save_path}")
         f.write(header.format(rule_count=len(sorted_rules)))
         f.write('\n\n')
         f.writelines(f"{rule}\n" for rule in sorted_rules)
 
-    print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {len(sorted_rules)}")
+    logging.info(f"Successfully wrote rules to {save_path}")
+    logging.info(f"有效规则数目: {len(sorted_rules)}")
 
 if __name__ == "__main__":
     main()
