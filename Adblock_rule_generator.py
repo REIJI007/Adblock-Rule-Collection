@@ -70,6 +70,15 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+def is_valid_regex(pattern):
+    """检查正则表达式是否有效"""
+    try:
+        import re
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
+
 def download_filter(url):
     """下载单个过滤器"""
     try:
@@ -78,7 +87,15 @@ def download_filter(url):
         if response.status_code == 200:
             logging.info(f"Successfully downloaded from {url}")
             lines = response.text.splitlines()
-            rules = {line.strip() for line in lines if line and not (line.startswith('!') or line.startswith('#'))}
+            rules = set()
+            for line in lines:
+                line = line.strip()
+                # 过滤掉注释行和空行
+                if line and not (line.startswith('!') or line.startswith('#')):
+                    if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
+                        rules.add(line)  # 添加正则表达式规则
+                    else:
+                        rules.add(line)  # 添加普通规则
             return rules
         else:
             logging.error(f"Failed to download from {url} with status code {response.status_code}")
@@ -126,6 +143,7 @@ def main():
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(sorted_rules)}")
+    print(f"有效规则数目: {len(sorted_rules)}")
 
 if __name__ == "__main__":
     main()
