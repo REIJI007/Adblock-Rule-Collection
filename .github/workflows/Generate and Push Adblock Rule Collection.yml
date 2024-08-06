@@ -38,7 +38,7 @@ jobs:
         
         # 添加和提交更改
         git add ADBLOCK_RULE_COLLECTION.txt
-        git commit -m "Update ADBLOCK_RULE_COLLECTION.txt"
+        git commit -m "Update ADBLOCK_RULE_COLLECTION.txt" || exit 0
         
         # 初始化重试计数器
         retry_count=0
@@ -55,12 +55,48 @@ jobs:
             sleep 10  # 等待10秒后再重试
           fi
         done
+        if [ $retry_count -eq $max_retries ]; then
+          echo "Push failed after maximum retries"  # 输出推送失败信息
+          exit 1  # 退出并标记工作流失败
+        fi
       env:
-        TOKEN: ${{ secrets.TOKEN }}  # 使用GitHub secret中的TOKEN
-      continue-on-error: true  # 允许步骤失败继续运行
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}  # 使用GitHub secret中的TOKEN
 
-    - name: Check push result
-      if: steps.push_changes.outcome == 'failure'  # 检查推送结果是否失败
+  release:
+    needs: generate_and_push
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up GitHub CLI
+      uses: actions/setup-gh@v2
+      with:
+        token: ${{ secrets.TOKEN }}
+
+    - name: Create Release
+      id: create_release
       run: |
-        echo "Push failed after maximum retries"  # 输出推送失败信息
-        exit 1  # 退出并标记工作流失败
+        # 获取当前日期和时间作为release的tag和名称
+        RELEASE_TAG=$(date +%Y%m%d%H%M)
+        RELEASE_NAME="Adblock Rule Collection - $RELEASE_TAG"
+
+        # 创建release
+        gh release create $RELEASE_TAG \
+          --title "$RELEASE_NAME" \
+          --notes "Automated release of Adblock Rule Collection" \
+          --target main \
+          --draft
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+    - name: Upload Asset
+      run: |
+        # 获取创建的release的ID
+        RELEASE_TAG=$(date +%Y%m%d%H%M)
+
+        # 上传ADBLOCK_RULE_COLLECTION.txt文件到release
+        gh release upload $RELEASE_TAG ADBLOCK_RULE_COLLECTION.txt
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
