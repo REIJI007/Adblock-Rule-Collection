@@ -145,13 +145,10 @@ def write_rules_to_file(sorted_rules, save_path):
 """
 
     total_rules_count = sum(len(rules) for rules in sorted_rules.values())
-    rule_type_counts = "\n".join([f"! {rule_type}: {len(rules)} 条规则" for rule_type, rules in sorted_rules.items()])
-
     with open(save_path, 'w', encoding='utf-8') as f:
         logging.info(f"Writing {total_rules_count} rules to file {save_path}")
         f.write(header.format(rule_count=total_rules_count))
-        f.write('\n')
-        f.write(f"! 规则分类统计:\n{rule_type_counts}\n\n")
+        f.write('\n\n')
         for rule_type, rules in sorted_rules.items():
             f.write(f"! {rule_type} ({len(rules)} 条规则)\n")
             f.writelines(f"{rule}\n" for rule in rules)
