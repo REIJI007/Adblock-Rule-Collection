@@ -139,5 +139,28 @@
 *https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt*
 
 
-## 特别鸣谢
+## 五、特别鸣谢
+*1、anti-AD <br>(https://github.com/privacy-protection-tools/anti-AD)*
+
+*2、easylist <br>(https://github.com/easylist/easylist)*
+
+*3、cjxlist <br>(https://github.com/cjx82630/cjxlist)*
+
+*4、uniartisan <br>(https://github.com/uniartisan/adblock_list)*
+
+*5、Cats-Team <br>(https://github.com/Cats-Team/AdRules)*
+
+*6、217heidai <br>(https://github.com/217heidai/adblockfilters)*
+
+*7、GOODBYEADS <br>(https://github.com/8680/GOODBYEADS)*
+
+*8、AWAvenue-Ads-Rule <br>(https://github.com/TG-Twilight/AWAvenue-Ads-Rule)*
+
+*9、Bibaiji <br>(https://github.com/Bibaiji/ad-rules/)*
+
+*10、uBlockOrigin <br>(https://github.com/uBlockOrigin/uAssets)*
+
+*11、ADguardTeam <br>(https://github.com/AdguardTeam/AdGuardFilters)*
+
+*12、HyperADRules <br>(https://github.com/Lynricsy/HyperADRules)*
 
