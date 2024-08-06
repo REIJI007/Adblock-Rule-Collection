@@ -30,7 +30,7 @@
 <br>
 
 ## 三、适用范围
-适用于ADguard,Adblock Plus,uBlock Origin,Brave Browser,各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件等
+适用于ADguard,Adblock Plus,uBlock Origin,Brave Browser,各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件或广告拦截程序等
 
 <br>
 
