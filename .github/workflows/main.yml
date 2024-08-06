@@ -1,0 +1,80 @@
+name: Periodic Release  # 工作流名称
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'  # 每20分钟运行一次
+  workflow_dispatch:  # 允许手动触发工作流
+
+
+
+
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest  # 使用最新的 Ubuntu 版本作为运行环境
+    steps:
+      - name: Checkout code  # 检出代码
+        uses: actions/checkout@v2  # 使用官方的checkout操作来检出代码
+
+
+
+
+
+      - name: Get current time  # 获取当前时间
+        id: current-time  # 设置步骤ID，以便后续步骤引用
+        run: echo "time=$(date +'%y%m%d%H%M')" >> $GITHUB_ENV  # 获取当前时间，并将其输出为GitHub Actions的环境变量
+
+
+
+
+      - name: Update timestamp file  # 更新时间戳文件
+        run: echo "${{ env.time }}" > timestamp.txt  # 将当前时间写入timestamp.txt文件
+
+
+
+
+
+      - name: Force add and commit changes  # 强制添加和提交更改
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -f ADBLOCK_RULE_COLLECTION.txt 
+          git commit -m "Forced update of adblock files and timestamp"
+        env:
+          TOKEN: ${{ secrets.TOKEN }}  # 使用自定义的 TOKEN 进行身份验证
+
+
+
+
+
+
+      - name: Create Release  # 创建发布版本
+        id: create_release  # 设置步骤ID，以便后续步骤引用
+        uses: actions/create-release@v1  # 使用官方的create-release操作来创建发布版本
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}  # 使用自定义的 TOKEN 进行身份验证
+        with:
+          tag_name: release-${{ env.time }}  # 使用当前时间作为标签名称
+          release_name: Release ${{ env.time }}  # 使用当前时间作为发布名称
+          body: "Periodic release of adblock files."  # 发布说明
+          draft: false  # 发布为正式版本
+          prerelease: false  # 不发布为预发布版本
+
+
+      - name: Upload ADBLOCK_RULE_COLLECTION.txt  # 上传ADBLOCK_RULE_COLLECTION.txt文件
+        uses: actions/upload-release-asset@v1  # 使用官方的upload-release-asset操作来上传发布资源
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}  # 使用自定义的 TOKEN 进行身份验证
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}  # 使用创建发布版本步骤中的上传URL
+          asset_path: ADBLOCK_RULE_COLLECTION.txt  # 要上传的文件路径
+          asset_name: ADBLOCK_RULE_COLLECTION.txt  # 上传后的文件名称
+          asset_content_type: text/plain  # 文件的内容类型
+
+
+
+
+
+
+          
+     
