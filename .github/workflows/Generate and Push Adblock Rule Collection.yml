@@ -37,6 +37,14 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add ADBLOCK_RULE_COLLECTION.txt
         git commit -m "Update Adblock rules" || echo "No changes to commit"
-        git push
+        for attempt in {1..5}; do  # 尝试5次
+          if git push; then
+            break
+          else
+            echo "Push failed, attempting to pull and rebase..."
+            git pull --rebase  # 拉取并合并远程更改
+            sleep $((attempt * 10))  # 指数级退避，首次等待10秒，第二次20秒，依此类推
+          fi
+        done
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
