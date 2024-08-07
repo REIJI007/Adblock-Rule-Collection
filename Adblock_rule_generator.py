@@ -109,7 +109,7 @@ async def download_filter(session, url):
                         elif "$document" in line:
                             rules['反广告拦截'].add(line)
                         else:
-                            rules['普通规则'].add(line)
+                            rules['其他规则'].add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
