@@ -79,8 +79,8 @@ def is_valid_regex(pattern):
     except re.error:
         return False
 
-def download_filter(url):
-    """下载单个过滤器"""
+def download_filter(url, counters):
+    """下载单个过滤器并更新计数器"""
     try:
         logging.info(f"Downloading from {url}")
         response = requests.get(url, verify=False)  # 禁用 SSL 证书验证
@@ -93,21 +93,29 @@ def download_filter(url):
                 # 过滤掉注释行和空行
                 if line and not (line.startswith('!') or line.startswith('#')):
                     if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-                        rules.add(f"正则表达式: {line}")  # 添加正则表达式规则
+                        rules.add(line)
+                        counters['regex'] += 1
                     elif line.startswith("||"):
-                        rules.add(f"URL: {line}")  # 添加URL过滤规则
+                        rules.add(line)
+                        counters['url'] += 1
                     elif line.startswith("##") or line.startswith("#@#"):
-                        rules.add(f"CSS: {line}")  # 添加CSS过滤规则
+                        rules.add(line)
+                        counters['css'] += 1
                     elif "$script" in line:
-                        rules.add(f"脚本过滤: {line}")  # 添加脚本过滤规则
+                        rules.add(line)
+                        counters['script'] += 1
                     elif "$iframe" in line:
-                        rules.add(f"iframe过滤: {line}")  # 添加iframe过滤规则
+                        rules.add(line)
+                        counters['iframe'] += 1
                     elif "$third-party" in line:
-                        rules.add(f"跟踪器过滤: {line}")  # 添加跟踪器过滤规则
+                        rules.add(line)
+                        counters['third-party'] += 1
                     elif "$document" in line:
-                        rules.add(f"反广告拦截: {line}")  # 添加反广告拦截规则
+                        rules.add(line)
+                        counters['anti-adblock'] += 1
                     else:
-                        rules.add(f"普通规则: {line}")  # 添加普通规则
+                        rules.add(line)
+                        counters['other'] += 1
             return rules
         else:
             logging.error(f"Failed to download from {url} with status code {response.status_code}")
@@ -117,10 +125,20 @@ def download_filter(url):
         return set()
 
 def download_filters(urls):
-    """并行下载过滤器并返回所有过滤规则的集合"""
+    """并行下载过滤器并返回所有过滤规则的集合和计数器"""
     all_rules = set()
+    counters = {
+        'regex': 0,
+        'url': 0,
+        'css': 0,
+        'script': 0,
+        'iframe': 0,
+        'third-party': 0,
+        'anti-adblock': 0,
+        'other': 0
+    }
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        future_to_url = {executor.submit(download_filter, url): url for url in urls}
+        future_to_url = {executor.submit(download_filter, url, counters): url for url in urls}
         for future in concurrent.futures.as_completed(future_to_url):
             url = future_to_url[future]
             try:
@@ -128,28 +146,36 @@ def download_filters(urls):
                 all_rules.update(rules)
             except Exception as e:
                 logging.error(f"Error processing {url}: {e}")
-    return all_rules
+    return all_rules, counters
 
 def main():
     """主函数，下载过滤器并生成合并后的文件"""
     logging.info("Starting to download filters...")
-    all_rules = download_filters(filter_urls)
+    all_rules, counters = download_filters(filter_urls)
     logging.info("Finished downloading filters. Sorting rules...")
     sorted_rules = sorted(all_rules)  # 对规则进行排序
 
     # 文件头部注释信息
-    header = """
+    header = f"""
 !Title: Adblock-Rule-Collection
 !Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
 !LICENSE2：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
-!有效规则数目: {rule_count}
+!有效规则数目: {len(sorted_rules)}
+!正则表达式规则数目: {counters['regex']}
+!URL规则数目: {counters['url']}
+!CSS规则数目: {counters['css']}
+!脚本过滤规则数目: {counters['script']}
+!iframe过滤规则数目: {counters['iframe']}
+!跟踪器过滤规则数目: {counters['third-party']}
+!反广告拦截规则数目: {counters['anti-adblock']}
+!其他规则数目: {counters['other']}
 """
 
     with open(save_path, 'w', encoding='utf-8') as f:
         logging.info(f"Writing {len(sorted_rules)} rules to file {save_path}")
-        f.write(header.format(rule_count=len(sorted_rules)))
+        f.write(header)
         f.write('\n\n')
         f.writelines(f"{rule}\n" for rule in sorted_rules)
 
