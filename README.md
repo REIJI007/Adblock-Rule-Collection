@@ -25,6 +25,7 @@
 <br>
 2、订阅地址二：<br> *https://cdn.jsdelivr.net/gh/REIJI007/Adblock-Rule-Collection@main/ADBLOCK_RULE_COLLECTION.txt*
 <br>
+<br>
 3、从Release中下载ADBLOCK_RULE_COLLECTION.txt文件进行本地导入广告过滤器，release每20分钟自动发布一次
 
 <br>
