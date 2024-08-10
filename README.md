@@ -163,3 +163,5 @@
 
 *12、HyperADRules <br>(https://github.com/Lynricsy/HyperADRules)*
 
+*13、guandasheng <br>(https://github.com/guandasheng/adguardhome)*
+
