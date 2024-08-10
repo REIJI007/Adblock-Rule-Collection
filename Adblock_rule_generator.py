@@ -125,7 +125,7 @@ async def download_filter(session, url):
                         elif "*$" in line:
                             rules['关键字过滤规则'].add(line)
                         elif "$document" in line:
-                            rules['广告拦截屏蔽规则'].add(line)
+                            rules['webrtc拦截屏蔽规则'].add(line)
                         elif "$webrtc" in line or "$ping" in line:
                             rules['反指纹跟踪规则'].add(line)
                         elif "$media" in line:
