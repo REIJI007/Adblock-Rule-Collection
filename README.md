@@ -16,7 +16,7 @@
 </p>
 
 
-## 一、关于Adblock-Rule-Collection，你可使用本仓库中的Adblock_rule_generator.py脚本合并去重生成广告过滤器，注意修改生成文件的保存路径与生成文件名，可按需求添加不同的上游广告过滤规则列表进行DIY定制
+## 一、关于Adblock-Rule-Collection，你可使用本仓库中的Adblock_rule_generator.py脚本合并去重生成广告过滤规则列表，注意修改生成文件的保存路径与生成的文件名，可按需求添加不同的上游广告过滤规则列表进行DIY定制
 
 <br>
 
