@@ -110,6 +110,26 @@ async def download_filter(session, url):
                             rules['网络过滤'].add(line)
                         elif "$cookie" in line:
                             rules['Cookie 过滤'].add(line)
+                        elif "||" in line:
+                            rules['域名过滤规则'].add(line)
+                        elif "$domain=" in line:
+                            rules['隐私规则'].add(line)
+                        elif "$font" in line or "$style" in line:
+                            rules['字体和样式过滤'].add(line)
+                        elif "$csp" in line:
+                            rules['脚本注入规则'].add(line)
+                        elif "#?#" in line:
+                            rules['区域选择器'].add(line)
+                        elif line.startswith("@@"):
+                            rules['除外规则'].add(line)
+                        elif "*$" in line:
+                            rules['关键字过滤规则'].add(line)
+                        elif "$document" in line:
+                            rules['广告拦截屏蔽规则'].add(line)
+                        elif "$webrtc" in line or "$ping" in line:
+                            rules['反指纹跟踪规则'].add(line)
+                        elif "$media" in line:
+                            rules['定向广告规则'].add(line)
                         else:
                             rules['其他规则'].add(line)
             else:
