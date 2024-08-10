@@ -132,6 +132,9 @@
 <br>
 **32、HyperADRules-DNS** <br>
 *https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt*
+<br>
+**33、TheBestAdrules** <br>
+*https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt*
 
 <br>
 
