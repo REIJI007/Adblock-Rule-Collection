@@ -34,7 +34,38 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    # 列表省略, 保持不变
+    "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+    "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+    "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt",
+    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
+    "https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_7_Japanese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt"
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -68,15 +99,17 @@ async def download_filter(session, url):
                         elif line.startswith("||"):
                             rules['URL'].add(line)
                         elif line.startswith("##") or line.startswith("#@#"):
-                            rules['CSS'].add(line)
+                            rules['CSS 选择器'].add(line)
                         elif "$script" in line:
                             rules['脚本过滤'].add(line)
-                        elif "$iframe" in line:
-                            rules['iframe过滤'].add(line)
-                        elif "$third-party" in line:
-                            rules['跟踪器过滤'].add(line)
-                        elif "$document" in line:
-                            rules['反广告拦截'].add(line)
+                        elif "$third-party" in line or "$image" in line or "$media" in line:
+                            rules['资源过滤'].add(line)
+                        elif "$redirect" in line:
+                            rules['重定向规则'].add(line)
+                        elif "$network" in line:
+                            rules['网络过滤'].add(line)
+                        elif "$cookie" in line:
+                            rules['Cookie 过滤'].add(line)
                         else:
                             rules['其他规则'].add(line)
             else:
