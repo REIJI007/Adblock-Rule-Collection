@@ -163,3 +163,7 @@
 
 *13、guandasheng <br>(https://github.com/guandasheng/adguardhome)*
 
+
+## LICENSE
+- [CC-BY-SA-4.0 License](./LICENSE-CC-BY-SA-4.0.md)
+- [GPL-3.0 License](./LICENSE-GPL-3.0.md)
