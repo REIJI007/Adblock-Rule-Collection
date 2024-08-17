@@ -165,5 +165,5 @@
 
 
 ## LICENSE
-- [CC-BY-SA-4.0 License](./LICENSE-CC-BY-SA-4.0.md)
+- [CC-BY-SA-4.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0)
 - [GPL-3.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0)
