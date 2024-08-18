@@ -34,7 +34,39 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    # ... (保持原有的URL列表不变)
+    "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+    "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+    "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt",
+    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
+    "https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_7_Japanese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
+    "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -49,22 +81,6 @@ def is_valid_regex(pattern):
     except re.error:
         return False
 
-def is_valid_adblock_rule(line):
-    """检查是否为有效的广告过滤器规则"""
-    if line.startswith('!') or line.startswith('#'):
-        return False
-    if line.startswith('||') or line.startswith('##') or line.startswith('#@#'):
-        return True
-    if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-        return True
-    if '$' in line and any(option in line for option in ['script', 'third-party', 'image', 'media', 'redirect', 'network', 'cookie', 'domain=', 'font', 'style', 'csp', 'document', 'webrtc', 'ping']):
-        return True
-    if line.startswith('@@'):
-        return True
-    if '*$' in line:
-        return True
-    return False
-
 async def download_filter(session, url):
     """异步下载单个过滤器"""
     rules = defaultdict(set)
@@ -77,11 +93,13 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    if line and is_valid_adblock_rule(line):
+                    # 过滤掉注释行和空行
+                    if line and not (line.startswith('!') or line.startswith('#')):
+                        # 只筛选符合广告过滤器语法的条目
                         if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
                             rules['正则表达式'].add(line)
                         elif line.startswith("||"):
-                            rules['URL'].add(line)
+                            rules['域名过滤规则'].add(line)
                         elif line.startswith("##") or line.startswith("#@#"):
                             rules['CSS 选择器'].add(line)
                         elif "$script" in line:
@@ -94,8 +112,6 @@ async def download_filter(session, url):
                             rules['网络过滤'].add(line)
                         elif "$cookie" in line:
                             rules['Cookie 过滤'].add(line)
-                        elif "||" in line:
-                            rules['域名过滤规则'].add(line)
                         elif "$domain=" in line:
                             rules['隐私规则'].add(line)
                         elif "$font" in line or "$style" in line:
@@ -114,15 +130,12 @@ async def download_filter(session, url):
                             rules['反指纹跟踪规则'].add(line)
                         elif "$media" in line:
                             rules['定向广告规则'].add(line)
-                        else:
-                            rules['其他规则'].add(line)
+                        # 其他不符合语法的条目将被忽略
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
         logging.error(f"Error downloading {url}: {e}")
     return rules
-
-# 其余函数保持不变
 
 async def download_filters(urls):
     """并行下载过滤器并返回所有过滤规则的集合"""
@@ -142,7 +155,6 @@ def merge_and_sort_rules(all_rules):
 
 def write_rules_to_file(sorted_rules, save_path):
     """将规则写入文件"""
-    # 文件头部注释信息
     header = """
 !Title: Adblock-Rule-Collection
 !Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
@@ -152,7 +164,6 @@ def write_rules_to_file(sorted_rules, save_path):
 !有效规则数目: {rule_count}
 """
 
-    # 计算每种规则类型的数量并排序
     rule_counts = {rule_type: len(rules) for rule_type, rules in sorted_rules.items()}
     sorted_rule_counts = sorted(rule_counts.items(), key=lambda x: x[1], reverse=True)
     
