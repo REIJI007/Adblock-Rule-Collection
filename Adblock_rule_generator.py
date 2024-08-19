@@ -8,7 +8,7 @@ import asyncio
 import aiohttp
 from collections import defaultdict
 from urllib3.exceptions import InsecureRequestWarning
-from datetime import datetime, timedelta, timezone  # 修改导入
+from datetime import datetime, timezone, timedelta
 
 # 设置日志
 logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
@@ -35,7 +35,39 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    # 这里是过滤器 URL 列表
+    "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylist.txt",
+    "https://easylist-downloads.adblockplus.org/easylistchina.txt",
+    "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
+    "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
+    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt",
+    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
+    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
+    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt",
+    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt",
+    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
+    "https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_7_Japanese/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
+    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
+    "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -73,7 +105,7 @@ async def download_filter(session, url):
                             rules['CSS 选择器'].add(line)
                         elif "$script" in line:
                             rules['脚本过滤'].add(line)
-                        elif "$third-party" in line or "$image" in line或 "$media" in line:
+                        elif "$third-party" in line or "$image" in line or "$media" in line:
                             rules['资源过滤'].add(line)
                         elif "$redirect" in line:
                             rules['重定向规则'].add(line)
@@ -83,7 +115,7 @@ async def download_filter(session, url):
                             rules['Cookie 过滤'].add(line)
                         elif "$domain=" in line:
                             rules['隐私规则'].add(line)
-                        elif "$font" in line或 "$style" in line:
+                        elif "$font" in line or "$style" in line:
                             rules['字体和样式过滤'].add(line)
                         elif "$csp" in line:
                             rules['脚本注入规则'].add(line)
@@ -124,9 +156,9 @@ def merge_and_sort_rules(all_rules):
 
 def write_rules_to_file(sorted_rules, save_path):
     """将规则写入文件"""
-    # 获取东八区时间
-    tz = timezone(timedelta(hours=8))
-    generation_time = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+    # 获取东八区当前时间
+    now = datetime.now(timezone(timedelta(hours=8)))
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')
 
     header = f"""
 !Title: Adblock-Rule-Collection
@@ -134,7 +166,7 @@ def write_rules_to_file(sorted_rules, save_path):
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
 !LICENSE2：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
-!Generated on: {generation_time}  # 使用东八区时间
+!生成时间: {timestamp}
 !有效规则数目: {{rule_count}}
 """
 
