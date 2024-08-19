@@ -20,7 +20,7 @@ def install_packages(packages):
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
-            logging.info(f"Package '{package}' installed成功.")
+            logging.info(f"Package '{package}' installed successfully.")
         else:
             logging.info(f"Package '{package}' is already installed.")
 
@@ -68,20 +68,24 @@ filter_urls = [
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
-    # 这里可以继续添加其他的过滤器URL
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
-    """检查是否符合Adblock Plus、uBlock Origin、AdGuard等的广告过滤器语法"""
+    """检查是否符合 Adblock Plus、uBlock Origin、AdGuard 等广告过滤器语法"""
     return (
         line.startswith("||") or               # 域名规则
-        (line.startswith("/") and line.endswith("/") and is_valid_regex(line[1:-1])) or  # 正则表达式规则
-        line.startswith("##") or               # CSS选择器规则
-        line.startswith("#@#") or              # CSS选择器例外规则
+        line.startswith("|") or                # URL 规则
+        line.startswith("/") and line.endswith("/") and is_valid_regex(line[1:-1]) or  # 正则表达式规则
+        line.startswith("##") or               # CSS 选择器规则
+        line.startswith("#@#") or              # CSS 选择器例外规则
         line.startswith("@@") or               # 例外规则
+        line.startswith("!#if") or             # 条件注释
+        line.startswith("!#endif") or          # 条件注释结束
+        line.startswith("!#include") or        # 引入规则
+        line.startswith("!#endif") or          # 结束引入规则
         "$" in line                            # 资源类型、其他条件规则
     )
 
