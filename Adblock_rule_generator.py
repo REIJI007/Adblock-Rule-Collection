@@ -73,29 +73,75 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+def is_valid_adblock_plus_ublock_origin_rule(line):
+    """检查是否符合 Adblock Plus 和 uBlock Origin 语法"""
+    if not line:
+        return False
+    
+    if line.startswith("||"):
+        return not line.startswith("||#")  # 域名规则，排除带 # 的规则
+    
+    if line.startswith("|"):
+        return True  # URL 规则
+
+    if line.startswith("/") and line.endswith("/"):
+        return is_valid_regex(line[1:-1])  # 正则表达式规则
+
+    if line.startswith("##"):
+        return True  # CSS 选择器规则
+
+    if line.startswith("@@"):
+        return True  # 例外规则
+
+    if "$" in line:
+        parts = line.split("$")
+        if len(parts) == 2:
+            condition = parts[1]
+            if condition in ["document", "script", "subdocument", "third-party"]:
+                return True
+        return False  # 资源类型和其他条件规则
+
+    return False
+
+def is_valid_adguard_rule(line):
+    """检查是否符合 AdGuard 语法"""
+    if not line:
+        return False
+    
+    if line.startswith("||"):
+        return True  # 域名规则
+
+    if line.startswith("|"):
+        return True  # URL 规则
+
+    if line.startswith("/") and line.endswith("/"):
+        return is_valid_regex(line[1:-1])  # 正则表达式规则
+
+    if line.startswith("##"):
+        return True  # CSS 选择器规则
+
+    if line.startswith("@@"):
+        return True  # 例外规则
+
+    if "$" in line:
+        parts = line.split("$")
+        if len(parts) == 2:
+            condition = parts[1]
+            if condition in ["document", "script", "subdocument", "third-party"]:
+                return True
+        return False  # 资源类型和其他条件规则
+
+    if line.startswith("~"):
+        return True  # 排除规则
+
+    return False
+
 def is_valid_rule(line):
-    """检查是否符合 Adblock Plus、uBlock Origin、AdGuard 等广告过滤器语法"""
+    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
     return (
-        line.startswith("||") or               # 域名规则
-        line.startswith("|") or                # URL 规则
-        line.startswith("/") and line.endswith("/") and is_valid_regex(line[1:-1]) or  # 正则表达式规则
-        line.startswith("##") or               # CSS 选择器规则
-        line.startswith("#@#") or              # CSS 选择器例外规则
-        line.startswith("@@") or               # 例外规则
-        line.startswith("!#if") or             # 条件注释
-        line.startswith("!#endif") or          # 条件注释结束
-        line.startswith("!#include") or        # 引入规则
-        line.startswith("!#endif") or          # 结束引入规则
-        "$" in line or                         # 资源类型、其他条件规则
-        line.startswith("~") or                # 排除规则（例如 ~third-party）
-        "^" in line or                         # URL 边界或子域边界
-        line.startswith("#?") or               # 条件选择器规则
-        line.startswith("#@?") or              # 条件选择器例外规则
-        line.startswith("#%#") or              # 用户脚本注入规则（AdGuard）
-        line.startswith("@#") or               # 禁止规则（AdGuard）
-        "$domain=" in line or                  # 特定域名规则
-        "$sitekey=" in line                    # 特定站点密钥规则
-    )
+        is_valid_adblock_plus_ublock_origin_rule(line) or 
+        is_valid_adguard_rule(line)
+    ) and not (line.startswith('!') or line.startswith('#'))  # 排除注释行
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
@@ -118,7 +164,7 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     # 过滤掉注释行、空行以及不符合语法的行
-                    if line and not (line.startswith('!') or line.startswith('#')) and is_valid_rule(line):
+                    if line and is_valid_rule(line):
                         rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
