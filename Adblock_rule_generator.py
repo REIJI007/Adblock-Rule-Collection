@@ -98,7 +98,7 @@ def is_valid_adblock_plus_ublock_origin_rule(line):
         if len(parts) == 2:
             condition = parts[1]
             # 扩展了对资源类型的处理，包括图片、视频、字体等
-            valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media"]
+            valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media", "xmlhttprequest", "csp"]
             if condition in valid_conditions:
                 return True
         return False  # 资源类型和其他条件规则
@@ -130,7 +130,7 @@ def is_valid_adguard_rule(line):
         if len(parts) == 2:
             condition = parts[1]
             # 扩展了对资源类型的处理，包括图片、视频、字体等
-            valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media"]
+            valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media", "xmlhttprequest", "csp"]
             if condition in valid_conditions:
                 return True
         return False  # 资源类型和其他条件规则
