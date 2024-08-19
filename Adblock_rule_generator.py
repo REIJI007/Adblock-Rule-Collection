@@ -6,7 +6,7 @@ import importlib.util
 import logging
 import asyncio
 import aiohttp
-from collections import defaultdict
+import re
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
 
@@ -15,12 +15,12 @@ logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def install_packages(packages):
-    """Ensure the required packages are installed."""
+    """确保安装所需的包"""
     for package in packages:
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
-            logging.info(f"Package '{package}' installed successfully.")
+            logging.info(f"Package '{package}' installed成功.")
         else:
             logging.info(f"Package '{package}' is already installed.")
 
@@ -68,15 +68,26 @@ filter_urls = [
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
+    # 这里可以继续添加其他的过滤器URL
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+def is_valid_rule(line):
+    """检查是否符合Adblock Plus、uBlock Origin、AdGuard等的广告过滤器语法"""
+    return (
+        line.startswith("||") or               # 域名规则
+        (line.startswith("/") and line.endswith("/") and is_valid_regex(line[1:-1])) or  # 正则表达式规则
+        line.startswith("##") or               # CSS选择器规则
+        line.startswith("#@#") or              # CSS选择器例外规则
+        line.startswith("@@") or               # 例外规则
+        "$" in line                            # 资源类型、其他条件规则
+    )
+
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
     try:
-        import re
         re.compile(pattern)
         return True
     except re.error:
@@ -84,7 +95,7 @@ def is_valid_regex(pattern):
 
 async def download_filter(session, url):
     """异步下载单个过滤器"""
-    rules = defaultdict(set)
+    rules = set()  # 使用 set 来确保规则的唯一性
     try:
         async with session.get(url, ssl=False) as response:
             logging.info(f"Downloading from {url}")
@@ -94,44 +105,9 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    # 过滤掉注释行和空行
-                    if line and not (line.startswith('!') or line.startswith('#')):
-                        # 只筛选符合广告过滤器语法的条目
-                        if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-                            rules['正则表达式规则'].add(line)
-                        elif line.startswith("||"):
-                            rules['域名过滤规则'].add(line)
-                        elif line.startswith("##") or line.startswith("#@#"):
-                            rules['CSS选择器过滤规则'].add(line)
-                        elif "$script" in line:
-                            rules['脚本过滤规则'].add(line)
-                        elif "$third-party" in line or "$image" in line or "$media" in line:
-                            rules['资源过滤规则'].add(line)
-                        elif "$redirect" in line:
-                            rules['重定向规则'].add(line)
-                        elif "$network" in line:
-                            rules['网络过滤规则'].add(line)
-                        elif "$cookie" in line:
-                            rules['Cookie过滤规则'].add(line)
-                        elif "$domain=" in line:
-                            rules['隐私规则'].add(line)
-                        elif "$font" in line or "$style" in line:
-                            rules['字体和样式过滤规则'].add(line)
-                        elif "$csp" in line:
-                            rules['脚本注入规则'].add(line)
-                        elif "#?#" in line:
-                            rules['区域选择器规则'].add(line)
-                        elif line.startswith("@@"):
-                            rules['例外规则'].add(line)
-                        elif "*$" in line:
-                            rules['关键字过滤规则'].add(line)
-                        elif "$document" in line:
-                            rules['webrtc拦截屏蔽规则'].add(line)
-                        elif "$webrtc" in line or "$ping" in line:
-                            rules['反指纹跟踪规则'].add(line)
-                        elif "$media" in line:
-                            rules['定向广告规则'].add(line)
-                        # 其他不符合语法的条目将被忽略
+                    # 过滤掉注释行、空行以及不符合语法的行
+                    if line and not (line.startswith('!') or line.startswith('#')) and is_valid_rule(line):
+                        rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
@@ -142,19 +118,13 @@ async def download_filters(urls):
     """并行下载过滤器并返回所有过滤规则的集合"""
     async with aiohttp.ClientSession() as session:
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = defaultdict(set)
+        all_rules = set()  # 所有规则的集合
         for future in asyncio.as_completed(tasks):
             rules = await future
-            for rule_type, rule_set in rules.items():
-                all_rules[rule_type].update(rule_set)
+            all_rules.update(rules)  # 将每个任务下载的规则更新到全局集合中
     return all_rules
 
-def merge_and_sort_rules(all_rules):
-    """合并并排序所有规则"""
-    sorted_rules = {k: sorted(v) for k, v in all_rules.items()}
-    return sorted_rules
-
-def write_rules_to_file(sorted_rules, save_path):
+def write_rules_to_file(rules, save_path):
     """将规则写入文件"""
     # 获取东八区当前时间
     now = datetime.now(timezone(timedelta(hours=8)))
@@ -167,48 +137,32 @@ def write_rules_to_file(sorted_rules, save_path):
 !LICENSE1：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
 !LICENSE2：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
 !生成时间: {timestamp}
-!有效规则数目: {{rule_count}}
+!有效规则数目: {len(rules)}
 """
 
-    rule_counts = {rule_type: len(rules) for rule_type, rules in sorted_rules.items()}
-    sorted_rule_counts = sorted(rule_counts.items(), key=lambda x: x[1], reverse=True)
-    
-    total_rules_count = sum(len(rules) for rules in sorted_rules.values())
-    rule_type_counts = "\n".join([f"! {rule_type}: {count} 条规则" for rule_type, count in sorted_rule_counts])
-
     with open(save_path, 'w', encoding='utf-8') as f:
-        logging.info(f"Writing {total_rules_count} rules to file {save_path}")
-        f.write(header.format(rule_count=total_rules_count))
+        logging.info(f"Writing {len(rules)} rules to file {save_path}")
+        f.write(header)
         f.write('\n')
-        f.write(f"! 规则分类统计:\n{rule_type_counts}\n\n")
-        for rule_type, _ in sorted_rule_counts:
-            rules = sorted_rules[rule_type]
-            f.write(f"! {rule_type} ({len(rules)} 条规则)\n")
-            f.writelines(f"{rule}\n" for rule in rules)
-            f.write('\n')
+        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 将所有规则写入文件并排序
 
     logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {total_rules_count}")
-    for rule_type, count in sorted_rule_counts:
-        logging.info(f"{rule_type}: {count} 条规则")
-        print(f"{rule_type}: {count} 条规则")
+    logging.info(f"有效规则数目: {len(rules)}")
 
     print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {total_rules_count}")
+    print(f"有效规则数目: {len(rules)}")
 
 def main():
     """主函数，下载过滤器并生成合并后的文件"""
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
-    all_rules = asyncio.run(download_filters(filter_urls))
+    rules = asyncio.run(download_filters(filter_urls))  # 异步运行下载任务
 
-    logging.info("Finished downloading filters. Sorting rules...")
-    print("Finished downloading filters. Sorting rules...")
+    logging.info("Finished downloading filters. Writing rules to file...")
+    print("Finished downloading filters. Writing rules to file...")
 
-    sorted_rules = merge_and_sort_rules(all_rules)
-
-    write_rules_to_file(sorted_rules, save_path)
+    write_rules_to_file(rules, save_path)  # 写入文件
 
 if __name__ == "__main__":
     main()
