@@ -98,31 +98,31 @@ async def download_filter(session, url):
                     if line and not (line.startswith('!') or line.startswith('#')):
                         # 只筛选符合广告过滤器语法的条目
                         if line.startswith('/') and line.endswith('/') and is_valid_regex(line[1:-1]):
-                            rules['正则表达式'].add(line)
+                            rules['正则表达式规则'].add(line)
                         elif line.startswith("||"):
                             rules['域名过滤规则'].add(line)
                         elif line.startswith("##") or line.startswith("#@#"):
-                            rules['CSS 选择器'].add(line)
+                            rules['CSS选择器过滤规则'].add(line)
                         elif "$script" in line:
-                            rules['脚本过滤'].add(line)
+                            rules['脚本过滤规则'].add(line)
                         elif "$third-party" in line or "$image" in line or "$media" in line:
-                            rules['资源过滤'].add(line)
+                            rules['资源过滤规则'].add(line)
                         elif "$redirect" in line:
                             rules['重定向规则'].add(line)
                         elif "$network" in line:
-                            rules['网络过滤'].add(line)
+                            rules['网络过滤规则'].add(line)
                         elif "$cookie" in line:
-                            rules['Cookie 过滤'].add(line)
+                            rules['Cookie过滤规则'].add(line)
                         elif "$domain=" in line:
                             rules['隐私规则'].add(line)
                         elif "$font" in line or "$style" in line:
-                            rules['字体和样式过滤'].add(line)
+                            rules['字体和样式过滤规则'].add(line)
                         elif "$csp" in line:
                             rules['脚本注入规则'].add(line)
                         elif "#?#" in line:
-                            rules['区域选择器'].add(line)
+                            rules['区域选择器规则'].add(line)
                         elif line.startswith("@@"):
-                            rules['除外规则'].add(line)
+                            rules['例外规则'].add(line)
                         elif "*$" in line:
                             rules['关键字过滤规则'].add(line)
                         elif "$document" in line:
