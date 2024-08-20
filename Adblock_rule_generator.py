@@ -35,7 +35,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    "https://anti-ad.net/adguard.txt",
+        "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylistchina.txt",
@@ -75,30 +75,22 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
     """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    if not line or line.startswith('!') or line.startswith('#') or line.startswith('['):
+    if not line or line.startswith(('!', '#', '[')):
         return False
 
-    # 域名规则
-    if line.startswith("||"):
+    # 域名规则，URL 规则
+    if line.startswith(('||', '|', '@@')):
         return True
 
-    # URL 规则，| 作为起始或结束符，匹配开头或结尾的 URL
-    if line.startswith("|") or line.endswith("|"):
+    # CSS 选择器规则
+    if line.startswith(('##', '#@#', '#?#', '#@?#')):
         return True
 
     # 正则表达式规则
-    if line.startswith("/") and line.endswith("/"):
+    if line.startswith('/') and line.endswith('/'):
         return is_valid_regex(line[1:-1])
 
-    # CSS 选择器规则，包括 uBlock Origin 的 extended CSS 选择器规则
-    if line.startswith("##") or line.startswith("#@#") or line.startswith("#?#") or line.startswith("#@?#"):
-        return True
-
-    # 例外规则，@@ 表示的例外，或者 $badfilter 表示无效化规则
-    if line.startswith("@@") or "$badfilter" in line:
-        return True
-
-    # 资源类型规则及其他高级选项，$表示后缀，用于修饰域名或 URL 的规则
+    # 资源类型和高级选项，$ 表示后缀，用于修饰域名或 URL 的规则
     if "$" in line:
         return True
 
@@ -106,12 +98,12 @@ def is_valid_rule(line):
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension):', line):
         return True
 
-    # AdGuard 特有的排除规则
-    if line.startswith("~"):
+    # AdGuard 特有的规则，如 ~ 排除符、CSP、注入脚本等
+    if line.startswith(('~', 'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=', 'header=')):
         return True
 
-    # 标准注入脚本、重定向规则、CSP规则等高级规则
-    if line.startswith("||") or "|$" in line or "^$" in line or line.startswith("script:inject(") or "redirect=" in line:
+    # 禁用规则（badfilter）
+    if "$badfilter" in line:
         return True
 
     return False
