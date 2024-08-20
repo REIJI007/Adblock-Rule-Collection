@@ -109,7 +109,7 @@ def is_valid_rule(line):
         'addparam', 'modifypattern', 'override', 'cookie', 'setcss', 'thirdparty',
         'firstparty', 'collapsing', 'collapse', 'subframe', 'frame', 'mainframe',
         'background', 'all', 'document', 'sitekey', 'method=', 'rewrite', 'xhr=',
-        'popup=', 'popup=', 'removeparam=', 'cookie=', 'javascript=', 'referer=',
+        'popup=', 'removeparam=', 'cookie=', 'javascript=', 'referer=',
         'query=', 'network=', 'dns=', 'param=', 'regex=', 'requestmethod=', 'requesttype=',
         'useragent=', ':has(', ':contains(', ':matches-css(', ':matches-css-before(',
         ':matches-css-after(', '##+js(', '#%#//scriptlet', 'min-device-pixel-ratio=',
