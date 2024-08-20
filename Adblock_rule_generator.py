@@ -95,11 +95,35 @@ def is_valid_rule(line):
         return True
 
     # AdGuard 特有的规则
-    adguard_keywords = [
-        'script:inject(', 'csp=', 'redirect=', 'removeparam=',
-        ':has(', ':contains(', ':matches-css(', ':matches-css-before(', ':matches-css-after(',
-        '##+js(', '#%#//scriptlet',
-        'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type='
+    adguard_keywords = 
+  [
+        'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=',
+        'header=', 'important', 'badfilter', 'empty', 'rewrite=', 'referrerpolicy=',
+        'permissionspolicy=', 'webrtc', 'stealth', 'ping', 'media', 'replace',
+        'stylesheet', 'mediaelement', 'urlblock', 'xhr', 'third-party', 'inline-script',
+        'subdocument', 'image', 'popup', 'elemhide', 'jsinject', 'specifichide',
+        'denyallow', 'path', 'document', 'font', 'stylesheet', 'all', 'min', 'max',
+        'redirect-rule=', 'remove-class=', 'remove-style=', 'dnsrewrite=', 'dnsblock=',
+        'dnsallow=', 'dnsmask=', 'network', 'css', 'important', 'important!', 'image',
+        'media', 'object', 'third-party', 'ping', 'noscript', 'csp', 'block',
+        'removeheader', 'addheader', 'modifyheader', 'setcookie', 'removeparam',
+        'addparam', 'modifypattern', 'override', 'cookie', 'setcss', 'thirdparty',
+        'firstparty', 'collapsing', 'collapse', 'subframe', 'frame', 'mainframe',
+        'background', 'all', 'document', 'sitekey', 'method=', 'rewrite', 'xhr=',
+        'popup=', 'popup=', 'removeparam=', 'cookie=', 'javascript=', 'referer=',
+        'query=', 'network=', 'dns=', 'param=', 'regex=', 'requestmethod=', 'requesttype=',
+        'useragent=', ':has(', ':contains(', ':matches-css(', ':matches-css-before(',
+        ':matches-css-after(', '##+js(', '#%#//scriptlet', 'min-device-pixel-ratio=',
+        'max-device-pixel-ratio=', 'media-type=', 'domain=', 'app=', 'match-case', 'popup',
+        'important', 'collapse', 'third-party', 'first-party', 'domain=', 'xmlhttprequest',
+        'websocket', 'websocket-connect', 'empty', 'ping', 'rewrite', 'redirect=',
+        'redirect-rule=', 'removeheader=', 'addheader=', 'removeparam=', 'removeparam',
+        'setcookie=', 'webrtc=', 'referrerpolicy=', 'permissionspolicy=', 'stealth=',
+        'denyallow=', 'dnscname=', 'method=', 'dnsprefetch=', 'dnsblock=', 'dnsrewrite=',
+        'dnsallow=', 'dnsmask=', 'noabp=1', 'noelemhide', 'sitekey=', 'dnstarget=',
+        'dnscname=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
+        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'dnsoverhttps-target=',
+        'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 'policy='
     ]
     
     for keyword in adguard_keywords:
