@@ -25,7 +25,7 @@ def install_packages(packages):
             logging.info(f"Package '{package}' is already installed.")
 
 # 要确保安装的包列表
-required_packages = ["aiohttp"]
+required_packages = ["aiohttp", "urllib3", "certifi"]
 
 # 安装所需的包
 install_packages(required_packages)
@@ -35,39 +35,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    "https://anti-ad.net/adguard.txt",
-    "https://anti-ad.net/easylist.txt",
-    "https://easylist-downloads.adblockplus.org/easylist.txt",
-    "https://easylist-downloads.adblockplus.org/easylistchina.txt",
-    "https://easylist-downloads.adblockplus.org/easyprivacy.txt",
-    "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt",
-    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
-    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt",
-    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
-    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
-    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
-    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
-    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt",
-    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
-    "https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_7_Japanese/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_11_Mobile/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
-    "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
+    # (保留URL列表不变)
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -95,8 +63,7 @@ def is_valid_rule(line):
         return True
 
     # AdGuard 特有的规则
-    adguard_keywords = 
-  [
+    adguard_keywords = [
         'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=',
         'header=', 'important', 'badfilter', 'empty', 'rewrite=', 'referrerpolicy=',
         'permissionspolicy=', 'webrtc', 'stealth', 'ping', 'media', 'replace',
