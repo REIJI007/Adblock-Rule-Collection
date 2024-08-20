@@ -96,34 +96,50 @@ def is_valid_rule(line):
 
     # AdGuard 特有的规则
     adguard_keywords = [
-        'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=',
-        'header=', 'important', 'badfilter', 'empty', 'rewrite=', 'referrerpolicy=',
-        'permissionspolicy=', 'webrtc', 'stealth', 'ping', 'media', 'replace',
-        'stylesheet', 'mediaelement', 'urlblock', 'xhr', 'third-party', 'inline-script',
-        'subdocument', 'image', 'popup', 'elemhide', 'jsinject', 'specifichide',
-        'denyallow', 'path', 'document', 'font', 'stylesheet', 'all', 'min', 'max',
-        'redirect-rule=', 'remove-class=', 'remove-style=', 'dnsrewrite=', 'dnsblock=',
-        'dnsallow=', 'dnsmask=', 'network', 'css', 'important', 'important!', 'image',
-        'media', 'object', 'third-party', 'ping', 'noscript', 'csp', 'block',
-        'removeheader', 'addheader', 'modifyheader', 'setcookie', 'removeparam',
-        'addparam', 'modifypattern', 'override', 'cookie', 'setcss', 'thirdparty',
-        'firstparty', 'collapsing', 'collapse', 'subframe', 'frame', 'mainframe',
-        'background', 'all', 'document', 'sitekey', 'method=', 'rewrite', 'xhr=',
-        'popup=', 'removeparam=', 'cookie=', 'javascript=', 'referer=',
-        'query=', 'network=', 'dns=', 'param=', 'regex=', 'requestmethod=', 'requesttype=',
-        'useragent=', ':has(', ':contains(', ':matches-css(', ':matches-css-before(',
-        ':matches-css-after(', '##+js(', '#%#//scriptlet', 'min-device-pixel-ratio=',
-        'max-device-pixel-ratio=', 'media-type=', 'domain=', 'app=', 'match-case', 'popup',
-        'important', 'collapse', 'third-party', 'first-party', 'domain=', 'xmlhttprequest',
-        'websocket', 'websocket-connect', 'empty', 'ping', 'rewrite', 'redirect=',
-        'redirect-rule=', 'removeheader=', 'addheader=', 'removeparam=', 'removeparam',
-        'setcookie=', 'webrtc=', 'referrerpolicy=', 'permissionspolicy=', 'stealth=',
-        'denyallow=', 'dnscname=', 'method=', 'dnsprefetch=', 'dnsblock=', 'dnsrewrite=',
-        'dnsallow=', 'dnsmask=', 'noabp=1', 'noelemhide', 'sitekey=', 'dnstarget=',
-        'dnscname=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
-        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'dnsoverhttps-target=',
-        'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 'policy='
-    ]
+    # 脚本相关
+    'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet', 
+    '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval',
+    
+    # CSS相关
+    'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
+    'css', 'setcss', 'style-src', 'font-src', 'remove-style=', 'addstyle=', 'display:none', 'visibility:hidden',
+    
+    # 网络请求相关
+    'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping', 
+    'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=', 'dnsallow=', 
+    'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=', 'dnsoverhttps-target=', 
+    'dnsoverhttps-resolver=', 'dnsoverhttps-resolver-url=', 'server=', 'server-version=', 'x-runtime=',
+    
+    # Cookie & Header相关
+    'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie', 'cookie-samesite', 
+    'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=', 'strict-transport-security', 
+    'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options', 'x-permitted-cross-domain-policies', 
+    'access-control-allow-origin', 'vary=', 'x-powered-by=', 'x-aspnet-version=',
+    
+    # 广告相关
+    'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=', 
+    'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background', 
+    'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe',
+    
+    # 安全隐私相关
+    'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
+    'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors', 
+    'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy', 
+    'cross-origin-embedder-policy', 'cross-origin-opener-policy', 'clear-site-data', 'upgrade-insecure-requests=',
+    
+    # 其他
+    'match-case', 'min=', 'max=', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 'domain=', 
+    'app=', 'apikey=', 'path=', 'regex=', 'replace', 'removeparam=', 'addparam=', 'modifypattern=', 'override=', 
+    'sitekey=', 'method=', 'query=', 'referrer-policy=', 'feature-policy=', 'expect-ct', 'expect-ct-report-uri', 
+    'x-ua-compatible', 'sandbox=', 'block-all-mixed-content', 'content-type=', 'cache-control=', 'expires=', 'pragma=', 
+    'crossorigin', 'dnsresolver=', 'dnsdoc=', 'dnsresolver-url=', 'sitekey=', 'dnstarget=',
+    
+    # 额外的安全措施和策略
+    'x-download-options', 'content-security-policy-report-only', 'plugin-types', 'block-all-mixed-content',
+    'referrer-policy', 'expect-ct', 'nel', 'dns-prefetch', 'no-store', 'no-cache', 'x-permitted-cross-domain-policies',
+    'strict-dynamic', 'block-all-mixed-content', 'block-on-error', 'upgrade-insecure-requests', 'base-uri'
+]
+
     
     for keyword in adguard_keywords:
         if keyword in line:
