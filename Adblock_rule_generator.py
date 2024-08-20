@@ -80,11 +80,13 @@ def is_valid_rule(line):
 
     # 域名规则和基本URL规则
     if line.startswith(('||', '|', '@@')):
-        return True
+        if line.endswith('^') or re.search(r'\$[a-zA-Z]+', line):
+            return True
 
     # CSS 选择器规则，包括 AdGuard 的扩展选择器
-    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
-        return True
+    if line.startswith(('##', '#@#', '#?#', '#@?#')):
+        if re.search(r'##\s*[\w\-\.\#\[\]\:\s]+', line):
+            return True
 
     # 正则表达式规则
     if line.startswith('/') and line.endswith('/'):
@@ -92,97 +94,131 @@ def is_valid_rule(line):
 
     # 特殊协议处理
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
-        return True
-
-    # AdGuard 特有的规则
-    adguard_keywords = [
-    # 脚本注入与执行
-    'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
-    '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
-    
-    # CSS 和样式
-    'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
-    'css', 'setcss', 'style-src', 'font-src', 'remove-style=', 'addstyle=', 'display:none', 'visibility:hidden',
-    'font-face', 'background-image', 'opacity', 'filter', 'transition', 'animation',
-    
-    # 网络请求控制
-    'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping',
-    'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=',
-    'dnsallow=', 'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=',
-    'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'server=', 'server-version=', 'x-runtime=',
-    'cache-control=', 'expires=', 'pragma=', 'etag=', 'vary=', 'age=', 'if-modified-since=',
-    'if-none-match=', 'accept-encoding=', 'accept-language=', 'accept=', 'content-type=',
-    
-    # Cookie 和 Header
-    'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie',
-    'cookie-samesite', 'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=',
-    'strict-transport-security', 'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options',
-    'x-permitted-cross-domain-policies', 'access-control-allow-origin', 'x-powered-by=', 'x-aspnet-version=',
-    'x-robots-tag=', 'x-download-options=', 'x-content-security-policy', 'x-webkit-csp',
-    
-    # 广告与跟踪防护
-    'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=',
-    'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background',
-    'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe', 'redirect=', 'redirect-rule=',
-    'requestheader=', 'responseheader=', 'url=', 'domain=', 'src=', 'cookie=', 'referer=', 'tracking=', 
-    'filter=', 'filterset=', 'privacy=', 'ad=', 'block-ad=', 'block-tracker=', 'track=', 'trackers=',
-    
-    # 安全与隐私
-    'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
-    'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors',
-    'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy',
-    'cross-origin-embedder-policy', 'cross-origin-opener-policy', 'clear-site-data', 'upgrade-insecure-requests=',
-    'x-frame-options', 'x-permitted-cross-domain-policies', 'permissions-policy', 'feature-policy=',
-    'strict-dynamic', 'no-store', 'no-cache', 'cache-control=', 'secure', 'samesite=', 'same-origin',
-    
-    # 请求与响应模式
-    'method=', 'path=', 'regex=', 'param=', 'query=', 'useragent=', 'referer=', 'requesturl=', 
-    'responsecode=', 'responseheader=', 'requestheader=', 'requestmethod=', 'requesttype=', 'content-type=',
-    'response=', 'responsebody=', 'body=', 'headers=', 'cache=', 'session=', 'cookiepolicy=',
-    
-    # 特性与策略
-    'sandbox=', 'base-uri=', 'content-type=', 'feature-policy', 'document-policy', 'sandbox=', 
-    'upgrade-insecure-requests=', 'base-uri=', 'block-all-mixed-content=', 'secure-context', 
-    'x-dns-prefetch-control=', 'x-download-options=', 'crossorigin', 'block-all-mixed-content',
-    'x-content-type-options=', 'x-xss-protection=', 'expect-ct=', 'report-to=', 'expect-ct-report-uri=',
-    'referrer-policy=', 'base-uri=', 'access-control-allow-headers=', 'cross-origin-embedder-policy=',
-    'cross-origin-opener-policy=', 'cross-origin-resource-policy=', 'content-security-policy-report-only=',
-    
-    # 浏览器特定设置
-    'chrome-extension=', 'firefox-extension=', 'safari-extension=', 'edge-extension=', 'browser-extension=',
-    'extension=', 'plugin=', 'activex=', 'silverlight=', 'flash=', 'java=', 'object=', 'embed=', 
-    'plugin-types=', 'object-type=', 'embed-type=', 'plugin=', 'flash=', 'silverlight=', 'java-applet=',
-    
-    # 其他
-    'all', 'min', 'max', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 
-    'app=', 'sitekey=', 'dnstarget=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
-    'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 
-    'policy=', 'location=', 'port=', 'range=', 'key=', 'value=', 'opt-in=', 'opt-out=', 'web-security=',
-    'session-identifier=', 'unique-id=', 'click-tracking=', 'impression-tracking=', 'behavioral-tracking=',
-    'contextual-tracking=', 'utm-source=', 'utm-medium=', 'utm-campaign=', 'utm-term=', 'utm-content=',
-    'campaign=', 'source=', 'medium=', 'term=', 'content=', 'adgroup=', 'placement=', 'creative=', 
-    'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
-]
-
-
-    
-    for keyword in adguard_keywords:
-        if keyword in line:
+        if not re.search(r'\s', line):  # 必须是单行协议，无空格
             return True
 
-    # 检查资源类型和高级选项（`$` 表示规则后缀）
-    if "$" in line:
-        return True
+    # 扩展的 AdGuard 规则
+    adguard_keywords = [
+        # 脚本注入与执行
+        'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
+        '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
+        
+        # CSS 和样式
+        'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
+        'css', 'setcss', 'style-src', 'font-src', 'remove-style=', 'addstyle=', 'display:none', 'visibility:hidden',
+        'font-face', 'background-image', 'opacity', 'filter', 'transition', 'animation', 'background-color=',
+        'border=', 'border-radius=', 'box-shadow=', 'color=', 'height=', 'width=', 'margin=', 'padding=',
+        
+        # 网络请求控制
+        'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping',
+        'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=',
+        'dnsallow=', 'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=',
+        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'server=', 'server-version=', 'x-runtime=',
+        'cache-control=', 'expires=', 'pragma=', 'etag=', 'vary=', 'age=', 'if-modified-since=',
+        'if-none-match=', 'accept-encoding=', 'accept-language=', 'accept=', 'content-type=', 'range=',
+        'if-range=', 'content-range=', 'authorization=', 'cookie=', 'set-cookie=', 'referer=', 'x-requested-with=',
+        
+        # Cookie 和 Header
+        'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie',
+        'cookie-samesite', 'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=',
+        'strict-transport-security', 'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options',
+        'x-permitted-cross-domain-policies', 'access-control-allow-origin', 'x-powered-by=', 'x-aspnet-version=',
+        'x-robots-tag=', 'x-download-options=', 'x-content-security-policy', 'x-webkit-csp',
+        
+        # 广告与跟踪防护
+        'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=',
+        'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background',
+        'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe', 'redirect=', 'redirect-rule=',
+        'requestheader=', 'responseheader=', 'url=', 'domain=', 'src=', 'cookie=', 'referer=', 'tracking=', 
+        'filter=', 'filterset=', 'privacy=', 'ad=', 'block-ad=', 'block-tracker=', 'track=', 'trackers=',
+        'adblockplus', 'uBlock', 'block-url=', 'block-domain=', 'block-source=', 'block-referrer=',
+        
+        # 安全与隐私
+        'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
+        'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors',
+        'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy',
+        'cross-origin-embedder-policy', 'cross-origin-opener-policy', 'clear-site-data', 'upgrade-insecure-requests=',
+        'x-frame-options', 'x-permitted-cross-domain-policies', 'permissions-policy', 'feature-policy=',
+        'strict-dynamic', 'no-store', 'no-cache', 'cache-control=', 'secure', 'samesite=', 'same-origin',
+        
+        # 请求与响应模式
+        'method=', 'path=', 'regex=', 'param=', 'query=', 'useragent=', 'referer=', 'requesturl=', 
+        'responsecode=', 'responseheader=', 'requestheader=', 'requestmethod=', 'requesttype=', 'content-type=',
+        'response=', 'responsebody=', 'body=', 'headers=', 'cache=', 'session=', 'cookiepolicy=',
+        
+        # 特性与策略
+        'sandbox=', 'base-uri=', 'content-type=', 'feature-policy', 'document-policy', 'sandbox=', 
+        'upgrade-insecure-requests=', 'base-uri=', 'block-all-mixed-content=', 'secure-context', 
+        'x-dns-prefetch-control=', 'x-download-options=', 'crossorigin', 'block-all-mixed-content',
+        'x-content-type-options=', 'x-xss-protection=', 'expect-ct=', 'report-to=', 'expect-ct-report-uri=',
+        'referrer-policy=', 'base-uri=', 'access-control-allow-headers=', 'cross-origin-embedder-policy=',
+        'cross-origin-opener-policy=', 'cross-origin-resource-policy=', 'content-security-policy-report-only=',
+        
+        # 浏览器特定设置
+        'chrome-extension=', 'firefox-extension=', 'safari-extension=', 'edge-extension=', 'browser-extension=',
+        'extension=', 'plugin=', 'activex=', 'silverlight=', 'flash=', 'java=', 'object=', 'embed=', 
+        'plugin-types=', 'object-type=', 'embed-type=', 'plugin=', 'flash=', 'silverlight=', 'java-applet=',
+        
+        # 其他
+        'all', 'min', 'max', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 
+        'app=', 'sitekey=', 'dnstarget=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
+        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 
+        'policy=', 'location=', 'port=', 'range=', 'key=', 'value=', 'opt-in=', 'opt-out=', 'web-security=',
+        'session-identifier=', 'unique-id=', 'click-tracking=', 'impression-tracking=', 'behavioral-tracking=',
+        'contextual-tracking=', 'utm-source=', 'utm-medium=', 'utm-campaign=', 'utm-term=', 'utm-content=',
+        'campaign=', 'source=', 'medium=', 'term=', 'content=', 'adgroup=', 'placement=', 'creative=', 
+        'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
+    ]
+
+    # 扩展的 uBlock Origin 规则
+    ublock_keywords = [
+        '$script', '$image', '$stylesheet', '$third-party', '$popup', '$object', '$xmlhttprequest', 
+        '$subdocument', '$elemhide', '$webrtc', '$websocket', '$other', '$all', '$csp=', '$cookie=', 
+        '$redirect=', '$document', '$important', '$media', '$generichide', '$inline-script', 
+        '$inline-style', '$removeparam=', '$removeclass=', '$setclass=', '$setcookie=', '$denyallow=',
+    ]
+
+    # 扩展的 Adblock Plus 规则
+    adblock_plus_keywords = [
+        '$script', '$image', '$stylesheet', '$object', '$xmlhttprequest', '$subdocument', '$third-party',
+        '$popup', '$csp=', '$cookie=', '$redirect=', '$document', '$important', '$media', '$webrtc', 
+        '$genericblock', '$genericblock=', '$inline-script', '$inline-style', '$removeparam=',
+        '$removeclass=', '$setclass=', '$setcookie=', '$denyallow=',
+    ]
+
+    def is_valid_adguard_rule(line):
+        """检查是否符合 AdGuard 语法"""
+        return any(keyword in line for keyword in adguard_keywords) and \
+               re.search(r'\$[a-zA-Z]*', line) is not None
+
+    def is_valid_ublock_rule(line):
+        """检查是否符合 uBlock Origin 语法"""
+        return any(keyword in line for keyword in ublock_keywords) and \
+               re.search(r'\$[a-zA-Z]*', line) is not None
+
+    def is_valid_adblock_plus_rule(line):
+        """检查是否符合 Adblock Plus 语法"""
+        return any(keyword in line for keyword in adblock_plus_keywords) and \
+               re.search(r'\$[a-zA-Z]*', line) is not None
+
+    def is_valid_regex(pattern):
+        """验证正则表达式语法"""
+        try:
+            re.compile(pattern)
+            return True
+        except re.error:
+            return False
+
+    if any(keyword in line for keyword in adguard_keywords):
+        return is_valid_adguard_rule(line)
+
+    if any(keyword in line for keyword in ublock_keywords):
+        return is_valid_ublock_rule(line)
+
+    if any(keyword in line for keyword in adblock_plus_keywords):
+        return is_valid_adblock_plus_rule(line)
 
     return False
-
-def is_valid_regex(pattern):
-    """检查正则表达式是否有效"""
-    try:
-        re.compile(pattern)
-        return True
-    except re.error:
-        return False
 
 async def download_filter(session, url):
     """异步下载单个过滤器"""
