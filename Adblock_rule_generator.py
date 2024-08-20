@@ -100,6 +100,7 @@ def is_valid_rule(line):
     'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
     '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
     'script-src=', 'jsinject=', 'inline-script=', 'script:', 'scriptlet', 'script-set=',
+    'script=',
     
     # CSS 和样式
     'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
@@ -107,6 +108,8 @@ def is_valid_rule(line):
     'font-face', 'background-image', 'opacity', 'filter', 'transition', 'animation', 'background-color=',
     'border=', 'border-radius=', 'box-shadow=', 'color=', 'height=', 'width=', 'margin=', 'padding=',
     'style=', 'background=', 'color=', 'border=', 'font=', 'line-height=', 'max-height=', 'max-width=',
+    'max-device-width=', 'min-device-width=', 'max-device-height=', 'min-device-height=',
+    'device-width=', 'device-height=', 'viewport=', 'device-pixel-ratio=', 'min-resolution=', 'max-resolution=',
     
     # 网络请求控制
     'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping',
@@ -117,6 +120,7 @@ def is_valid_rule(line):
     'if-none-match=', 'accept-encoding=', 'accept-language=', 'accept=', 'content-type=', 'range=',
     'if-range=', 'content-range=', 'authorization=', 'cookie=', 'set-cookie=', 'referer=', 'x-requested-with=',
     'request-header=', 'response-header=', 'request-method=', 'request-type=',
+    'allow=', 'deny=',
     
     # Cookie 和 Header
     'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie',
@@ -125,6 +129,8 @@ def is_valid_rule(line):
     'x-permitted-cross-domain-policies', 'access-control-allow-origin', 'x-powered-by=', 'x-aspnet-version=',
     'x-robots-tag=', 'x-download-options=', 'x-content-security-policy', 'x-webkit-csp',
     'access-control-', 'content-security-policy=', 'referrer-policy=', 'permissions-policy=',
+    'access-control-allow-headers=', 'access-control-allow-methods=', 'access-control-allow-credentials=',
+    'access-control-allow-origin=', 'access-control-max-age=',
     
     # 广告与跟踪防护
     'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=',
@@ -134,6 +140,7 @@ def is_valid_rule(line):
     'filter=', 'filterset=', 'privacy=', 'ad=', 'block-ad=', 'block-tracker=', 'track=', 'trackers=',
     'adblockplus', 'uBlock', 'block-url=', 'block-domain=', 'block-source=', 'block-referrer=',
     'block-list=', 'block-some=', 'block-everything=', 'adblockplus-filter=', 'filter-privacy=',
+    'block-ads=', 'no-track=', 'no-trackers=', 'anti-track=', 'anti-ad=',
     
     # 安全与隐私
     'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
@@ -143,18 +150,20 @@ def is_valid_rule(line):
     'x-frame-options', 'x-permitted-cross-domain-policies', 'permissions-policy', 'feature-policy=',
     'strict-dynamic', 'no-store', 'no-cache', 'cache-control=', 'secure', 'samesite=', 'same-origin',
     'content-security-policy=', 'x-content-security-policy=', 'x-webkit-csp=', 'report-to=',
+    'privacy=', 'privacy-level=',
     
     # 请求与响应模式
     'method=', 'path=', 'regex=', 'param=', 'query=', 'useragent=', 'referer=', 'requesturl=', 
     'responsecode=', 'responseheader=', 'requestheader=', 'requestmethod=', 'requesttype=', 'content-type=',
     'response=', 'responsebody=', 'body=', 'headers=', 'cache=', 'session=', 'cookiepolicy=',
-    'content-type=', 'response-body=', 'request-url=', 'response-code=',
+    'request-url=', 'response-code=', 'request-body=', 'response-body=',
     
     # 特性与策略
     'sandbox=', 'base-uri=', 'content-type=', 'feature-policy', 'document-policy', 'sandbox=', 
     'upgrade-insecure-requests=', 'base-uri=', 'access-control-allow-headers=', 'cross-origin-embedder-policy=',
     'cross-origin-opener-policy=', 'cross-origin-resource-policy=', 'content-security-policy-report-only=',
     'base-uri=', 'feature-policy=', 'permissions-policy=', 'cross-origin-resource-policy=',
+    'referrer-policy=', 'referrer=', 'block-all-mixed-content=', 'secure-context=', 'content-security-policy-raw=',
     
     # 浏览器特定设置
     'chrome-extension=', 'firefox-extension=', 'safari-extension=', 'edge-extension=', 'browser-extension=',
@@ -171,9 +180,11 @@ def is_valid_rule(line):
     'contextual-tracking=', 'utm-source=', 'utm-medium=', 'utm-campaign=', 'utm-term=', 'utm-content=',
     'campaign=', 'source=', 'medium=', 'term=', 'content=', 'adgroup=', 'placement=', 'creative=', 
     'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
-    'useragent=', 'device-memory=', 'device-model=', 'device-name=', 'os-version=', 'platform-version=',
-    'screen-resolution=', 'screen-size=', 'viewport-width=', 'viewport-height=', 'device-type=',
+    'screen-width=', 'screen-height=', 'resolution=', 'pixel-ratio=',
+    'source-url=', 'destination-url=', 'referrer-url=', 'request-source=',
+    'plugin-name=', 'plugin-version=', 'plugin-type=',
 ]
+
 
     for keyword in adguard_keywords:
         if keyword in line:
