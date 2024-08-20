@@ -96,49 +96,74 @@ def is_valid_rule(line):
 
     # AdGuard 特有的规则
     adguard_keywords = [
-    # 脚本相关
-    'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet', 
-    '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval',
+    # 脚本注入与执行
+    'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
+    '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
     
-    # CSS相关
+    # CSS 和样式
     'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
     'css', 'setcss', 'style-src', 'font-src', 'remove-style=', 'addstyle=', 'display:none', 'visibility:hidden',
+    'font-face', 'background-image', 'opacity', 'filter', 'transition', 'animation',
     
-    # 网络请求相关
-    'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping', 
-    'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=', 'dnsallow=', 
-    'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=', 'dnsoverhttps-target=', 
-    'dnsoverhttps-resolver=', 'dnsoverhttps-resolver-url=', 'server=', 'server-version=', 'x-runtime=',
+    # 网络请求控制
+    'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping',
+    'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=',
+    'dnsallow=', 'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=',
+    'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'server=', 'server-version=', 'x-runtime=',
+    'cache-control=', 'expires=', 'pragma=', 'etag=', 'vary=', 'age=', 'if-modified-since=',
+    'if-none-match=', 'accept-encoding=', 'accept-language=', 'accept=', 'content-type=',
     
-    # Cookie & Header相关
-    'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie', 'cookie-samesite', 
-    'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=', 'strict-transport-security', 
-    'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options', 'x-permitted-cross-domain-policies', 
-    'access-control-allow-origin', 'vary=', 'x-powered-by=', 'x-aspnet-version=',
+    # Cookie 和 Header
+    'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie',
+    'cookie-samesite', 'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=',
+    'strict-transport-security', 'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options',
+    'x-permitted-cross-domain-policies', 'access-control-allow-origin', 'x-powered-by=', 'x-aspnet-version=',
+    'x-robots-tag=', 'x-download-options=', 'x-content-security-policy', 'x-webkit-csp',
     
-    # 广告相关
-    'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=', 
-    'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background', 
-    'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe',
+    # 广告与跟踪防护
+    'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=',
+    'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background',
+    'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe', 'redirect=', 'redirect-rule=',
+    'requestheader=', 'responseheader=', 'url=', 'domain=', 'src=', 'cookie=', 'referer=', 'tracking=', 
+    'filter=', 'filterset=', 'privacy=', 'ad=', 'block-ad=', 'block-tracker=', 'track=', 'trackers=',
     
-    # 安全隐私相关
+    # 安全与隐私
     'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
-    'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors', 
-    'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy', 
+    'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors',
+    'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy',
     'cross-origin-embedder-policy', 'cross-origin-opener-policy', 'clear-site-data', 'upgrade-insecure-requests=',
+    'x-frame-options', 'x-permitted-cross-domain-policies', 'permissions-policy', 'feature-policy=',
+    'strict-dynamic', 'no-store', 'no-cache', 'cache-control=', 'secure', 'samesite=', 'same-origin',
+    
+    # 请求与响应模式
+    'method=', 'path=', 'regex=', 'param=', 'query=', 'useragent=', 'referer=', 'requesturl=', 
+    'responsecode=', 'responseheader=', 'requestheader=', 'requestmethod=', 'requesttype=', 'content-type=',
+    'response=', 'responsebody=', 'body=', 'headers=', 'cache=', 'session=', 'cookiepolicy=',
+    
+    # 特性与策略
+    'sandbox=', 'base-uri=', 'content-type=', 'feature-policy', 'document-policy', 'sandbox=', 
+    'upgrade-insecure-requests=', 'base-uri=', 'block-all-mixed-content=', 'secure-context', 
+    'x-dns-prefetch-control=', 'x-download-options=', 'crossorigin', 'block-all-mixed-content',
+    'x-content-type-options=', 'x-xss-protection=', 'expect-ct=', 'report-to=', 'expect-ct-report-uri=',
+    'referrer-policy=', 'base-uri=', 'access-control-allow-headers=', 'cross-origin-embedder-policy=',
+    'cross-origin-opener-policy=', 'cross-origin-resource-policy=', 'content-security-policy-report-only=',
+    
+    # 浏览器特定设置
+    'chrome-extension=', 'firefox-extension=', 'safari-extension=', 'edge-extension=', 'browser-extension=',
+    'extension=', 'plugin=', 'activex=', 'silverlight=', 'flash=', 'java=', 'object=', 'embed=', 
+    'plugin-types=', 'object-type=', 'embed-type=', 'plugin=', 'flash=', 'silverlight=', 'java-applet=',
     
     # 其他
-    'match-case', 'min=', 'max=', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 'domain=', 
-    'app=', 'apikey=', 'path=', 'regex=', 'replace', 'removeparam=', 'addparam=', 'modifypattern=', 'override=', 
-    'sitekey=', 'method=', 'query=', 'referrer-policy=', 'feature-policy=', 'expect-ct', 'expect-ct-report-uri', 
-    'x-ua-compatible', 'sandbox=', 'block-all-mixed-content', 'content-type=', 'cache-control=', 'expires=', 'pragma=', 
-    'crossorigin', 'dnsresolver=', 'dnsdoc=', 'dnsresolver-url=', 'sitekey=', 'dnstarget=',
-    
-    # 额外的安全措施和策略
-    'x-download-options', 'content-security-policy-report-only', 'plugin-types', 'block-all-mixed-content',
-    'referrer-policy', 'expect-ct', 'nel', 'dns-prefetch', 'no-store', 'no-cache', 'x-permitted-cross-domain-policies',
-    'strict-dynamic', 'block-all-mixed-content', 'block-on-error', 'upgrade-insecure-requests', 'base-uri'
+    'all', 'min', 'max', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 
+    'app=', 'sitekey=', 'dnstarget=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
+    'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 
+    'policy=', 'location=', 'port=', 'range=', 'key=', 'value=', 'opt-in=', 'opt-out=', 'web-security=',
+    'session-identifier=', 'unique-id=', 'click-tracking=', 'impression-tracking=', 'behavioral-tracking=',
+    'contextual-tracking=', 'utm-source=', 'utm-medium=', 'utm-campaign=', 'utm-term=', 'utm-content=',
+    'campaign=', 'source=', 'medium=', 'term=', 'content=', 'adgroup=', 'placement=', 'creative=', 
+    'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
 ]
+
 
     
     for keyword in adguard_keywords:
