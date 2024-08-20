@@ -80,13 +80,11 @@ def is_valid_rule(line):
 
     # 域名规则和基本URL规则
     if line.startswith(('||', '|', '@@')):
-        if line.endswith('^') or re.search(r'\$[a-zA-Z]+', line):
-            return True
+        return True
 
     # CSS 选择器规则，包括 AdGuard 的扩展选择器
-    if line.startswith(('##', '#@#', '#?#', '#@?#')):
-        if re.search(r'##\s*[\w\-\.\#\[\]\:\s]+', line):
-            return True
+    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
 
     # 正则表达式规则
     if line.startswith('/') and line.endswith('/'):
@@ -94,11 +92,11 @@ def is_valid_rule(line):
 
     # 特殊协议处理
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
-        if not re.search(r'\s', line):  # 必须是单行协议，无空格
-            return True
+        return True
 
-    # 扩展的 AdGuard 规则
-    adguard_keywords = [
+    # AdGuard 特有的规则
+    adguard_keywords = 
+  [
         # 脚本注入与执行
         'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
         '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
@@ -170,55 +168,25 @@ def is_valid_rule(line):
         'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
     ]
 
-    # 扩展的 uBlock Origin 规则
-    ublock_keywords = [
-        '$script', '$image', '$stylesheet', '$third-party', '$popup', '$object', '$xmlhttprequest', 
-        '$subdocument', '$elemhide', '$webrtc', '$websocket', '$other', '$all', '$csp=', '$cookie=', 
-        '$redirect=', '$document', '$important', '$media', '$generichide', '$inline-script', 
-        '$inline-style', '$removeparam=', '$removeclass=', '$setclass=', '$setcookie=', '$denyallow=',
-    ]
 
-    # 扩展的 Adblock Plus 规则
-    adblock_plus_keywords = [
-        '$script', '$image', '$stylesheet', '$object', '$xmlhttprequest', '$subdocument', '$third-party',
-        '$popup', '$csp=', '$cookie=', '$redirect=', '$document', '$important', '$media', '$webrtc', 
-        '$genericblock', '$genericblock=', '$inline-script', '$inline-style', '$removeparam=',
-        '$removeclass=', '$setclass=', '$setcookie=', '$denyallow=',
-    ]
-
-    def is_valid_adguard_rule(line):
-        """检查是否符合 AdGuard 语法"""
-        return any(keyword in line for keyword in adguard_keywords) and \
-               re.search(r'\$[a-zA-Z]*', line) is not None
-
-    def is_valid_ublock_rule(line):
-        """检查是否符合 uBlock Origin 语法"""
-        return any(keyword in line for keyword in ublock_keywords) and \
-               re.search(r'\$[a-zA-Z]*', line) is not None
-
-    def is_valid_adblock_plus_rule(line):
-        """检查是否符合 Adblock Plus 语法"""
-        return any(keyword in line for keyword in adblock_plus_keywords) and \
-               re.search(r'\$[a-zA-Z]*', line) is not None
-
-    def is_valid_regex(pattern):
-        """验证正则表达式语法"""
-        try:
-            re.compile(pattern)
+    
+    for keyword in adguard_keywords:
+        if keyword in line:
             return True
-        except re.error:
-            return False
 
-    if any(keyword in line for keyword in adguard_keywords):
-        return is_valid_adguard_rule(line)
-
-    if any(keyword in line for keyword in ublock_keywords):
-        return is_valid_ublock_rule(line)
-
-    if any(keyword in line for keyword in adblock_plus_keywords):
-        return is_valid_adblock_plus_rule(line)
+    # 检查资源类型和高级选项（`$` 表示规则后缀）
+    if "$" in line:
+        return True
 
     return False
+
+def is_valid_regex(pattern):
+    """检查正则表达式是否有效"""
+    try:
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
 
 async def download_filter(session, url):
     """异步下载单个过滤器"""
