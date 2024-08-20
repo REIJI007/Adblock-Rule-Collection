@@ -35,7 +35,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-        "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylistchina.txt",
@@ -68,6 +68,8 @@ filter_urls = [
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
+  
+    # 在此处添加你的过滤器URL列表
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -90,20 +92,38 @@ def is_valid_rule(line):
     if line.startswith('/') and line.endswith('/'):
         return is_valid_regex(line[1:-1])
 
-    # 资源类型和高级选项，$ 表示后缀，用于修饰域名或 URL 的规则
-    if "$" in line:
-        return True
-
     # 特殊协议处理
-    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension):', line):
+    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
         return True
 
     # AdGuard 特有的规则，如 ~ 排除符、CSP、注入脚本等
-    if line.startswith(('~', 'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=', 'header=')):
-        return True
+    adguard_specials = [
+        '~', 'script:inject(', 'csp=', 'redirect=', 'removeparam=',
+        'cookie=', 'header=', 'important', 'badfilter', 'empty',
+        'rewrite=', 'referrerpolicy=', 'permissionspolicy=', 'webrtc',
+        'stealth', 'important', 'ping', 'media', 'replace', 'stylesheet',
+        'mediaelement', 'urlblock', 'xhr', 'third-party', 'inline-script',
+        'subdocument', 'image', 'popup', 'elemhide', 'jsinject',
+        'specifichide', 'denyallow', 'path', 'document', 'font', 'stylesheet',
+        'all', 'min', 'max', 'redirect-rule=', 'remove-class=', 'remove-style=',
+        'dnsrewrite=', 'dnsblock=', 'dnsallow=', 'dnsmask=', 'network',
+        'css', 'important', 'important!', 'image', 'media', 'object',
+        'third-party', 'ping', 'noscript', 'csp', 'block', 'removeheader',
+        'addheader', 'modifyheader', 'setcookie', 'removeparam', 'removeparam',
+        'addparam', 'modifypattern', 'override', 'cookie', 'setcss',
+        'thirdparty', 'firstparty', 'collapsing', 'collapse', 'subframe',
+        'frame', 'mainframe', 'background', 'all', 'document', 'sitekey',
+        'method=', 'rewrite', 'xhr=', 'popup=', 'popup=', 'removeparam=', 
+        'cookie=', 'javascript=', 'referer=', 'query=', 'network=', 'dns=', 
+        'param=', 'regex=', 'requestmethod=', 'requesttype=', 'useragent='
+    ]
+    
+    for special in adguard_specials:
+        if special in line:
+            return True
 
-    # 禁用规则（badfilter）
-    if "$badfilter" in line:
+    # 资源类型和高级选项，$ 表示后缀，用于修饰域名或 URL 的规则
+    if "$" in line:
         return True
 
     return False
@@ -189,3 +209,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input("Press Enter to exit...")
