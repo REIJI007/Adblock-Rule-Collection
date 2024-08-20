@@ -35,7 +35,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    "https://anti-ad.net/adguard.txt",
+        "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylistchina.txt",
@@ -73,35 +73,39 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-def is_valid_adblock_plus_ublock_origin_rule(line):
+def is_valid_adblock_rule(line):
     """检查是否符合 Adblock Plus 和 uBlock Origin 语法"""
     if not line:
         return False
-
-    # 检查 CSS 选择器规则，包括反规则选择器
-    if line.startswith("##") or line.startswith("#@#"):
+    
+    # 注释行
+    if line.startswith("!") or line.startswith("[") or line.startswith("#"):
+        return False
+    
+    # 域名规则
+    if line.startswith("||") or line.startswith("|") or line.startswith("~"):
         return True
-
-    # 例外规则
-    if line.startswith("@@"):
-        return True
-
-    # URL 和域名规则
-    if line.startswith("||") or line.startswith("|"):
-        return not line.startswith("||#")  # 域名规则，排除带 # 的规则
-
+    
     # 正则表达式规则
     if line.startswith("/") and line.endswith("/"):
         return is_valid_regex(line[1:-1])
-
-    # 带条件的规则，包括资源类型和其他条件
+    
+    # CSS 选择器规则
+    if line.startswith("##") or line.startswith("#@#"):
+        return True
+    
+    # 例外规则
+    if line.startswith("@@"):
+        return True
+    
+    # 资源类型规则
     if "$" in line:
-        valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media", "xmlhttprequest", "csp", "popup", "domain"]
-        parts = line.split("$")
-        if len(parts) == 2 and any(cond in parts[1] for cond in valid_conditions):
-            return True
-        return False
-
+        return True
+    
+    # 符合 Adblock Plus 语法的域名、URL 和正则规则
+    if any(line.startswith(prefix) for prefix in ["http://", "https://", "ftp://", "|http://", "|https://", "|ftp://", "||"]):
+        return True
+    
     return False
 
 def is_valid_adguard_rule(line):
@@ -109,42 +113,39 @@ def is_valid_adguard_rule(line):
     if not line:
         return False
     
-    # 检查 CSS 选择器规则，包括反规则选择器
-    if line.startswith("##") or line.startswith("#@#"):
+    # 注释行
+    if line.startswith("!") or line.startswith("[") or line.startswith("#"):
+        return False
+    
+    # 域名规则
+    if line.startswith("||") or line.startswith("|") or line.startswith("~"):
         return True
-
-    # 例外规则
-    if line.startswith("@@"):
-        return True
-
-    # URL 和域名规则
-    if line.startswith("||") or line.startswith("|"):
-        return True
-
+    
     # 正则表达式规则
     if line.startswith("/") and line.endswith("/"):
         return is_valid_regex(line[1:-1])
-
-    # 带条件的规则，包括资源类型和其他条件
-    if "$" in line:
-        valid_conditions = ["document", "script", "subdocument", "third-party", "image", "stylesheet", "font", "media", "xmlhttprequest", "csp", "popup", "domain"]
-        parts = line.split("$")
-        if len(parts) == 2 and any(cond in parts[1] for cond in valid_conditions):
-            return True
-        return False
-
-    # 排除规则
-    if line.startswith("~"):
+    
+    # CSS 选择器规则
+    if line.startswith("##") or line.startswith("#@#"):
         return True
-
+    
+    # 例外规则
+    if line.startswith("@@"):
+        return True
+    
+    # 资源类型规则
+    if "$" in line:
+        return True
+    
+    # AdGuard 扩展规则格式
+    if line.startswith("#?#") or line.startswith("#@?#") or line.startswith("~"):
+        return True
+    
     return False
 
 def is_valid_rule(line):
     """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    return (
-        is_valid_adblock_plus_ublock_origin_rule(line) or 
-        is_valid_adguard_rule(line)
-    ) and not (line.startswith('!') or line.startswith('#'))  # 排除注释行
+    return is_valid_adblock_rule(line) or is_valid_adguard_rule(line)
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
@@ -193,28 +194,37 @@ def write_rules_to_file(rules, save_path):
 
     header = f"""
 !Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅集合
-!Last Modified: {timestamp}
-!Expires: 1 day
-!Licence: https://creativecommons.org/licenses/by/3.0/
-!Github: https://github.com/your_github_username/your_repository_name
-    """.strip()
+!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
+!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+!LICENSE1：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
+!LICENSE2：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
+!生成时间: {timestamp}
+!有效规则数目: {len(rules)}
+"""
 
-    try:
-        with open(save_path, 'w', encoding='utf-8') as f:
-            f.write(header + '\n\n')
-            for rule in sorted(rules):  # 排序后写入文件
-                f.write(rule + '\n')
-        logging.info(f"Rules successfully written to {save_path}")
-    except Exception as e:
-        logging.error(f"Failed to write rules to file: {e}")
+    with open(save_path, 'w', encoding='utf-8') as f:
+        logging.info(f"Writing {len(rules)} rules to file {save_path}")
+        f.write(header)
+        f.write('\n')
+        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 将所有规则写入文件并排序
+
+    logging.info(f"Successfully wrote rules to {save_path}")
+    logging.info(f"有效规则数目: {len(rules)}")
+
+    print(f"Successfully wrote rules to {save_path}")
+    print(f"有效规则数目: {len(rules)}")
 
 def main():
-    """主函数"""
-    loop = asyncio.get_event_loop()
-    rules = loop.run_until_complete(download_filters(filter_urls))
-    write_rules_to_file(rules, save_path)
-    logging.info("Adblock rule download and save completed.")
+    """主函数，下载过滤器并生成合并后的文件"""
+    logging.info("Starting to download filters...")
+    print("Starting to download filters...")
+
+    rules = asyncio.run(download_filters(filter_urls))  # 异步运行下载任务
+
+    logging.info("Finished downloading filters. Writing rules to file...")
+    print("Finished downloading filters. Writing rules to file...")
+
+    write_rules_to_file(rules, save_path)  # 写入文件
 
 if __name__ == "__main__":
     main()
