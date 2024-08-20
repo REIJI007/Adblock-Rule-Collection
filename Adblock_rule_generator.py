@@ -70,8 +70,8 @@ filter_urls = [
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
 ]
 
-# 保存路径设定为 M 盘根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
-save_path = os.path.join('M:\\', 'ADBLOCK_RULE_COLLECTION.txt')
+# 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
+save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_adblock_plus_ublock_origin_rule(line):
     """检查是否符合 Adblock Plus 和 uBlock Origin 语法"""
