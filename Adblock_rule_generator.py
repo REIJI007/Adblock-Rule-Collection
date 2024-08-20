@@ -35,7 +35,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-        "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylist.txt",
     "https://easylist-downloads.adblockplus.org/easylistchina.txt",
@@ -77,70 +77,70 @@ def is_valid_adblock_rule(line):
     """检查是否符合 Adblock Plus 和 uBlock Origin 语法"""
     if not line:
         return False
-    
-    # 注释行
+
+    # 注释行和无效行
     if line.startswith("!") or line.startswith("[") or line.startswith("#"):
         return False
-    
+
     # 域名规则
-    if line.startswith("||") or line.startswith("|") or line.startswith("~"):
+    if line.startswith("||") or line.startswith("|"):
         return True
-    
+
     # 正则表达式规则
     if line.startswith("/") and line.endswith("/"):
         return is_valid_regex(line[1:-1])
-    
+
     # CSS 选择器规则
     if line.startswith("##") or line.startswith("#@#"):
         return True
-    
+
     # 例外规则
     if line.startswith("@@"):
         return True
-    
+
     # 资源类型规则
     if "$" in line:
         return True
-    
-    # 符合 Adblock Plus 语法的域名、URL 和正则规则
-    if any(line.startswith(prefix) for prefix in ["http://", "https://", "ftp://", "|http://", "|https://", "|ftp://", "||"]):
+
+    # 特殊处理: 处理所有带前缀的 URL 规则
+    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension):', line):
         return True
-    
+
     return False
 
 def is_valid_adguard_rule(line):
     """检查是否符合 AdGuard 语法"""
     if not line:
         return False
-    
-    # 注释行
+
+    # 注释行和无效行
     if line.startswith("!") or line.startswith("[") or line.startswith("#"):
         return False
-    
+
     # 域名规则
-    if line.startswith("||") or line.startswith("|") or line.startswith("~"):
+    if line.startswith("||") or line.startswith("|"):
         return True
-    
+
     # 正则表达式规则
     if line.startswith("/") and line.endswith("/"):
         return is_valid_regex(line[1:-1])
-    
+
     # CSS 选择器规则
-    if line.startswith("##") or line.startswith("#@#"):
+    if line.startswith("##") or line.startswith("#@#") or line.startswith("#?#") or line.startswith("#@?#"):
         return True
-    
+
     # 例外规则
     if line.startswith("@@"):
         return True
-    
+
     # 资源类型规则
     if "$" in line:
         return True
-    
-    # AdGuard 扩展规则格式
-    if line.startswith("#?#") or line.startswith("#@?#") or line.startswith("~"):
+
+    # AdGuard 特有的排除规则
+    if line.startswith("~"):
         return True
-    
+
     return False
 
 def is_valid_rule(line):
