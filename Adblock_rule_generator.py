@@ -70,20 +70,20 @@ filter_urls = [
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
 ]
 
-# 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
-save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
+# 保存路径设定为 M 盘，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
+save_path = os.path.join("M:\\", 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
     """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    if not line or line.startswith(('!', '#', '[')):
+    if not line or line.startswith(('!', '#', '[', '||', '|', '@@', '##', '#@#', '#?#', '#@?#', '/')):
         return False
 
-    # 域名规则，URL 规则
+    # 域名规则和基本URL规则
     if line.startswith(('||', '|', '@@')):
         return True
 
-    # CSS 选择器规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#')):
+    # CSS 选择器规则，包括 AdGuard 的扩展选择器
+    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
     # 正则表达式规则
@@ -94,16 +94,17 @@ def is_valid_rule(line):
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
         return True
 
-    # AdGuard 特有的规则，如 ~ 排除符、CSP、注入脚本等
-    adguard_specials = [
-        '~', 'script:inject(', 'csp=', 'redirect=', 'removeparam=',
-        'cookie=', 'header=', 'important', 'badfilter', 'empty',
-        'rewrite=', 'referrerpolicy=', 'permissionspolicy=', 'webrtc',
-        'stealth', 'important', 'ping', 'media', 'replace', 'stylesheet',
-        'mediaelement', 'urlblock', 'xhr', 'third-party', 'inline-script',
-        'subdocument', 'image', 'popup', 'elemhide', 'jsinject',
-        'specifichide', 'denyallow', 'path', 'document', 'font', 'stylesheet',
-        'all', 'min', 'max', 'redirect-rule=', 'remove-class=', 'remove-style=',
+    # AdGuard 特有的规则
+    adguard_keywords = [
+        # 通用关键字
+        'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=', 
+        'header=', 'important', 'badfilter', 'empty', 'rewrite=',
+        'referrerpolicy=', 'permissionspolicy=', 'webrtc', 'stealth', 
+        'ping', 'media', 'replace', 'stylesheet', 'mediaelement', 
+        'urlblock', 'xhr', 'third-party', 'inline-script', 'subdocument', 
+        'image', 'popup', 'elemhide', 'jsinject', 'specifichide', 
+        'denyallow', 'path', 'document', 'font', 'stylesheet', 'all', 
+        'min', 'max', 'redirect-rule=', 'remove-class=', 'remove-style=',
         'dnsrewrite=', 'dnsblock=', 'dnsallow=', 'dnsmask=', 'network',
         'css', 'important', 'important!', 'image', 'media', 'object',
         'third-party', 'ping', 'noscript', 'csp', 'block', 'removeheader',
@@ -113,14 +114,33 @@ def is_valid_rule(line):
         'frame', 'mainframe', 'background', 'all', 'document', 'sitekey',
         'method=', 'rewrite', 'xhr=', 'popup=', 'popup=', 'removeparam=', 
         'cookie=', 'javascript=', 'referer=', 'query=', 'network=', 'dns=', 
-        'param=', 'regex=', 'requestmethod=', 'requesttype=', 'useragent='
+        'param=', 'regex=', 'requestmethod=', 'requesttype=', 'useragent=',
+
+        # 扩展支持
+        ':has(', ':contains(', ':matches-css(', ':matches-css-before(', ':matches-css-after(',
+        '##+js(', '#%#//scriptlet',
+
+        # 新增AdGuard过滤器功能关键字
+        'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=',
+        'domain=', 'app=', 'match-case', 'popup', 'important', 'collapse',
+        'third-party', 'first-party', 'domain=', 'xmlhttprequest', 'websocket',
+        'websocket', 'websocket-connect', 'empty', 'ping', 'rewrite', 'redirect=', 
+        'redirect-rule=', 'removeheader=', 'addheader=', 'removeparam=', 
+        'removeparam', 'setcookie=', 'webrtc=', 'referrerpolicy=', 
+        'permissionspolicy=', 'stealth=', 'denyallow=', 'dnscname=', 
+        'method=', 'dnsprefetch=', 'dnsblock=', 'dnsrewrite=', 'dnsallow=', 
+        'dnsmask=', 'noabp=1', 'noelemhide', 'sitekey=', 'dnstarget=', 
+        'dnscname=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 
+        'dnsoverhttps=', 'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 
+        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 
+        'samesite=', 'secure', 'httponly', 'policy='
     ]
     
-    for special in adguard_specials:
-        if special in line:
+    for keyword in adguard_keywords:
+        if keyword in line:
             return True
 
-    # 资源类型和高级选项，$ 表示后缀，用于修饰域名或 URL 的规则
+    # 检查资源类型和高级选项（`$` 表示规则后缀）
     if "$" in line:
         return True
 
@@ -211,3 +231,6 @@ if __name__ == "__main__":
         input("Press Enter to exit...")
     else:
         print("Non-interactive mode, exiting...")
+        
+        
+    input("Press Enter to exit...")
