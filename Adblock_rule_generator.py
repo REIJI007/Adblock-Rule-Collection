@@ -73,79 +73,48 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-def is_valid_adblock_rule(line):
-    """检查是否符合 Adblock Plus 和 uBlock Origin 语法"""
-    if not line:
-        return False
-
-    # 注释行和无效行
-    if line.startswith("!") or line.startswith("[") or line.startswith("#"):
+def is_valid_rule(line):
+    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
+    if not line or line.startswith('!') or line.startswith('#') or line.startswith('['):
         return False
 
     # 域名规则
-    if line.startswith("||") or line.startswith("|"):
+    if line.startswith("||"):
+        return True
+
+    # URL 规则，| 作为起始或结束符，匹配开头或结尾的 URL
+    if line.startswith("|") or line.endswith("|"):
         return True
 
     # 正则表达式规则
     if line.startswith("/") and line.endswith("/"):
         return is_valid_regex(line[1:-1])
 
-    # CSS 选择器规则
-    if line.startswith("##") or line.startswith("#@#"):
-        return True
-
-    # 例外规则
-    if line.startswith("@@"):
-        return True
-
-    # 资源类型规则
-    if "$" in line:
-        return True
-
-    # 特殊处理: 处理所有带前缀的 URL 规则
-    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension):', line):
-        return True
-
-    return False
-
-def is_valid_adguard_rule(line):
-    """检查是否符合 AdGuard 语法"""
-    if not line:
-        return False
-
-    # 注释行和无效行
-    if line.startswith("!") or line.startswith("[") or line.startswith("#"):
-        return False
-
-    # 域名规则
-    if line.startswith("||") or line.startswith("|"):
-        return True
-
-    # 正则表达式规则
-    if line.startswith("/") and line.endswith("/"):
-        return is_valid_regex(line[1:-1])
-
-    # CSS 选择器规则
+    # CSS 选择器规则，包括 uBlock Origin 的 extended CSS 选择器规则
     if line.startswith("##") or line.startswith("#@#") or line.startswith("#?#") or line.startswith("#@?#"):
         return True
 
-    # 例外规则
-    if line.startswith("@@"):
+    # 例外规则，@@ 表示的例外，或者 $badfilter 表示无效化规则
+    if line.startswith("@@") or "$badfilter" in line:
         return True
 
-    # 资源类型规则
+    # 资源类型规则及其他高级选项，$表示后缀，用于修饰域名或 URL 的规则
     if "$" in line:
+        return True
+
+    # 特殊协议处理
+    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension):', line):
         return True
 
     # AdGuard 特有的排除规则
     if line.startswith("~"):
         return True
 
-    return False
+    # 标准注入脚本、重定向规则、CSP规则等高级规则
+    if line.startswith("||") or "|$" in line or "^$" in line or line.startswith("script:inject(") or "redirect=" in line:
+        return True
 
-def is_valid_rule(line):
-    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    return is_valid_adblock_rule(line) or is_valid_adguard_rule(line)
+    return False
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
