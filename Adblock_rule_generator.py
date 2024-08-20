@@ -68,8 +68,6 @@ filter_urls = [
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
     "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt"
-  
-    # 在此处添加你的过滤器URL列表
 ]
 
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
@@ -148,7 +146,6 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    # 过滤掉注释行、空行以及不符合语法的行
                     if line and is_valid_rule(line):
                         rules.add(line)
             else:
@@ -161,15 +158,14 @@ async def download_filters(urls):
     """并行下载过滤器并返回所有过滤规则的集合"""
     async with aiohttp.ClientSession() as session:
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()  # 所有规则的集合
+        all_rules = set()
         for future in asyncio.as_completed(tasks):
             rules = await future
-            all_rules.update(rules)  # 将每个任务下载的规则更新到全局集合中
+            all_rules.update(rules)
     return all_rules
 
 def write_rules_to_file(rules, save_path):
     """将规则写入文件"""
-    # 获取东八区当前时间
     now = datetime.now(timezone(timedelta(hours=8)))
     timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')
 
@@ -187,7 +183,7 @@ def write_rules_to_file(rules, save_path):
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
         f.write(header)
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 将所有规则写入文件并排序
+        f.writelines(f"{rule}\n" for rule in sorted(rules))
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(rules)}")
@@ -200,13 +196,18 @@ def main():
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
-    rules = asyncio.run(download_filters(filter_urls))  # 异步运行下载任务
+    rules = asyncio.run(download_filters(filter_urls))
 
     logging.info("Finished downloading filters. Writing rules to file...")
     print("Finished downloading filters. Writing rules to file...")
 
-    write_rules_to_file(rules, save_path)  # 写入文件
+    write_rules_to_file(rules, save_path)
 
 if __name__ == "__main__":
     main()
-    input("Press Enter to exit...")
+    
+    # 检查是否在交互式环境中运行
+    if sys.stdin.isatty():
+        input("Press Enter to exit...")
+    else:
+        print("Non-interactive mode, exiting...")
