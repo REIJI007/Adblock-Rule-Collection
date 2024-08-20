@@ -95,8 +95,7 @@ def is_valid_rule(line):
         return True
 
     # AdGuard 特有的规则
-    adguard_keywords = 
-  [
+    adguard_keywords = [
         # 脚本注入与执行
         'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
         '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
@@ -168,8 +167,6 @@ def is_valid_rule(line):
         'format=', 'device=', 'browser=', 'platform=', 'os=', 'locale=', 'region=', 'city=', 'country=',
     ]
 
-
-    
     for keyword in adguard_keywords:
         if keyword in line:
             return True
