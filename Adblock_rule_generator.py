@@ -79,11 +79,19 @@ def is_valid_rule(line):
         return False
 
     # 域名规则和基本URL规则
-    if line.startswith(('||', '|', '@@')):
+    if line.startswith(('||', '|', '@@|', '@@')):
+        return True
+
+    # 支持通配符和其他特殊字符的域名规则
+    if '*' in line or '^' in line:
         return True
 
     # CSS 选择器规则，包括 AdGuard 的扩展选择器
-    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
+    if line.startswith(('##', '#@#', '#?#', '#@?#', ':-abp-')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
+
+    # 脚本注入和 AdGuard 特有的脚本规则
+    if '##+js(' in line or line.startswith('#%#//scriptlet'):
         return True
 
     # 正则表达式规则
@@ -98,27 +106,20 @@ def is_valid_rule(line):
     adguard_keywords = [
         'script:inject(', 'csp=', 'redirect=', 'removeparam=',
         ':has(', ':contains(', ':matches-css(', ':matches-css-before(', ':matches-css-after(',
-        '##+js(', '#%#//scriptlet',
-        'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type='
+        'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=',
+        ':matches-css', ':has-text', ':remove()', ':-abp-properties'
     ]
     
     for keyword in adguard_keywords:
         if keyword in line:
             return True
 
-    # 检查资源类型和高级选项（`$` 表示规则后缀）
-    if "$" in line:
+    # 检查资源类型和高级选项（$ 表示规则后缀）
+    if "$" in line or ",important" in line or ",domain=" in line or ",~domain=" in line:
         return True
 
     return False
 
-def is_valid_regex(pattern):
-    """检查正则表达式是否有效"""
-    try:
-        re.compile(pattern)
-        return True
-    except re.error:
-        return False
 
 async def download_filter(session, url):
     """异步下载单个过滤器"""
