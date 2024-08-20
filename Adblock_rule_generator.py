@@ -75,72 +75,52 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
     """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    if not line or line.startswith(('!', '#', '[', '||', '|', '@@', '##', '#@#', '#?#', '#@?#', '/')):
+    if not line or line.startswith(('!', '[', '/', '||', '|', '@@', '##', '#@#', '#?#', '#@?#')):
         return False
 
-    # 域名规则和基本URL规则
-    if line.startswith(('||', '|', '@@')):
+    if line.startswith(('||', '|', '@@')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
-    # CSS 选择器规则，包括 AdGuard 的扩展选择器
-    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
-        return True
-
-    # 正则表达式规则
     if line.startswith('/') and line.endswith('/'):
         return is_valid_regex(line[1:-1])
 
-    # 特殊协议处理
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
         return True
 
-    # AdGuard 特有的规则
     adguard_keywords = [
-        # 通用关键字
-        'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=', 
-        'header=', 'important', 'badfilter', 'empty', 'rewrite=',
-        'referrerpolicy=', 'permissionspolicy=', 'webrtc', 'stealth', 
-        'ping', 'media', 'replace', 'stylesheet', 'mediaelement', 
-        'urlblock', 'xhr', 'third-party', 'inline-script', 'subdocument', 
-        'image', 'popup', 'elemhide', 'jsinject', 'specifichide', 
-        'denyallow', 'path', 'document', 'font', 'stylesheet', 'all', 
-        'min', 'max', 'redirect-rule=', 'remove-class=', 'remove-style=',
-        'dnsrewrite=', 'dnsblock=', 'dnsallow=', 'dnsmask=', 'network',
-        'css', 'important', 'important!', 'image', 'media', 'object',
-        'third-party', 'ping', 'noscript', 'csp', 'block', 'removeheader',
-        'addheader', 'modifyheader', 'setcookie', 'removeparam', 'removeparam',
-        'addparam', 'modifypattern', 'override', 'cookie', 'setcss',
-        'thirdparty', 'firstparty', 'collapsing', 'collapse', 'subframe',
-        'frame', 'mainframe', 'background', 'all', 'document', 'sitekey',
-        'method=', 'rewrite', 'xhr=', 'popup=', 'popup=', 'removeparam=', 
-        'cookie=', 'javascript=', 'referer=', 'query=', 'network=', 'dns=', 
-        'param=', 'regex=', 'requestmethod=', 'requesttype=', 'useragent=',
-
-        # 扩展支持
-        ':has(', ':contains(', ':matches-css(', ':matches-css-before(', ':matches-css-after(',
-        '##+js(', '#%#//scriptlet',
-
-        # 新增AdGuard过滤器功能关键字
-        'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=',
-        'domain=', 'app=', 'match-case', 'popup', 'important', 'collapse',
-        'third-party', 'first-party', 'domain=', 'xmlhttprequest', 'websocket',
-        'websocket', 'websocket-connect', 'empty', 'ping', 'rewrite', 'redirect=', 
-        'redirect-rule=', 'removeheader=', 'addheader=', 'removeparam=', 
-        'removeparam', 'setcookie=', 'webrtc=', 'referrerpolicy=', 
-        'permissionspolicy=', 'stealth=', 'denyallow=', 'dnscname=', 
-        'method=', 'dnsprefetch=', 'dnsblock=', 'dnsrewrite=', 'dnsallow=', 
-        'dnsmask=', 'noabp=1', 'noelemhide', 'sitekey=', 'dnstarget=', 
-        'dnscname=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 
-        'dnsoverhttps=', 'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 
-        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 
-        'samesite=', 'secure', 'httponly', 'policy='
+        'script:inject(', 'csp=', 'redirect=', 'removeparam=', 'cookie=',
+        'header=', 'important', 'badfilter', 'empty', 'rewrite=', 'referrerpolicy=',
+        'permissionspolicy=', 'webrtc', 'stealth', 'ping', 'media', 'replace',
+        'stylesheet', 'mediaelement', 'urlblock', 'xhr', 'third-party', 'inline-script',
+        'subdocument', 'image', 'popup', 'elemhide', 'jsinject', 'specifichide',
+        'denyallow', 'path', 'document', 'font', 'stylesheet', 'all', 'min', 'max',
+        'redirect-rule=', 'remove-class=', 'remove-style=', 'dnsrewrite=', 'dnsblock=',
+        'dnsallow=', 'dnsmask=', 'network', 'css', 'important', 'important!', 'image',
+        'media', 'object', 'third-party', 'ping', 'noscript', 'csp', 'block',
+        'removeheader', 'addheader', 'modifyheader', 'setcookie', 'removeparam',
+        'addparam', 'modifypattern', 'override', 'cookie', 'setcss', 'thirdparty',
+        'firstparty', 'collapsing', 'collapse', 'subframe', 'frame', 'mainframe',
+        'background', 'all', 'document', 'sitekey', 'method=', 'rewrite', 'xhr=',
+        'popup=', 'popup=', 'removeparam=', 'cookie=', 'javascript=', 'referer=',
+        'query=', 'network=', 'dns=', 'param=', 'regex=', 'requestmethod=', 'requesttype=',
+        'useragent=', ':has(', ':contains(', ':matches-css(', ':matches-css-before(',
+        ':matches-css-after(', '##+js(', '#%#//scriptlet', 'min-device-pixel-ratio=',
+        'max-device-pixel-ratio=', 'media-type=', 'domain=', 'app=', 'match-case', 'popup',
+        'important', 'collapse', 'third-party', 'first-party', 'domain=', 'xmlhttprequest',
+        'websocket', 'websocket-connect', 'empty', 'ping', 'rewrite', 'redirect=',
+        'redirect-rule=', 'removeheader=', 'addheader=', 'removeparam=', 'removeparam',
+        'setcookie=', 'webrtc=', 'referrerpolicy=', 'permissionspolicy=', 'stealth=',
+        'denyallow=', 'dnscname=', 'method=', 'dnsprefetch=', 'dnsblock=', 'dnsrewrite=',
+        'dnsallow=', 'dnsmask=', 'noabp=1', 'noelemhide', 'sitekey=', 'dnstarget=',
+        'dnscname=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
+        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'dnsoverhttps-target=',
+        'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 'policy='
     ]
-    
+
     for keyword in adguard_keywords:
         if keyword in line:
             return True
 
-    # 检查资源类型和高级选项（`$` 表示规则后缀）
     if "$" in line:
         return True
 
@@ -231,6 +211,3 @@ if __name__ == "__main__":
         input("Press Enter to exit...")
     else:
         print("Non-interactive mode, exiting...")
-        
-        
-    input("Press Enter to exit...")
