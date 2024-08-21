@@ -133,6 +133,13 @@
 <br>
 **33、TheBestAdrules** <br>
 *https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt*
+<br>
+**34、xinggsf rules** <br>
+https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt
+<br>
+**35、xinggsf mv rules** <br>
+https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
+
 
 <br>
 
