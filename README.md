@@ -163,6 +163,8 @@
 
 *13、guandasheng <br>(https://github.com/guandasheng/adguardhome)*
 
+*14、xinggsf <br>(https://github.com/xinggsf/Adblock-Plus-Rule)*
+
 
 ## LICENSE
 - [CC-BY-SA-4.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0)
