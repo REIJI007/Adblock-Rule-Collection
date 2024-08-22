@@ -139,6 +139,9 @@ https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt
 <br>
 **35、xinggsf mv rules** <br>
 https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
+<br>
+**36、superbigsteam rules**<br>
+https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.txt
 
 
 <br>
@@ -171,6 +174,8 @@ https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt
 *13、guandasheng <br>(https://github.com/guandasheng/adguardhome)*
 
 *14、xinggsf <br>(https://github.com/xinggsf/Adblock-Plus-Rule)*
+
+*15、superbigsteam <br>(https://github.com/superbigsteam/adguardhomeguiz)
 
 
 ## LICENSE
