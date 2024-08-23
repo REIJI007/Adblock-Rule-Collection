@@ -78,8 +78,8 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
-    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法"""
-    # 空行或注释
+    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法的有效规则"""
+    # 排除注释行或空行
     if not line or line.startswith(('!', '#', '[')):
         return False
 
@@ -87,7 +87,7 @@ def is_valid_rule(line):
     if line.startswith(('||', '|', '@@')):
         return True
 
-    # CSS 选择器规则（包括常规选择器和AdGuard的扩展选择器）
+    # CSS 选择器规则（包括常规选择器和 AdGuard 的扩展选择器）
     if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
@@ -104,8 +104,7 @@ def is_valid_rule(line):
         # 脚本注入与执行
         'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
         '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
-        'script-src=', 'jsinject=', 'inline-script=', 'script:', 'scriptlet', 'script-set=',
-        'script=',
+        'script-src=', 'jsinject=', 'inline-script=', 'script:', 'scriptlet', 'script-set=', 'script=',
         
         # CSS 和样式
         'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
@@ -182,21 +181,25 @@ def is_valid_rule(line):
         'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 
         'policy=', 'location=', 'port=', 'range=', 'key=', 'value=', 'opt-in=', 'opt-out=', 'web-security=',
         'session-identifier=', 'unique-id=', 'click-tracking=', 'telemetry=', 'analytics=', 'mouse-tracking=', 
-        'tracking-pixel=', 'block-ads=', 'block-tracking=', 'trackers=', 'user-id=', 'unique-identifier=',
-        'cross-domain=', 'cross-origin=', 'cross-site=', 'secure-context=', 'tracking-cookie=', 'tracking-id=', 
-        'analytics-id=', 'monitoring-id=', 'tracking-server=', 'fingerprinting=', 'browser-fingerprint=',
-        'dns-query=', 'dns-response=', 'dns-header=', 'dns-payload=', 'dns-rewrite=', 'dnsblock=',
-        'dnsoverhttps=',
+        'tracking-pixel=', 'block-ads=', 'block-tracking=', 'block-list=', 'filter-list=', 'uBlock-list=', 
+        'block-script=', 'block-frame=', 'block-object=', 'block-popup=', 'block-cookie=',
     ]
     
-    if any(keyword in line for keyword in adguard_keywords):
-        return True
+    for keyword in adguard_keywords:
+        if keyword in line:
+            return True
 
     # 资源类型和高级选项检查 (`$` 表示规则后缀)
     if "$" in line:
         # 常见的资源类型
-        resource_types = ['script', 'image', 'stylesheet', 'object', 'xmlhttprequest', 'subdocument', 'document', 'popup', 'media', 'websocket']
-        options = ['third-party', 'domain', 'important', 'match-case', 'collapse', 'donottrack', 'badfilter', 'rewrite']
+        resource_types = [
+            'script', 'image', 'stylesheet', 'object', 'xmlhttprequest', 'subdocument', 'document', 
+            'popup', 'media', 'websocket'
+        ]
+        options = [
+            'third-party', 'domain', 'important', 'match-case', 'collapse', 'donottrack', 
+            'badfilter', 'rewrite'
+        ]
 
         parts = line.split('$')
         # 确保 $ 之后的内容包含资源类型或选项
@@ -204,6 +207,7 @@ def is_valid_rule(line):
             return True
 
     return False
+
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
