@@ -175,7 +175,7 @@ https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.tx
 
 *14、xinggsf <br>(https://github.com/xinggsf/Adblock-Plus-Rule)*
 
-*15、superbigsteam <br>(https://github.com/superbigsteam/adguardhomeguiz)
+*15、superbigsteam <br>(https://github.com/superbigsteam/adguardhomeguiz)*
 
 
 ## LICENSE
