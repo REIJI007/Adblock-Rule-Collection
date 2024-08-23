@@ -80,7 +80,7 @@
 **15、GOODBYEADS-DNS** <br>
 *https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt*
 <br>
-**16、GOODBYEADS-allow <br>
+**16、GOODBYEADS-allow** <br>
 *https://raw.githubusercontent.com/8680/GOODBYEADS/master/allow.txt*
 <br>
 **17、AWAvenue-Ads-Rule** <br>
