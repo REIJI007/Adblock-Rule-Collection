@@ -127,31 +127,33 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
     """检查是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 语法的有效规则"""
-    # 排除注释行或空行
+
+    # 1. 排除空行和注释行
     if not line or line.startswith(('!', '#', '[')):
         return False
 
-    # 常见的域名规则
-    if line.startswith(('||', '|', '@@')):
-        return True
-
-    # CSS 选择器规则（包括常规选择器和 AdGuard 的扩展选择器）
-    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
-        return True
-
-    # 正则表达式规则（符合 /regex/ 形式的）
+    # 2. 正则表达式规则
     if line.startswith('/') and line.endswith('/'):
         return is_valid_regex(line[1:-1])
 
-    # 特定协议处理
+    # 3. 特定协议处理
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
         return True
 
-    # 任何包含 `$` 的规则都被认为是有效的
+    # 4. 任何包含 `$` 的规则
     if "$" in line:
         return True
 
+    # 5. 常见的域名规则
+    if line.startswith(('||', '|', '@@')):
+        return True
+
+    # 6. CSS 选择器规则
+    if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
+
     return False
+
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
