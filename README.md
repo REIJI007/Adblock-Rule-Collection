@@ -287,8 +287,58 @@
 84. **Brave-Unbreak filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt*<br>
 
+## 五、特别鸣谢
 
+1、anti-AD (https://github.com/privacy-protection-tools/anti-AD)
 
+2、easylist (https://github.com/easylist/easylist)
+
+3、cjxlist (https://github.com/cjx82630/cjxlist)
+
+4、uniartisan (https://github.com/uniartisan/adblock_list)
+
+5、Cats-Team (https://github.com/Cats-Team/AdRules)
+
+6、217heidai (https://github.com/217heidai/adblockfilters)
+
+7、GOODBYEADS (https://github.com/8680/GOODBYEADS)
+
+8、AWAvenue-Ads-Rule (https://github.com/TG-Twilight/AWAvenue-Ads-Rule)
+
+9、Bibaiji (https://github.com/Bibaiji/ad-rules/)
+
+10、uBlockOrigin (https://github.com/uBlockOrigin/uAssets)
+
+11、ADguardTeam (https://github.com/AdguardTeam/AdGuardFilters)
+
+12、HyperADRules (https://github.com/Lynricsy/HyperADRules)
+
+13、guandasheng (https://github.com/guandasheng/adguardhome)
+
+14、xinggsf (https://github.com/xinggsf/Adblock-Plus-Rule)
+
+15、superbigsteam (https://github.com/superbigsteam/adguardhomeguiz)
+
+16、hoshsadiq (https://github.com/hoshsadiq/adblock-nocoin-list)
+
+17、jerryn70 (https://github.com/jerryn70/GoodbyeAds)
+
+18、malware-filter (https://gitlab.com/malware-filter)
+
+19、abp-filters (https://gitlab.com/eyeo/anti-cv/abp-filters-anti-cv)
+
+20、banbendalao (https://github.com/banbendalao/ADgk)
+
+21、yokoffing (https://github.com/yokoffing/filterlists)
+
+22、notracking (https://github.com/notracking/hosts-blocklists)
+
+23、Spam404 (https://github.com/Spam404/lists)
+
+24、brave (https://github.com/brave/adblock-lists)
+
+<br>
+<br>
 ## LICENSE
 - [CC-BY-SA-4.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0)
 - [GPL-3.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0)
