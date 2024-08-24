@@ -35,6 +35,9 @@
 
 ## 四、汇总引用规则列表有如下:
 
+<details>
+  <summary>点击展开查看汇总引用规则列表</summary>
+
 1. **Anti-ad for adguard**  
    *https://anti-ad.net/adguard.txt*<br>
 
@@ -287,6 +290,8 @@
 84. **Brave-Unbreak filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt*<br>
 
+</details>
+
 ## 五、特别鸣谢
 
 1、anti-AD (https://github.com/privacy-protection-tools/anti-AD)
@@ -339,6 +344,8 @@
 
 <br>
 <br>
+
+
 ## LICENSE
 - [CC-BY-SA-4.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0)
 - [GPL-3.0 License](https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0)
