@@ -136,19 +136,15 @@ def is_valid_rule(line):
     if line.startswith('/') and line.endswith('/'):
         return is_valid_regex(line[1:-1])
 
-    # 3. 特定协议处理
-    if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
-        return True
-
-    # 4. 任何包含 `$` 的规则
+    # 3. 任何包含 `$` 的规则
     if "$" in line:
         return True
 
-    # 5. 常见的域名规则
+    # 4. 常见的域名规则
     if line.startswith(('||', '|', '@@')):
         return True
 
-    # 6. CSS 选择器规则
+    # 5. CSS 选择器规则
     if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
