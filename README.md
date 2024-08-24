@@ -292,7 +292,11 @@
 
 </details>
 
-## 五、特别鸣谢
+## 五、特别致谢
+
+
+<details>
+  <summary>致谢名单</summary>
 
 1、anti-AD (https://github.com/privacy-protection-tools/anti-AD)
 
@@ -341,6 +345,9 @@
 23、Spam404 (https://github.com/Spam404/lists)
 
 24、brave (https://github.com/brave/adblock-lists)
+
+</details>
+
 
 <br>
 <br>
