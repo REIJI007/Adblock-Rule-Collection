@@ -125,11 +125,14 @@ filter_urls = [
 # 保存路径设定为当前工作目录的根目录下，并命名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+import re
+
 def is_valid_rule(line):
     """检查是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 语法的有效规则"""
 
     # 1. 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[')):
+    line = line.strip()  # 去除首尾空白字符
+    if not line or line.startswith(('!', '#', '[', ';', '//')):
         return False
 
     # 2. 正则表达式规则
@@ -138,9 +141,11 @@ def is_valid_rule(line):
 
     # 3. 任何包含 `$` 的规则
     if "$" in line:
-        return True
+        # 检查是否确实是规则，而非注释行包含的 `$`
+        if not line.startswith(('!', '#', '[', ';', '//')):
+            return True
 
-    # 4. 常见的域名规则
+    # 4. 域名规则
     if line.startswith(('||', '|', '@@')):
         return True
 
@@ -149,6 +154,15 @@ def is_valid_rule(line):
         return True
 
     return False
+
+def is_valid_regex(regex):
+    """简单验证正则表达式是否有效"""
+    try:
+        re.compile(regex)
+        return True
+    except re.error:
+        return False
+
 
 
 def is_valid_regex(pattern):
