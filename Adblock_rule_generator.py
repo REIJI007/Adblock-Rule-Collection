@@ -99,115 +99,11 @@ def is_valid_rule(line):
     if re.match(r'^(https?|ftp|ws|wss|data|blob|about|chrome-extension|file|filesystem|moz-extension|mailto|tel|sms|magnet|telnet|ssh|steam|irc|itms|intent|spotify|geo|maps|gopher|telnet|vnc|webcal|javascript):', line):
         return True
 
-    # AdGuard 特定语法和特殊关键词
-    adguard_keywords = [
-        # 脚本注入与执行
-        'script:inject(', 'jsinject', 'javascript=', 'inline-script', 'noscript', '##+js(', '#%#//scriptlet',
-        '##script', '#script', 'script-src', 'unsafe-inline', 'unsafe-eval', 'defer', 'async', 'document.write',
-        'script-src=', 'jsinject=', 'inline-script=', 'script:', 'scriptlet', 'script-set=', 'script=',
-        
-        # CSS 和样式
-        'csp=', 'stylesheet', 'mediaelement', ':matches-css(', ':matches-css-before(', ':matches-css-after(', 
-        'css', 'setcss', 'style-src', 'font-src', 'remove-style=', 'addstyle=', 'display:none', 'visibility:hidden',
-        'font-face', 'background-image', 'opacity', 'filter', 'transition', 'animation', 'background-color=',
-        'border=', 'border-radius=', 'box-shadow=', 'color=', 'height=', 'width=', 'margin=', 'padding=',
-        'style=', 'background=', 'color=', 'border=', 'font=', 'line-height=', 'max-height=', 'max-width=',
-        'max-device-width=', 'min-device-width=', 'max-device-height=', 'min-device-height=',
-        'device-width=', 'device-height=', 'viewport=', 'device-pixel-ratio=', 'min-resolution=', 'max-resolution=',
-        
-        # 网络请求控制
-        'redirect=', 'redirect-rule=', 'xhr', 'xmlhttprequest', 'websocket', 'websocket-connect', 'ping',
-        'network', 'requestmethod=', 'requesttype=', 'connect-src', 'dns=', 'dnsrewrite=', 'dnsblock=',
-        'dnsallow=', 'dnsmask=', 'dns-prefetch-control', 'x-dns-prefetch-control', 'dnsoverhttps=',
-        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'server=', 'server-version=', 'x-runtime=',
-        'cache-control=', 'expires=', 'pragma=', 'etag=', 'vary=', 'age=', 'if-modified-since=',
-        'if-none-match=', 'accept-encoding=', 'accept-language=', 'accept=', 'content-type=', 'range=',
-        'if-range=', 'content-range=', 'authorization=', 'cookie=', 'set-cookie=', 'referer=', 'x-requested-with=',
-        'request-header=', 'response-header=', 'request-method=', 'request-type=',
-        'allow=', 'deny=',
-        
-        # Cookie 和 Header
-        'cookie=', 'setcookie', 'addheader=', 'removeheader=', 'modifyheader=', 'header=', 'set-cookie',
-        'cookie-samesite', 'samesite=', 'httponly', 'secure', 'policy=', 'referrerpolicy=', 'permissionspolicy=',
-        'strict-transport-security', 'hsts=', 'x-content-type-options', 'x-xss-protection', 'x-frame-options',
-        'x-permitted-cross-domain-policies', 'access-control-allow-origin', 'x-powered-by=', 'x-aspnet-version=',
-        'x-robots-tag=', 'x-download-options=', 'x-content-security-policy', 'x-webkit-csp',
-        'access-control-', 'content-security-policy=', 'referrer-policy=', 'permissions-policy=',
-        'access-control-allow-headers=', 'access-control-allow-methods=', 'access-control-allow-credentials=',
-        'access-control-allow-origin=', 'access-control-max-age=',
-        
-        # 广告与跟踪防护
-        'block', 'important', 'badfilter', 'urlblock', 'third-party', 'thirdparty', 'first-party', 'popup=',
-        'elemhide', 'specifichide', 'adblock', 'noabp=1', 'noelemhide', 'collapse', 'collapsing', 'background',
-        'empty', 'image', 'media', 'object', 'frame', 'subframe', 'mainframe', 'redirect=', 'redirect-rule=',
-        'requestheader=', 'responseheader=', 'url=', 'domain=', 'src=', 'cookie=', 'referer=', 'tracking=', 
-        'filter=', 'filterset=', 'privacy=', 'ad=', 'block-ad=', 'block-tracker=', 'track=', 'trackers=',
-        'adblockplus', 'uBlock', 'block-url=', 'block-domain=', 'block-source=', 'block-referrer=',
-        'block-list=', 'block-some=', 'block-everything=', 'adblockplus-filter=', 'filter-privacy=',
-        'block-ads=', 'no-track=', 'no-trackers=', 'anti-track=', 'anti-ad=',
-        
-        # 安全与隐私
-        'webrtc', 'stealth', 'denyallow', 'dnscname=', 'dnsprefetch=', 'dnsoverhttps=', 'referrer=', 
-        'reflected-xss', 'x-content-security-policy', 'x-webkit-csp', 'x-content-options', 'frame-ancestors',
-        'content-security-policy', 'report-uri=', 'report-to=', 'nel=', 'cross-origin-resource-policy',
-        'cross-origin-embedder-policy', 'cross-origin-opener-policy', 'clear-site-data', 'upgrade-insecure-requests=',
-        'x-frame-options', 'x-permitted-cross-domain-policies', 'permissions-policy', 'feature-policy=',
-        'strict-dynamic', 'no-store', 'no-cache', 'cache-control=', 'secure', 'samesite=', 'same-origin',
-        'content-security-policy=', 'x-content-security-policy=', 'x-webkit-csp=', 'report-to=',
-        'privacy=', 'privacy-level=',
-        
-        # 请求与响应模式
-        'method=', 'path=', 'regex=', 'param=', 'query=', 'useragent=', 'referer=', 'requesturl=', 
-        'responsecode=', 'responseheader=', 'requestheader=', 'requestmethod=', 'requesttype=', 'content-type=',
-        'response=', 'responsebody=', 'body=', 'headers=', 'cache=', 'session=', 'cookiepolicy=',
-        'request-url=', 'response-code=', 'request-body=', 'response-body=',
-        
-        # 特性与策略
-        'sandbox=', 'base-uri=', 'content-type=', 'feature-policy', 'document-policy', 'sandbox=', 
-        'upgrade-insecure-requests=', 'base-uri=', 'access-control-allow-headers=', 'cross-origin-embedder-policy=',
-        'cross-origin-opener-policy=', 'cross-origin-resource-policy=', 'content-security-policy-report-only=',
-        'base-uri=', 'feature-policy=', 'permissions-policy=', 'cross-origin-resource-policy=',
-        'referrer-policy=', 'referrer=', 'block-all-mixed-content=', 'secure-context=', 'content-security-policy-raw=',
-        
-        # 浏览器特定设置
-        'chrome-extension=', 'firefox-extension=', 'safari-extension=', 'edge-extension=', 'browser-extension=',
-        'extension=', 'plugin=', 'activex=', 'silverlight=', 'flash=', 'java=', 'object=', 'embed=', 
-        'plugin-types=', 'object-type=', 'embed-type=', 'plugin=', 'flash=', 'silverlight=', 'java-applet=',
-        'extension-url=', 'browser-extension=', 'plugin-url=',
-        
-        # 其他
-        'all', 'min', 'max', 'min-device-pixel-ratio=', 'max-device-pixel-ratio=', 'media-type=', 
-        'app=', 'sitekey=', 'dnstarget=', 'dnsdoc=', 'dnsresolver=', 'dnsresolver-url=', 'dnsoverhttps=',
-        'dnsoverhttps-target=', 'dnsoverhttps-resolver=', 'max-age=', 'samesite=', 'secure', 'httponly', 
-        'policy=', 'location=', 'port=', 'range=', 'key=', 'value=', 'opt-in=', 'opt-out=', 'web-security=',
-        'session-identifier=', 'unique-id=', 'click-tracking=', 'telemetry=', 'analytics=', 'mouse-tracking=', 
-        'tracking-pixel=', 'block-ads=', 'block-tracking=', 'block-list=', 'filter-list=', 'uBlock-list=', 
-        'block-script=', 'block-frame=', 'block-object=', 'block-popup=', 'block-cookie=',
-    ]
-    
-    for keyword in adguard_keywords:
-        if keyword in line:
-            return True
-
-    # 资源类型和高级选项检查 (`$` 表示规则后缀)
+    # 任何包含 `$` 的规则都被认为是有效的
     if "$" in line:
-        # 常见的资源类型
-        resource_types = [
-            'script', 'image', 'stylesheet', 'object', 'xmlhttprequest', 'subdocument', 'document', 
-            'popup', 'media', 'websocket'
-        ]
-        options = [
-            'third-party', 'domain', 'important', 'match-case', 'collapse', 'donottrack', 
-            'badfilter', 'rewrite'
-        ]
-
-        parts = line.split('$')
-        # 确保 $ 之后的内容包含资源类型或选项
-        if any(part in resource_types + options for part in parts[1].split(',')):
-            return True
+        return True
 
     return False
-
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效"""
