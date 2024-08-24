@@ -78,7 +78,7 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
-    """检查是否符合 Adblock Plus、uBlock Origin 和 AdGuard 语法的有效规则"""
+    """检查是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 语法的有效规则"""
     # 排除注释行或空行
     if not line or line.startswith(('!', '#', '[')):
         return False
