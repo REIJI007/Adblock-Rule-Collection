@@ -124,7 +124,11 @@ filter_urls = [
 "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt",
 "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt",
 "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt",
-"https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt"
+"https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt",
+"https://raw.githubusercontent.com/star1145209/adblock_list/main/rule/dns.txt",
+"https://raw.githubusercontent.com/xndeye/adblock_list/beta/rule/easylist.txt",
+"https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/all.txt",
+"https://raw.githubusercontent.com/BlueSkyXN/AdGuardHomeRules/master/skyrules.txt",
 ]
 
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
