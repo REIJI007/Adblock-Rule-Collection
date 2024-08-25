@@ -4,7 +4,7 @@
 <h1 align="center" style="font-size: 100px; margin-bottom: 40px;">Adblock-Rule-Collection</h1>
 
 <!-- 居中的副标题 -->
-<h2 align="center" style="font-size: 30px; margin-bottom: 40px;">一个将众多广告过滤器条目去重汇总合并生成的广告拦截器,规则总数多达百万，包含URL域名规则、资源过滤规则、域名过滤规则、区域选择器规则、脚本过滤规则、隐私规则、Cookie 过滤规则、例外规则、关键字过滤规则、webrtc拦截屏蔽规则、正则表达式过滤规则、网络过滤规则、字体和样式过滤规则、重定向规则、脚本注入规则、反指纹跟踪规则等类型的条目</h2>
+<h2 align="center" style="font-size: 30px; margin-bottom: 40px;">一个将众多广告过滤器条目去重汇总合并生成的广告拦截器,规则总数多达百万，包含URL规则、资源过滤规则、域名过滤规则、区域选择器规则、脚本过滤规则、隐私规则、Cookie 过滤规则、例外规则、关键字过滤规则、webrtc拦截屏蔽规则、正则表达式过滤规则、网络过滤规则、字体和样式过滤规则、重定向规则、脚本注入规则、反指纹跟踪规则等类型的条目</h2>
 
 <!-- 徽章（根据需要调整） -->
 <p align="center" style="margin-bottom: 40px;">
