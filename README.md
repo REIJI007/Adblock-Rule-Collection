@@ -16,25 +16,22 @@
 </p>
 
 
-## 一、关于Adblock-Rule-Collection，你可使用本仓库中的Adblock_rule_generator.py脚本合并去重生成广告过滤规则列表，注意修改生成文件的保存路径与生成的文件名，可按需求添加不同的上游广告过滤规则列表进行DIY定制，但必须符合adblock plus语法或adguard语法才有效
+## 一、关于Adblock-Rule-Collection，你可使用本仓库中的Adblock_rule_generator.py脚本合并去重生成广告过滤规则列表，注意修改生成文件的保存路径与生成的文件名，可按需求添加不同的上游广告过滤规则列表进行DIY定制，但必须符合adblock plus语法或adguard语法才有效,随着加入合并的广告过滤规则越来越多，生成文件体积也会越来越大，若你的广告过滤程序订阅失败则就下载规则文件充当本地用户过滤器
 
 <br>
 
 ## 二、本仓库使用方式如下：
-1、订阅地址: <br> *https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*
-<br>
+1、订阅地址: <br> *https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*<br>
 <br>
 2、从Release中下载ADBLOCK_RULE_COLLECTION.txt文件进行本地导入广告过滤器，release每20分钟自动发布一次
-
 <br>
 
 ## 三、适用范围
-适用于ADguard,Adblock,Adblock Plus,uBlock Origin,Brave Browser,各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件或广告拦截程序以及适合DNS拦截的程序等
-
+适用于ADguard,Adblock,Adblock Plus,uBlock Origin,Brave Browser等各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件或广告拦截程序
 <br>
 
-## 四、汇总引用规则列表有如下:
 
+## 四、汇总引用规则列表有如下，未来会加入更多
 <details>
   <summary>点击展开查看汇总引用规则列表</summary>
 
