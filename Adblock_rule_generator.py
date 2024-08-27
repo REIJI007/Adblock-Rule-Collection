@@ -149,6 +149,7 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -159,26 +160,30 @@ def is_valid_rule(line):
     bool: 如果该行符合有效规则格式，则返回 True，否则返回 False。
     """
     line = line.strip()  # 去除首尾的空白字符
+
     # 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[', ';', '//')):
+    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
         return False
 
     # 检查是否是正则表达式规则
     if line.startswith('/') and line.endswith('/'):
+        # 正则表达式的快速有效性检查
         return is_valid_regex(line[1:-1])
 
-    # 检查是否包含 '$' 符号的规则
+    # 检查是否包含 '$' 符号的规则（包括特定的过滤条件）
     if "$" in line:
-        # 确保规则不是注释行
-        if not line.startswith(('!', '#', '[', ';', '//')):
-            return True
+        return True
 
-    # 检查是否是常见的域名规则
+    # 检查是否是基本的域名规则
     if line.startswith(('||', '|', '@@')):
         return True
 
     # 检查是否是 CSS 选择器规则
     if line.startswith(('##', '#@#', '#?#', '#@?#')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
+
+    # 检查是否是 AdGuard 特定的规则格式
+    if re.search(r'^\|\|[^\^]+\^\$', line) or re.search(r'^\|\|[^\^]+[^\s]*$', line):
         return True
 
     return False
@@ -197,6 +202,7 @@ def is_valid_regex(pattern):
         return True
     except re.error:
         return False
+
 
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。
