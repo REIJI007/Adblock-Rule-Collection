@@ -407,7 +407,11 @@
 26、DandelionSprout
 (https://github.com/DandelionSprout/adfilt)<br>
 27、blocklistproject
-(https://github.com/blocklistproject/Lists)
+(https://github.com/blocklistproject/Lists)<br>
+28、reek
+(https://github.com/reek/anti-adblock-killer)<br>
+29、durablenapkin
+(https://github.com/durablenapkin/scamblocklist)<br>
 
 
   </details>
