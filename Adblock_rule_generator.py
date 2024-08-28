@@ -54,6 +54,8 @@ filter_urls = [
     "https://raw.githubusercontent.com/easylist/easylistchina/master/easylistchina.txt",
     "https://secure.fanboy.co.nz/fanboy-annoyance.txt",
     "https://easylist.to/easylist/fanboy-social.txt",
+    "https://www.fanboy.co.nz/fanboy-antifacebook.txt",
+    "https://www.fanboy.co.nz/fanboy-antifonts.txt",
     "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
     "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjxlist.txt",
     "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-ublock.txt",
@@ -143,7 +145,9 @@ filter_urls = [
     "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt",
     "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt",
     "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt"
+    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt",
+    "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt",
+    "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt"
 ]
 
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
