@@ -228,136 +228,139 @@
 **63. HyperADRules-DNS**  
     *https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt*<br>
 
-**64. TheBestAdrules**  
+**64. HyperADRules-allow**  
+    *https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt*<br>
+    
+**65. TheBestAdrules**  
     *https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt*<br>
 
-**65. xinggsf's rules**  
+**66. xinggsf's rules**  
     *https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt*<br>
 
-**66. xinggsf's mv rules**  
+**67. xinggsf's mv rules**  
     *https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt*<br>
 
-**67. superbigsteam rules**  
+**68. superbigsteam rules**  
     *https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.txt*<br>
 
-**68. adblock-nocoin-list**  
+**69. adblock-nocoin-list**  
     *https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt*<br>
 
-**69. GoodbyeAds-AdBlock-Filter**  
+**70. GoodbyeAds-AdBlock-Filter**  
     *https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-AdBlock-Filter.txt*<br>
 
-**70. GoodbyeAds-Ultra-AdBlock-Filter**  
+**71. GoodbyeAds-Ultra-AdBlock-Filter**  
     *https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master*<br>
 
-**71. Phishing URL Blocklist——AdGuard**  
+**72. Phishing URL Blocklist——AdGuard**  
     *https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt*<br>
 
-**72. Phishing URL Blocklist——AdGuard Home**  
+**73. Phishing URL Blocklist——AdGuard Home**  
     *https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt*<br>
 
-**73. Phishing URL Blocklist——uBlock Origin**  
+**74. Phishing URL Blocklist——uBlock Origin**  
     *https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt*<br>
 
-**74. Malicious URL Blocklist——AdGuard**  
+**75. Malicious URL Blocklist——AdGuard**  
     *https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag.txt*<br>
 
-**75. Malicious URL Blocklist——AdGuard Home**  
+**76. Malicious URL Blocklist——AdGuard Home**  
     *https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt*<br>
 
-**76. Malicious URL Blocklist——uBlock Origin**  
+**77. Malicious URL Blocklist——uBlock Origin**  
     *https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt*<br>
 
-**77. Tracking JS Blocklist**  
+**78. Tracking JS Blocklist**  
     *https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt*<br>
 
-**78. Botnet IP Blocklist——AdGuard**  
+**79. Botnet IP Blocklist——AdGuard**  
     *https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt*<br>
 
-**79. Botnet IP Blocklist——AdGuard Home**  
+**80. Botnet IP Blocklist——AdGuard Home**  
     *https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt*<br>
 
-**80. Botnet IP Blocklist——uBlock Origin**  
+**81. Botnet IP Blocklist——uBlock Origin**  
     *https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt*<br>
 
-**81. ABP filters**  
+**82. ABP filters**  
     *https://easylist-msie.adblockplus.org/abp-filters-anti-cv.txt*<br>
 
-**82. adgk**  
+**83. adgk**  
     *https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt*<br>
 
-**83. yokoffing's Annoyance List**  
+**84. yokoffing's Annoyance List**  
     *https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt*<br>
 
-**84. yokoffing's Privacy Essentials**  
+**85. yokoffing's Privacy Essentials**  
     *https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt*<br>
 
-**85. Spam404's Adblock-list**  
+**86. Spam404's Adblock-list**  
     *https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt*<br>
 
-**86. Brave-specific filter**  
+**87. Brave-specific filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt*<br>
 
-**87. Brave-ios-specific filter**  
+**88. Brave-ios-specific filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt*<br>
 
-**88. Brave-Android-specific filter**  
+**89. Brave-Android-specific filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt*<br>
 
-**89. Brave-Firstparty filter**  
+**90. Brave-Firstparty filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt*<br>
 
-**90. Brave-Firstparty-cname filter**  
+**91. Brave-Firstparty-cname filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt*<br>
 
-**91. Brave-Unbreak filter**  
+**92. Brave-Unbreak filter**  
     *https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt*<br>
 
-**92. Filter unblocking search ads and self-promotions**  
+**93. Filter unblocking search ads and self-promotions**  
     *https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt*<br>
 
-**93. Peter Lowe’s Ad and Tracking Server List**  
+**94. Peter Lowe’s Ad and Tracking Server List**  
     *https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0*<br>
 
-**94. Dandelion Sprout's Anti-Malware List (for AdGuard)**  
+**95. Dandelion Sprout's Anti-Malware List (for AdGuard)**  
     *https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt*<br>
 
-**95. Dandelion Sprout's Anti-Malware List (for Adblock Plus and AdBlock)**  
+**96. Dandelion Sprout's Anti-Malware List (for Adblock Plus and AdBlock)**  
     *https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt*<br>
 
-**96. Fanboy's Notifications Blocking List**  
+**97. Fanboy's Notifications Blocking List**  
     *https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Other%20domains%20versions/FanboyNotifications-LoadableInUBO.txt*<br>
 
-**97. The Block List Project - Ads List**  
+**98. The Block List Project - Ads List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ads-ags.txt*<br>
 
-**98. The Block List Project - Basic Starter List**  
+**99. The Block List Project - Basic Starter List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/basic-ags.txt*<br>
 
-**99. The Block List Project - Tracking List**  
+**100. The Block List Project - Tracking List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/tracking-ags.txt*<br>
 
-**100. The Block List Project - Malware List**  
+**101. The Block List Project - Malware List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/malware-ags.txt*<br>
 
-**101. The Block List Project - Scam List**  
+**102. The Block List Project - Scam List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/scam-ags.txt*<br>
 
-**102. The Block List Project - Phishing List**  
+**103. The Block List Project - Phishing List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt*<br>
 
-**103. The Block List Project - Ransomware List**  
+**104. The Block List Project - Ransomware List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt*<br>
 
-**104. The Block List Project - Fraud List**  
+**105. The Block List Project - Fraud List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt*<br>
 
-**105. The Block List Project - Abuse List**  
+**106. The Block List Project - Abuse List**  
     *https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt*<br>
 
-**106. Anti-Adblock Killer**  
+**107. Anti-Adblock Killer**  
     *https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt*<br>
 
-**107. Scam Blocklist (Adblock Plus)**  
+**108. Scam Blocklist (Adblock Plus)**  
     *https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt*<br>
 
 
