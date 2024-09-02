@@ -1,53 +1,24 @@
 name: Delete All Releases
 
 on:
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch: # 手动触发
 
 jobs:
   delete-releases:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Git user
+      - name: List and delete all releases
         run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-
-      - name: Pull latest changes and rebase
-        run: git pull origin main --rebase
-
-      - name: List all releases
-        id: list_releases
-        run: |
-          releases=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
+          releases=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
           if [ -z "$releases" ]; then
             echo "No releases found."
             exit 0
           fi
-          echo "::set-output name=releases::$releases"
-
-      - name: Delete each release
-        if: steps.list_releases.outputs.releases
-        run: |
-          for release_id in ${{ steps.list_releases.outputs.releases }}; do
-            echo "Deleting release ID: $release_id"
-            curl -s -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+          for id in $releases; do
+            echo "Deleting release ID: $id"
+            curl -s -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/$id"
           done
-
-      - name: Handle merge conflicts
-        run: |
-          git status
-          if git diff --name-only --diff-filter=U | grep -q 'ADBLOCK_RULE_COLLECTION.txt'; then
-            echo "Merge conflict detected in ADBLOCK_RULE_COLLECTION.txt, resolving..."
-            git checkout --theirs ADBLOCK_RULE_COLLECTION.txt
-            git add ADBLOCK_RULE_COLLECTION.txt
-            git rebase --continue || git rebase --skip
-          else
-            echo "No merge conflicts detected."
-          fi
-
-      - name: Push changes
-        run: git push origin main || (git pull --rebase && git push origin main)
+          echo "All releases deleted."
