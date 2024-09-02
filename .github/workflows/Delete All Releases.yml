@@ -10,15 +10,21 @@ jobs:
     steps:
       - name: List and delete all releases
         run: |
+          # 获取所有 release 的 ID
           releases=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
           "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
+
+          # 检查是否有 releases
           if [ -z "$releases" ]; then
             echo "No releases found."
             exit 0
           fi
+
+          # 删除每个 release
           for id in $releases; do
             echo "Deleting release ID: $id"
             curl -s -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/$id"
           done
+
           echo "All releases deleted."
