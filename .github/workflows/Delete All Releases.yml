@@ -22,7 +22,7 @@ jobs:
       - name: List all releases
         id: list_releases
         run: |
-          releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
+          releases=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
           if [ -z "$releases" ]; then
             echo "No releases found."
             exit 0
@@ -34,7 +34,7 @@ jobs:
         run: |
           for release_id in ${{ steps.list_releases.outputs.releases }}; do
             echo "Deleting release ID: $release_id"
-            curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+            curl -s -X DELETE -H "Authorization: token ${{ secrets.TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
           done
 
       - name: Handle merge conflicts
