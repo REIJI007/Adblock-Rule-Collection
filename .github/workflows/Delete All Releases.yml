@@ -1,4 +1,4 @@
-name: Delete All Releases and Handle Merge Conflicts
+name: Delete All Releases
 
 on:
   workflow_dispatch: # 允许手动触发
@@ -51,11 +51,3 @@ jobs:
 
       - name: Push changes
         run: git push origin main || (git pull --rebase && git push origin main)
-
-      - name: Clean up large files with Git LFS
-        run: |
-          git lfs install
-          git lfs track "ADBLOCK_RULE_COLLECTION.txt"
-          git add .gitattributes ADBLOCK_RULE_COLLECTION.txt
-          git commit -m "Track large file with Git LFS"
-          git push origin main
