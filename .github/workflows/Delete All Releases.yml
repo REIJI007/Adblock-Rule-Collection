@@ -11,11 +11,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: List and delete all releases
+      - name: List and delete all releases (with pagination)
         run: |
-          # 获取所有 release 的 ID
-          releases=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
+          # 初始化页码和release ID列表
+          page=1
+          releases=""
+
+          # 获取所有分页中的release ID
+          while true; do
+            result=$(curl -s -H "Authorization: token ${{ secrets.TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100&page=$page" | jq -r '.[].id')
+
+            if [ -z "$result" ]; then
+              break
+            fi
+
+            releases="$releases $result"
+            page=$((page + 1))
+          done
 
           # 检查是否有 releases
           if [ -z "$releases" ]; then
