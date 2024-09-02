@@ -1,4 +1,4 @@
-name: Delete All Releases
+name: Delete All Releases and Handle Merge Conflicts
 
 on:
   workflow_dispatch: # 允许手动触发
@@ -8,6 +8,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Git user
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+
+      - name: Pull latest changes and rebase
+        run: git pull origin main --rebase
+
       - name: List all releases
         id: list_releases
         run: |
@@ -21,3 +32,27 @@ jobs:
             echo "Deleting release ID: $release_id"
             curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
           done
+
+      - name: Handle merge conflicts
+        run: |
+          git status
+          if git diff --name-only --diff-filter=U | grep -q 'ADBLOCK_RULE_COLLECTION.txt'; then
+            echo "Merge conflict detected in ADBLOCK_RULE_COLLECTION.txt, resolving..."
+            git checkout --theirs ADBLOCK_RULE_COLLECTION.txt
+            git add ADBLOCK_RULE_COLLECTION.txt
+            git rebase --continue || git rebase --skip
+          else
+            echo "No merge conflicts detected."
+          fi
+
+      - name: Push changes
+        run: git push origin main || (git pull --rebase && git push origin main)
+
+      - name: Clean up large files with Git LFS
+        if: steps.list_releases.outputs.releases != ""
+        run: |
+          git lfs install
+          git lfs track "ADBLOCK_RULE_COLLECTION.txt"
+          git add .gitattributes ADBLOCK_RULE_COLLECTION.txt
+          git commit -m "Track large file with Git LFS"
+          git push origin main
