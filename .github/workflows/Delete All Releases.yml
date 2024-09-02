@@ -1,0 +1,23 @@
+name: Delete All Releases
+
+on:
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  delete-releases:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: List all releases
+        id: list_releases
+        run: |
+          releases=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '.[].id')
+          echo "::set-output name=releases::$releases"
+
+      - name: Delete each release
+        if: steps.list_releases.outputs.releases != ""
+        run: |
+          for release_id in ${{ steps.list_releases.outputs.releases }}; do
+            echo "Deleting release ID: $release_id"
+            curl -s -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases/$release_id"
+          done
