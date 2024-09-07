@@ -39,7 +39,6 @@
 <details>
   <summary>查看规则列表</summary>
 
-formatted_content = """
 **1. Anti-ad for adguard**  
    *https://anti-ad.net/adguard.txt*<br>
 
