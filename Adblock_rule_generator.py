@@ -184,7 +184,7 @@ def is_valid_rule(line):
         return True
 
     # 检查是否是基本的域名规则
-    if line.startswith(('||', '|', '@@')):
+    if line.startswith(('||', '|', '@@', '@@||')):
         return True
 
     # 检查是否是 CSS 选择器规则
@@ -289,8 +289,8 @@ def write_rules_to_file(rules, save_path):
 !Title: Adblock-Rule-Collection
 !Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
-!LICENSE1：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
-!LICENSE2：https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
+!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
+!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
 !生成时间: {timestamp}
 !有效规则数目: {len(rules)}
 """
