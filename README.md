@@ -39,341 +39,119 @@
 <details>
   <summary>查看规则列表</summary>
 
-**1. Anti-ad for adguard**<br>  
-*https://anti-ad.net/adguard.txt*<br>
+1. [**Anti-ad for Adguard**](https://anti-ad.net/adguard.txt)
+2. [**Anti-ad-Easylist**](https://anti-ad.net/easylist.txt)
+3. [**OISD Big List**](https://big.oisd.nl)
+4. [**EasyList**](https://easylist.to/easylist/easylist.txt)
+5. [**EasyList — First-Party Servers**](https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt)
+6. [**EasyList — Third-Party Servers**](https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt)
+7. [**EasyList Privacy**](https://easylist.to/easylist/easyprivacy.txt)
+8. [**EasyList Privacy — Tracking Servers**](https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_trackingservers.txt)
+9. [**EasyPrivacy — Third-Party Trackers**](https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt)
+10. [**EasyPrivacy — Third-Party International Trackers**](https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty_international.txt)
+11. [**Easylist Cookie List**](https://secure.fanboy.co.nz/fanboy-cookiemonster.txt)
+12. [**EasyList China**](https://raw.githubusercontent.com/easylist/easylistchina/master/easylistchina.txt)
+13. [**Adblock Warning Removal List**](https://easylist-downloads.adblockplus.org/antiadblockfilters.txt)
+14. [**Fanboy's Annoyance List**](https://secure.fanboy.co.nz/fanboy-annoyance.txt)
+15. [**Fanboy's Social Blocking List**](https://easylist.to/easylist/fanboy-social.txt)
+16. [**Fanboy's Anti-Facebook List**](https://www.fanboy.co.nz/fanboy-antifacebook.txt)
+17. [**Fanboy's Anti-Third-Party Fonts**](https://www.fanboy.co.nz/fanboy-antifonts.txt)
+18. [**Fanboy's Notifications Blocking List**](https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Other%20domains%20versions/FanboyNotifications-LoadableInUBO.txt)
+19. [**CJX's Annoyance List**](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt)
+20. [**CJX's EasyList Lite**](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjxlist.txt)
+21. [**CJX's uBlock List**](https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-ublock.txt)
+22. [**uniartrisan's Adblock List Plus**](https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt)
+23. [**uniartrisan's Privacy List**](https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt)
+24. [**AdRules AdBlock List Plus**](https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt)
+25. [**AdRules DNS List**](https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt)
+26. [**AdBlock DNS**](https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt)
+27. [**AdBlock Filter**](https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt)
+28. [**GOODBYEADS**](https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt)
+29. [**GOODBYEADS-DNS**](https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt)
+30. [**GOODBYEADS-Allow**](https://raw.githubusercontent.com/8680/GOODBYEADS/master/allow.txt)
+31. [**AWAvenue-Ads-Rule**](https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt)
+32. [**Bibaiji's Ad-Rules**](https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt)
+33. [**uBlock Filters**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt)
+34. [**uBlock Privacy Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt)
+35. [**uBlock Mobile Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt)
+36. [**uBlock Badware Risks Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt)
+37. [**uBlock Annoyances-Cookies Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-cookies.txt)
+38. [**uBlock Annoyances-Others Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-others.txt)
+39. [**uBlock Resource Abuse Filters**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/resource-abuse.txt)
+40. [**uBlock Unbreak Filter**](https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt)
+41. [**AdGuard Base Filter Cryptominers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/cryptominers.txt)
+42. [**AdGuard Exclusion Rules**](https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exclusions.txt)
+43. [**AdGuard Exception Rules**](https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt)
+44. [**AdGuard SDNS Filter**](https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/rules.txt)
+45. [**AdGuard Base Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt)
+46. [**AdGuard Base Filter — First-Party Servers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers_firstparty.txt)
+47. [**AdGuard Base Filter — Foreign Servers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/foreign.txt)
+48. [**AdGuard Mobile Filter**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt)
+49. [**AdGuard Tracking Protection Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt)
+50. [**AdGuard Tracking Protection Filter — First-Party Trackers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers_firstparty.txt)
+51. [**AdGuard Tracking Protection filter — Third-Party Trackers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt)
+52. [**AdGuard Tracking Protection filter — Mobile Trackers**](https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/mobile.txt)
+53. [**AdGuard URL Tracking Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt)
+54. [**AdGuard Social Media Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt)
+55. [**AdGuard Annoyances Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt)
+56. [**AdGuard CNAME Original Trackers List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt)
+57. [**AdGuard CNAME Disguised Ads List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt)
+58. [**AdGuard CNAME Disguised Clickthroughs List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_clickthroughs.txt)
+59. [**AdGuard CNAME Disguised Microsites List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites.txt)
+60. [**AdGuard CNAME Disguised Trackers List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_trackers.txt)
+61. [**AdGuard CNAME Disguised Mail Trackers List**](https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_mail_trackers.txt)
+62. [**AdGuard Chinese Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt)
+63. [**AdGuard DNS Filter**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt)
+64. [**AdGuard for Android**](https://filters.adtidy.org/android/filters/11.txt)
+65. [**AdGuard for iOS**](https://filters.adtidy.org/ios/filters/11.txt)
+66. [**HyperADRules**](https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt)
+67. [**HyperADRules-DNS**](https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt)
+68. [**HyperADRules-Allow**](https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt)
+69. [**TheBestAdRules**](https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt)
+70. [**xinggsf's Rules**](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt)
+71. [**xinggsf's MV Rules**](https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt)
+72. [**superbigsteam Rules**](https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.txt)
+73. [**Adblock NoCoin List**](https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt)
+74. [**GoodbyeAds-AdBlock-Filter**](https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-AdBlock-Filter.txt)
+75. [**GoodbyeAds-Ultra-AdBlock-Filter**](https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master)
+76. [**Phishing URL Blocklist — AdGuard**](https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt)
+77. [**Phishing URL Blocklist — AdGuard Home**](https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt)
+78. [**Phishing URL Blocklist — uBlock Origin**](https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt)
+79. [**Malicious URL Blocklist — AdGuard**](https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag.txt)
+80. [**Malicious URL Blocklist — AdGuard Home**](https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt)
+81. [**Malicious URL Blocklist — uBlock Origin**](https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt)
+82. [**Tracking JS Blocklist**](https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt)
+83. [**Botnet IP Blocklist — AdGuard**](https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt)
+84. [**Botnet IP Blocklist — AdGuard Home**](https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt)
+85. [**Botnet IP Blocklist — uBlock Origin**](https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt)
+86. [**ABP Filters**](https://easylist-msie.adblockplus.org/abp-filters-anti-cv.txt)
+87. [**ADgk**](https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt)
+88. [**Yokoffing's Annoyance List**](https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt)
+89. [**Yokoffing's Privacy Essentials**](https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt)
+90. [**Spam404's Adblock List**](https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt)
+91. [**Brave-Specific Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt)
+92. [**Brave-iOS-Specific Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt)
+93. [**Brave-Android-Specific Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt)
+94. [**Brave-Firstparty Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt)
+95. [**Brave-Firstparty-CNAME Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt)
+96. [**Brave-Unbreak Filter**](https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt)
+97. [**Filter Unblocking Search Ads and Self-Promotions**](https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt)
+98. [**Peter Lowe’s Ad and Tracking Server List**](https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0)
+99. [**Dandelion Sprout's Anti-Malware List (AdGuard)**](https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt)
+100. [**Dandelion Sprout's Anti-Malware List (Adblock Plus and AdBlock)**](https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt)
+101. [**The Block List Project - Ads List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ads-ags.txt)
+102. [**The Block List Project - Basic Starter List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/basic-ags.txt)
+103. [**The Block List Project - Tracking List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/tracking-ags.txt)
+104. [**The Block List Project - Malware List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/malware-ags.txt)
+105. [**The Block List Project - Scam List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/scam-ags.txt)
+106. [**The Block List Project - Phishing List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt)
+107. [**The Block List Project - Ransomware List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt)
+108. [**The Block List Project - Fraud List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt)
+109. [**The Block List Project - Abuse List**](https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt)
+110. [**Anti-Adblock Killer**](https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt)
+111. [**Scam Blocklist (Adblock Plus)**](https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt)
+112. [**Smart-TV Blocklist for AdGuard Home**](https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt)
 
-**2. Anti-ad-Easylist**<br>  
-*https://anti-ad.net/easylist.txt*<br>
-
-**3. OISD Big List**<br>
-*https://big.oisd.nl*<br>
-
-**4. EasyList**<br>  
-*https://easylist.to/easylist/easylist.txt*<br>
-
-**5. EasyList — first-party servers**<br>  
-*https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt*<br>
-
-**6. EasyList — third-party servers**<br>  
-*https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt*<br>
-
-**7. EasyList Privacy**<br> 
-*https://easylist.to/easylist/easyprivacy.txt*<br>
-
-**8. EasyList Privacy — trackingservers**<br>  
-*https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_trackingservers.txt*<br>
-
-**9. EasyPrivacy — third-party trackers**<br>  
-*https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt*<br>
-
-**10. EasyPrivacy — third-party international trackers**<br>  
-*https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty_international.txt*<br>
-
-**11. Easylist Cookie List**<br>  
-*https://secure.fanboy.co.nz/fanboy-cookiemonster.txt*<br>
-
-**12. EasyList China**<br>  
-*https://raw.githubusercontent.com/easylist/easylistchina/master/easylistchina.txt*<br>
-    
-**13、Adblock Warning Removal List**<br>
-*https://easylist-downloads.adblockplus.org/antiadblockfilters.txt*<br>
-
-**14. Fanboy's Annoyance List**<br>  
-*https://secure.fanboy.co.nz/fanboy-annoyance.txt*<br>
-
-**15. Fanboy's Social Blocking List**<br>  
-*https://easylist.to/easylist/fanboy-social.txt*<br>
-    
-**16. Fanboy's Anti-Facebook List**<br>
-*https://www.fanboy.co.nz/fanboy-antifacebook.txt*<br>
-
-**17. Fanboy's Anti-thirdparty Fonts**<br>
-*https://www.fanboy.co.nz/fanboy-antifonts.txt*<br>
-    
-**18. Fanboy's Notifications Blocking List**<br>  
-*https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Other%20domains%20versions/FanboyNotifications-LoadableInUBO.txt*<br>
-    
-**19. CJX's Annoyance List**<br>  
-*https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt*<br>
-
-**20. CJX's EasyList Lite**<br>  
-*https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjxlist.txt*<br>
-
-**21. CJX's uBlock list**<br>  
-*https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-ublock.txt*<br>
-
-**22. uniartrisan's Adblock List Plus**<br>  
-*https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt*<br>
-
-**23. uniartrisan's Privacy List**<br>  
-*https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt*<br>
-
-**24. AdRules AdBlock List Plus**<br>  
-*https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt*<br>
-
-**25. AdRules DNS List**<br>  
-*https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt*<br>
-
-**26. AdBlock DNS**<br>  
-*https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt*<br>
-
-**27. AdBlock Filter**<br>  
-*https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt*<br>
-
-**28. GOODBYEADS**<br>  
-*https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt*<br>
-
-**29. GOODBYEADS-DNS**<br>  
-*https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt*<br>
-
-**30. GOODBYEADS-allow**<br>  
-*https://raw.githubusercontent.com/8680/GOODBYEADS/master/allow.txt*<br>
-
-**31. AWAvenue-Ads-Rule**<br>  
-*https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt*<br>
-
-**32. Bibaiji's ad-rules**<br>  
-*https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt*<br>
-
-**33. uBlock filters**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt*<br>
-
-**34. uBlock privacy filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt*<br>
-
-**35. uBlock mobile filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt*<br>
-
-**36. uBlock Badware risks filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt*<br>
-
-**37. uBlock Annoyances-Cookies filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-cookies.txt*<br>
-
-**38. uBlock Annoyances-others filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-others.txt*<br>
-
-**39. uBlock Resource abuse filters**<br>
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/resource-abuse.txt*<br>
-
-**40. uBlock Unbreak filter**<br>  
-*https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt*<br>
-
-**41. AdGuard Base filter cryptominers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/cryptominers.txt*<br>
-
-**42. AdGuard Exclusion rules**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exclusions.txt*<br>
-
-**43. AdGuard Exception rules**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt*<br>
-
-**44. AdGuardSDNSFilter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/rules.txt*<br>
-
-**45. AdGuard Base filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt*<br>
-
-**46. AdGuard Base filter — first-party servers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers_firstparty.txt*<br>
-
-**47. AdGuard Base filter — foreign servers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/foreign.txt*<br>
-
-**48. AdGuard Mobile filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt*<br>
-
-**49. AdGuard Tracking Protection filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt*<br>
-
-**50. AdGuard Tracking Protection filter — first-party trackers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers_firstparty.txt*<br>
-
-**51. AdGuard Tracking Protection filter — third-party trackers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt*<br>
-
-**52. AdGuard Tracking Protection filter — mobile trackers**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/mobile.txt*<br>
-
-**53. AdGuard URL Tracking filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt*<br>
-
-**54. AdGuard Social media filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt*<br>
-
-**55. AdGuard Annoyances filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt*<br>
-
-**56. AdGuard CNAME original trackers list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt*<br>
-
-**57. AdGuard CNAME disguised ads list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt*<br>
-
-**58. AdGuard CNAME disguised clickthroughs list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_clickthroughs.txt*<br>
-
-**59. AdGuard CNAME disguised microsites list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites.txt*<br>
-
-**60. AdGuard CNAME disguised trackers list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_trackers.txt*<br>
-
-**61. AdGuard CNAME disguised mail_trackers list**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_mail_trackers.txt*<br>
-
-**62. AdGuard Chinese filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt*<br>
-
-**63. AdGuard DNS filter**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt*<br>
-
-**64. AdGuard for Android**<br>  
-*https://filters.adtidy.org/android/filters/11.txt*<br>
-
-**65. AdGuard for iOS**<br>  
-*https://filters.adtidy.org/ios/filters/11.txt*<br>
-
-**66. HyperADRules**<br>  
-*https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt*<br>
-
-**67. HyperADRules-DNS**<br>  
-*https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt*<br>
-
-**68. HyperADRules-allow**<br>
-*https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt*<br>
-
-**69. TheBestAdrules**<br>  
-*https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt*<br>
-
-**70. xinggsf's rules**<br>  
-*https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt*<br>
-
-**71. xinggsf's mv rules**<br>  
-*https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt*<br>
-
-**72. superbigsteam rules**<br>  
-*https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.txt*<br>
-
-**73. adblock-nocoin-list**<br>  
-*https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt*<br>
-
-**74. GoodbyeAds-AdBlock-Filter**<br>  
-*https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-AdBlock-Filter.txt*<br>
-
-**75. GoodbyeAds-Ultra-AdBlock-Filter**<br>  
-*https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master*<br>
-
-**76. Phishing URL Blocklist——AdGuard**<br>  
-*https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt*<br>
-
-**77. Phishing URL Blocklist——AdGuard Home**<br>  
-*https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt*<br>
-
-**78. Phishing URL Blocklist——uBlock Origin**<br>  
-*https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt*<br>
-
-**79. Malicious URL Blocklist——AdGuard**<br>  
-*https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag.txt*<br>
-
-**80. Malicious URL Blocklist——AdGuard Home**<br>  
-*https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt*<br>
-
-**81. Malicious URL Blocklist——uBlock Origin**<br>  
-*https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt*<br>
-
-**82. Tracking JS Blocklist**<br>  
-*https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt*<br>
-
-**83. Botnet IP Blocklist——AdGuard**<br>  
-*https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt*<br>
-
-**84. Botnet IP Blocklist——AdGuard Home**<br>  
-*https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt*<br>
-    
-**85. Botnet IP Blocklist——uBlock Origin**<br>  
-*https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt*<br>
-
-**86. ABP filters**<br>  
-*https://easylist-msie.adblockplus.org/abp-filters-anti-cv.txt*<br>
-
-**87. adgk**<br>  
-*https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt*<br>
-
-**88. yokoffing's Annoyance List**<br>
-*https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt*<br>
-
-**89. yokoffing's Privacy Essentials**<br>  
-*https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt*<br>
-
-**90. Spam404's Adblock-list**<br>  
-*https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt*<br>
-
-**91. Brave-specific filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt*<br>
-
-**92. Brave-ios-specific filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt*<br>
-
-**93. Brave-Android-specific filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt*<br>
-
-**94. Brave-Firstparty filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt*<br>
-
-**95. Brave-Firstparty-cname filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt*<br>
-
-**96. Brave-Unbreak filter**<br>  
-*https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt*<br>
-
-**97. Filter unblocking search ads and self-promotions**<br>  
-*https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt*<br>
-
-**98. Peter Lowe’s Ad and Tracking Server List**<br>  
-*https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0*<br>
-
-**99. Dandelion Sprout's Anti-Malware List (for AdGuard)**<br>  
-*https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt*<br>
-
-**100. Dandelion Sprout's Anti-Malware List (for Adblock Plus and AdBlock)**<br>  
-*https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt*<br>
-
-**101. The Block List Project - Ads List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ads-ags.txt*<br>
-
-**102. The Block List Project - Basic Starter List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/basic-ags.txt*<br>
-
-**103. The Block List Project - Tracking List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/tracking-ags.txt*<br>
-
-**104. The Block List Project - Malware List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/malware-ags.txt*<br>
-
-**105. The Block List Project - Scam List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/scam-ags.txt*<br>
-
-**106. The Block List Project - Phishing List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt*<br>
-
-**107. The Block List Project - Ransomware List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt*<br>
-
-**108. The Block List Project - Fraud List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt*<br>
-
-**109. The Block List Project - Abuse List**<br>  
-*https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt*<br>
-     
-**110. Anti-Adblock Killer**<br>
-*https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt*<br>
-
-**111. Scam Blocklist (Adblock Plus)**<br>
-*https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt*<br>
-  
-**112. Smart-TV Blocklist for AdGuard Home**<br>
-*https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt*<br>
 
 </details>
 
