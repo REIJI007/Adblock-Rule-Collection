@@ -36,13 +36,30 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add ADBLOCK_RULE_COLLECTION.txt
+        
+        # 尝试提交更改
         git commit -m "Update Adblock rules" || echo "No changes to commit"
-        for attempt in {1..5}; do  # 尝试5次
+        
+        # 尝试推送更改
+        for attempt in {1..5}; do
           if git push; then
-            break
+            echo "Push successful."
+            exit 0  # 退出脚本
           else
             echo "Push failed, attempting to pull and rebase..."
-            git pull --rebase  # 拉取并合并远程更改
+            if git pull --rebase; then
+              # 拉取成功，继续Rebase
+              git add ADBLOCK_RULE_COLLECTION.txt
+              git rebase --continue
+              # 重新尝试推送
+              if git push; then
+                echo "Push successful after rebase."
+                exit 0  # 退出脚本
+              fi
+            else
+              echo "Pull failed, skipping rebase and push."
+              exit 1  # 退出脚本，失败状态
+            fi
             sleep $((attempt * 10))  # 指数级退避，首次等待10秒，第二次20秒，依此类推
           fi
         done
