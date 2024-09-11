@@ -173,8 +173,6 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
-import re
-
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -195,27 +193,28 @@ def is_valid_rule(line):
         # 正则表达式的快速有效性检查
         return is_valid_regex(line[1:-1])
 
-    # 检查是否包含 '$' 符号的规则（包括特定的过滤条件）
+    # 检查是否包含 '$' 符号的规则（高级修饰符规则）
     if "$" in line:
         return True
 
-    # 检查是否是基本的域名规则
+    # 检查是否是域名规则或 AdGuard 的特定规则（||example.com^ 或 ||example.com^$ 等）
     if line.startswith(('||', '|', '@@', '@@||')):
         return True
 
-    # 检查是否是 CSS 选择器规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#', '###')) or re.search(r'#\^?([^\s]+)$', line):
+    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则
+    # - '##'/'#@#'/'###' 隐藏或撤销 DOM 元素规则
+    # - '#?#'/'#@?#' uBlock Origin 复杂 CSS 选择器
+    # - '##^' AdGuard 样式选择器规则
+    # - '#%#' AdGuard 的 JavaScript 注入规则
+    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
-    # 检查是否是 AdGuard 特定的 JavaScript 注入规则（#%#）
-    if line.startswith('#%#'):
-        return True
-
-    # 检查是否是 AdGuard 特定的规则格式
-    if re.search(r'^\|\|[^\^]+\^\$', line) or re.search(r'^\|\|[^\^]+[^\s]*$', line):
+    # 检查是否是脚本注入规则（如 +js 或 #@#+js）
+    if '+js' in line or '#@#+js' in line:
         return True
 
     return False
+
 
 
 def is_valid_regex(pattern):
