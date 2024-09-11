@@ -188,10 +188,13 @@ def is_valid_rule(line):
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
         return False
 
-    # 检查是否是正则表达式规则
-    if line.startswith('/') and line.endswith('/'):
-        # 正则表达式的快速有效性检查
-        return is_valid_regex(line[1:-1])
+    # 检查是否是正则表达式规则或以 / 开头的路径匹配规则（符合 AdGuard 语法）
+    if line.startswith('/'):
+        # 如果以 / 结尾，按正则表达式规则处理
+        if line.endswith('/'):
+            return is_valid_regex(line[1:-1])
+        # 如果不以 / 结尾，则可能是 AdGuard 的路径匹配规则
+        return True
 
     # 检查是否包含 '$' 符号的规则（高级修饰符规则）
     if "$" in line:
