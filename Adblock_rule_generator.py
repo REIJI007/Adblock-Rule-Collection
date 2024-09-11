@@ -173,6 +173,8 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
+import re
+
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -202,7 +204,11 @@ def is_valid_rule(line):
         return True
 
     # 检查是否是 CSS 选择器规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#','###')) or re.search(r'#\^?([^\s]+)$', line):
+    if line.startswith(('##', '#@#', '#?#', '#@?#', '###')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
+
+    # 检查是否是 AdGuard 特定的 JavaScript 注入规则（#%#）
+    if line.startswith('#%#'):
         return True
 
     # 检查是否是 AdGuard 特定的规则格式
@@ -210,6 +216,7 @@ def is_valid_rule(line):
         return True
 
     return False
+
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效。
