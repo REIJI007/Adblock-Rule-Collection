@@ -173,6 +173,7 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
+
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -190,25 +191,23 @@ def is_valid_rule(line):
 
     # 检查是否是正则表达式规则或以 / 开头的路径匹配规则（符合 AdGuard 语法）
     if line.startswith('/'):
-        # 如果以 / 结尾，按正则表达式规则处理
         if line.endswith('/'):
             return is_valid_regex(line[1:-1])
-        # 如果不以 / 结尾，则可能是 AdGuard 的路径匹配规则
         return True
 
     # 检查是否包含 '$' 符号的规则（高级修饰符规则）
     if "$" in line:
         return True
 
-    # 检查是否是域名规则或 AdGuard 的特定规则（||example.com^ 或 ||example.com^$ 等）
+    # 检查是否是域名规则或 AdGuard 的特定规则
     if line.startswith(('||', '|', '@@', '@@||')):
         return True
 
+    # 处理路径规则和修饰符组合
+    if re.search(r'\|\|[^\s]+[^$]*\$', line):
+        return True
+
     # 检查是否是 CSS 选择器规则或 JavaScript 注入规则
-    # - '##'/'#@#'/'###' 隐藏或撤销 DOM 元素规则
-    # - '#?#'/'#@?#' uBlock Origin 复杂 CSS 选择器
-    # - '##^' AdGuard 样式选择器规则
-    # - '#%#' AdGuard 的 JavaScript 注入规则
     if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
@@ -218,22 +217,21 @@ def is_valid_rule(line):
 
     return False
 
-
-
 def is_valid_regex(pattern):
-    """检查正则表达式是否有效。
+    """检查给定的字符串是否为有效的正则表达式。
 
     参数:
-    pattern (str): 正则表达式字符串。
+    pattern (str): 要检查的正则表达式模式。
 
     返回:
-    bool: 如果正则表达式有效，则返回 True，否则返回 False。
+    bool: 如果是有效的正则表达式，则返回 True，否则返回 False。
     """
     try:
         re.compile(pattern)
         return True
     except re.error:
         return False
+
 
 
 async def download_filter(session, url):
