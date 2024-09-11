@@ -174,7 +174,7 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
 def is_valid_rule(line):
-    """检查一行规则是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
+    """检查一行规则是否符合 Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
     参数:
     line (str): 要检查的规则行。
