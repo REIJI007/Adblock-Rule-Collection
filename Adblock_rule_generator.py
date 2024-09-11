@@ -202,7 +202,7 @@ def is_valid_rule(line):
         return True
 
     # 检查是否是 CSS 选择器规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#'，'###')) or re.search(r'#\^?([^\s]+)$', line):
+    if line.startswith(('##', '#@#', '#?#', '#@?#','###')) or re.search(r'#\^?([^\s]+)$', line):
         return True
 
     # 检查是否是 AdGuard 特定的规则格式
