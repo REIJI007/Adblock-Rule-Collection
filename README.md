@@ -211,6 +211,10 @@
 29. [oisd](https://github.com/sjhgvr/oisd)
 30. [Perflyst](https://github.com/Perflyst/PiHoleBlocklist)
 31. [hagezi](https://github.com/hagezi/dns-blocklists)
+32. [neodevpro](https://github.com/neodevpro/neodevhost)
+33. [notracking](https://github.com/notracking/hosts-blocklists)
+34. [damengzhu](https://github.com/damengzhu/banad)
+35. [hectorm](https://github.com/hectorm/hblock)
 
   </details>
 
