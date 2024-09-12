@@ -166,6 +166,13 @@
 124. [HaGeZi's Threat Intelligence Feeds DNS Blocklist](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt)
 125. [HaGeZi's Allowlist Referral](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-referral.txt)
 126. [HaGeZi's Allowlist URL Shortener](https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-urlshortener.txt)
+127. [neodevpro's adblock list](https://raw.githubusercontent.com/neodevpro/neodevhost/master/adblocker)
+128. [notracking's adblock List](https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt)
+129. [damengzhu's adblock List](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt)
+130. [damengzhu's DNS List](https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt)
+131. [hectorm's adblock List](https://hblock.molinero.dev/hosts_adblock.txt)
+  
+
   
 </details>
 
