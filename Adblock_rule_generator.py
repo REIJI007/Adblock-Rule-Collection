@@ -166,7 +166,12 @@ filter_urls = [
     "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds-adblock-allow.txt",
     "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt",
     "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-referral.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-urlshortener.txt"
+    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-urlshortener.txt",
+    "https://raw.githubusercontent.com/neodevpro/neodevhost/master/adblocker",
+    "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt",
+    "https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt",
+    "https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt",
+    "https://hblock.molinero.dev/hosts_adblock.txt"
 ]
 
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
