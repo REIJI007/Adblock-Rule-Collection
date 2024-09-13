@@ -171,6 +171,7 @@
 129. [damengzhu's adblock List](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt)
 130. [damengzhu's DNS List](https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt)
 131. [hectorm's adblock List](https://hblock.molinero.dev/hosts_adblock.txt)
+132. [1Hosts's adblock list](https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt)
   
 
   
@@ -215,6 +216,7 @@
 33. [notracking](https://github.com/notracking/hosts-blocklists)
 34. [damengzhu](https://github.com/damengzhu/banad)
 35. [hectorm](https://github.com/hectorm/hblock)
+36. [badmojr](https://github.com/badmojr/1Hosts)
 
   </details>
 
