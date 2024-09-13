@@ -171,7 +171,8 @@ filter_urls = [
     "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt",
     "https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt",
     "https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt",
-    "https://hblock.molinero.dev/hosts_adblock.txt"
+    "https://hblock.molinero.dev/hosts_adblock.txt",
+    "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
 ]
 
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
