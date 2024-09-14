@@ -230,27 +230,32 @@ def is_valid_rule(line):
     # 其他非注释和空行的规则保持原样
     return line
 
-def validate_rules(rules):
-    """验证并处理规则集合，将特定格式的规则转换为正确的形式。
-
+def process_and_deduplicate_rules(rules):
+    """处理规则，先进行转换，然后进行去重。
+    
     参数:
     rules (set): 原始规则集合。
 
     返回:
-    set: 经过处理和转换的规则集合。
+    set: 处理后的去重规则集合。
     """
-    validated_rules = set()
+    processed_rules = []  # 使用列表保留顺序
+    seen = set()  # 用于去重
+
+    # 处理规则
     for rule in rules:
-        validated_rule = is_valid_rule(rule)
-        if validated_rule:  # 过滤掉注释和空行
-            validated_rules.add(validated_rule)
-    return validated_rules
+        processed_rule = is_valid_rule(rule)
+        if processed_rule and processed_rule not in seen:
+            processed_rules.append(processed_rule)  # 保持顺序
+            seen.add(processed_rule)
+
+    return processed_rules
 
 def write_rules_to_file(rules, save_path):
-    """将过滤规则写入指定的文件。
+    """将处理过的规则写入指定的文件。
 
     参数:
-    rules (set): 要写入的规则集合。
+    rules (list): 要写入的规则列表。
     save_path (str): 文件保存路径。
     """
     now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
@@ -334,12 +339,12 @@ def main():
     # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
 
-    # 再次验证规则
-    logging.info("Validating downloaded rules...")
-    rules = validate_rules(rules)
+    # 处理规则并去重
+    logging.info("Processing and deduplicating rules...")
+    rules = process_and_deduplicate_rules(rules)
 
-    logging.info("Finished downloading filters. Writing rules to file...")
-    print("Finished downloading filters. Writing rules to file...")
+    logging.info("Finished processing rules. Writing rules to file...")
+    print("Finished processing rules. Writing rules to file...")
 
     # 将收集的规则写入文件
     write_rules_to_file(rules, save_path)
