@@ -184,19 +184,30 @@ def is_valid_regex(pattern):
 
 def convert_rule(rule):
     """将 host 规则和 IP 地址转换为 AdBlock 语法规则。"""
+    # 匹配 hosts 文件中的 host 规则
     host_pattern = r'^(0\.0\.0\.0|127\.0\.0\.1)\s+([a-zA-Z0-9.-]+)$'
     match_host = re.match(host_pattern, rule)
     if match_host:
         domain = match_host.group(2)
         return f"||{domain}^"
     
+    # 匹配纯 IP 地址
     ip_pattern = r'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'
     match_ip = re.match(ip_pattern, rule)
     if match_ip:
         ip = match_ip.group(1)
         return f"||{ip}^"
 
+    # 匹配 IP$all 形式
+    ip_all_pattern = r'^\|\|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\$all$'
+    match_ip_all = re.match(ip_all_pattern, rule)
+    if match_ip_all:
+        ip = match_ip_all.group(1)
+        return f"||{ip}^"
+
+    # 对于其他规则保持不变
     return rule
+
 
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。"""
