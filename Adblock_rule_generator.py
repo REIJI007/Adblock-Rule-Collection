@@ -178,31 +178,19 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-import re
-from datetime import datetime, timezone, timedelta
-
-def is_ip_address(value):
-    """检查给定的值是否为合法的 IP 地址 (IPv4)。"""
-    try:
-        ip_pattern = re.compile(
-            r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$'  # 简单的 IPv4 匹配
-        )
-        return ip_pattern.match(value) is not None
-    except:
-        return False
-
-def is_valid_rule(line):
-    """检查并转换特定的规则行格式。
+def process_rule(line):
+    """处理规则行，并进行适当的转换和清理。
     
-    如果是 '127.0.0.1 example.com' 或 '0.0.0.0 example.com' 形式的行，将其转换为 '||example.com^' 格式。
-    如果是 IP 规则，将其转换为 '||IP^' 格式，且排除已经是 '||IP^' 的规则。
-    如果是注释或空行，则排除。
+    处理如下类型的规则：
+    - `127.0.0.1 example.com` 或 `0.0.0.0 example.com` 转换为 `||example.com^`
+    - `||IP$all` 转换为 `||IP^`
+    - 其他 IP 规则和域名规则保持适当格式
 
     参数:
     line (str): 规则行。
 
     返回:
-    str or None: 转换后的规则，或 None 如果是注释/空行。
+    str or None: 转换后的规则，或 None 如果是无效规则。
     """
     line = line.strip()  # 去除首尾空白字符
 
@@ -210,28 +198,48 @@ def is_valid_rule(line):
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return None
 
-    # 转换 127.0.0.1 或 0.0.0.0 开头的规则为 '||domain^'
+    # 转换 `127.0.0.1 example.com` 或 `0.0.0.0 example.com` 为 `||example.com^`
     if line.startswith(('127.0.0.1', '0.0.0.0')):
         parts = line.split()
-        if len(parts) == 2 and not is_ip_address(parts[1]):  # 确保第二部分不是 IP
+        if len(parts) == 2 and not is_ip_address(parts[1]):
             domain = parts[1]
             return f"||{domain}^"
-    
-    # 如果是 '||IP$all' 的规则，转换为 '||IP^'
+
+    # 转换 `||IP$all` 为 `||IP^`
     if line.startswith('||') and '$all' in line:
         ip_part = line.split('$')[0]
-        return f"{ip_part}^"
+        if is_ip_address(ip_part[2:]):
+            return f"{ip_part}^"
 
-    # 如果是纯 IP 规则，将其转换为 '||IP^'，但排除已经是 '||IP^' 的规则
+    # 处理纯 IP 规则
     if is_ip_address(line):
-        return f"||{line}^" if not line.endswith('^') else line
+        return f"||{line}^"
 
-    # 排除已经是 '||IP^' 的规则
-    if line.startswith('||') and line.endswith('^'):
-        return line.rstrip('^^')  # 去掉多余的 '^'
-
-    # 其他非注释和空行的规则保持原样
+    # 保持其他规则格式不变
     return line
+
+def is_ip_address(address):
+    """检查给定的字符串是否是一个有效的 IP 地址（IPv4）。"""
+    try:
+        parts = address.split('.')
+        return len(parts) == 4 and all(part.isdigit() and 0 <= int(part) <= 255 for part in parts)
+    except Exception:
+        return False
+
+def is_valid_rule(line):
+    """检查并转换规则行格式。
+    
+    这将处理规则行并将其转换为适当的格式。
+
+    参数:
+    line (str): 规则行。
+
+    返回:
+    str or None: 转换后的规则，或 None 如果是无效规则。
+    """
+    processed_rule = process_rule(line)
+    return processed_rule if processed_rule else None
+
 
 
 def validate_rules(rules):
