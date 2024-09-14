@@ -21,10 +21,8 @@ def install_packages(packages):
     packages (list): 包名列表，每个包名都是一个字符串。
     """
     for package in packages:
-        # 检查包是否已安装
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
-            # 安装包
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
             logging.info(f"Package '{package}' installed successfully.")
         else:
@@ -38,9 +36,6 @@ install_packages(required_packages)
 
 # 忽略不安全请求警告
 warnings.simplefilter('ignore', InsecureRequestWarning)
-
-# 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
-save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
     """排除有效规则格式。
@@ -58,74 +53,43 @@ def is_valid_rule(line):
 
     return True
 
-def is_valid_host_rule(line):
-    """验证 host 规则是否有效。
+def is_host_or_dnsmasq_rule(line):
+    """检查是否为 Host 或 Dnsmasq 规则。
 
     参数:
-    line (str): host 文件中的一行。
+    line (str): 要检查的规则行。
 
     返回:
-    bool: 如果该行是有效的 host 规则，返回 True，否则返回 False。
+    bool: 如果该行是 Host 或 Dnsmasq 规则，则返回 True，否则返回 False。
     """
-    line = line.strip()
-    if not line or line.startswith(('#', '!', '[', ';')):
-        return False
-    parts = line.split()
-    return len(parts) == 2 and all(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", part) for part in parts[:1])
-
-def is_valid_dnsmasq_rule(line):
-    """验证 Dnsmasq 规则是否有效。
-
-    参数:
-    line (str): Dnsmasq 规则中的一行。
-
-    返回:
-    bool: 如果该行是有效的 Dnsmasq 规则，返回 True，否则返回 False。
-    """
-    line = line.strip()
-    return bool(re.match(r"^address=\/[a-zA-Z0-9-]+\.[a-zA-Z]+\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", line))
-
-def convert_host_to_adblock(line):
-    """将 host 规则转换为 Adblock Plus 规则格式。
-
-    参数:
-    line (str): host 文件中的一行。
-
-    返回:
-    str: 对应的 Adblock Plus 规则。
-    """
-    parts = line.split()
-    domain = parts[1]
-    return f"||{domain}^"
-
-def convert_dnsmasq_to_adblock(line):
-    """将 Dnsmasq 规则转换为 Adblock Plus 规则格式。
-
-    参数:
-    line (str): Dnsmasq 规则中的一行。
-
-    返回:
-    str: 对应的 Adblock Plus 规则。
-    """
-    domain = line.split('/')[1]
-    return f"||{domain}^"
+    # 判断 Host 和 Dnsmasq 规则的简单条件
+    return line.startswith('0.0.0.0') or line.startswith('127.0.0.1') or line.startswith('::') or line.startswith('address=') or line.startswith('server=')
 
 def process_line(line):
-    """根据不同的规则类型处理行并转换为 Adblock Plus 规则。
+    """处理规则行，将 Host 或 Dnsmasq 规则转换为 Adblock Plus 规则。
 
     参数:
     line (str): 要处理的规则行。
 
     返回:
-    str: 转换后的 Adblock Plus 规则。
+    str: 处理后的规则行，如果不需要转换则返回原始行。
     """
-    if is_valid_rule(line):
+    line = line.strip()
+    if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
+        # 处理 host 规则
+        domain = line.split()[1]
+        return f"||{domain}^"
+    elif line.startswith('address='):
+        # 处理 Dnsmasq 规则
+        domain = line.split('=')[1]
+        return f"||{domain}^"
+    elif line.startswith('server='):
+        # 处理 Dnsmasq 规则
+        domain = line.split('=')[1]
+        return f"||{domain}^"
+    else:
+        # 不是 Host 或 Dnsmasq 规则，返回原始行
         return line
-    elif is_valid_host_rule(line):
-        return convert_host_to_adblock(line)
-    elif is_valid_dnsmasq_rule(line):
-        return convert_dnsmasq_to_adblock(line)
-    return None
 
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。
@@ -147,9 +111,9 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    processed_rule = process_line(line)  # 使用新处理函数
-                    if processed_rule:
-                        rules.add(processed_rule)
+                    if is_valid_rule(line):
+                        processed_line = process_line(line)
+                        rules.add(processed_line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
@@ -166,16 +130,15 @@ async def download_filters(urls):
     set: 一个包含所有有效规则的集合。
     """
     async with aiohttp.ClientSession() as session:
-        # 创建所有下载任务
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()  # 存储所有过滤规则的集合
+        all_rules = set()
         for future in asyncio.as_completed(tasks):
             rules = await future
-            all_rules.update(rules)  # 更新集合
+            all_rules.update(rules)
     return all_rules
 
 def validate_rules(rules):
-    """对规则集合进行重新验证，确保每条规则都符合格式。
+    """对规则集合进行去重，并验证规则的有效性。
 
     参数:
     rules (set): 要验证的规则集合。
@@ -199,7 +162,6 @@ def write_rules_to_file(rules, save_path):
     now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
     timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
 
-    # 文件头部注释
     header = f"""
 !Title: Adblock-Rule-Collection
 !Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
@@ -212,9 +174,9 @@ def write_rules_to_file(rules, save_path):
 
     with open(save_path, 'w', encoding='utf-8') as f:
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
-        f.write(header)  # 写入文件头
+        f.write(header)
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
+        f.writelines(f"{rule}\n" for rule in sorted(rules))
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(rules)}")
@@ -227,9 +189,9 @@ def main():
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
-    # 更新为需要下载的过滤器 URL 列表
+    # 替换为真实的 URL 列表
     filter_urls = [
-    "https://anti-ad.net/adguard.txt",
+            "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
@@ -363,9 +325,10 @@ def main():
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
     ]
 
-    # 异步下载所有过滤器并保存
-    loop = asyncio.get_event_loop()
-    rules = loop.run_until_complete(download_filters(filter_urls))
+    save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
+
+    # 下载所有过滤器并收集规则
+    rules = asyncio.run(download_filters(filter_urls))
 
     # 验证规则
     validated_rules = validate_rules(rules)
@@ -375,3 +338,8 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+    if sys.stdin.isatty():
+        input("Press Enter to exit...")
+    else:
+        print("Non-interactive mode, exiting...")
