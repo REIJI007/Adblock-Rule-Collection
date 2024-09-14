@@ -179,39 +179,20 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
-    """
-    检查并转换规则行的格式。支持匹配 host 文件格式和 Dnsmasq 格式的规则。
-    
+    """排除有效规则格式。
+
     参数:
-        line (str): 需要处理的规则行。
+    line (str): 要检查的规则行。
 
     返回:
-        str 或 None: 如果是有效的 host 或 Dnsmasq 规则，返回转换后的 Adblock Plus 规则格式；
-                     否则返回原条目或 None（如果是注释或空行）。
+    bool: 如果该行符合有效规则格式，则返回 True，否则返回 False。
     """
     line = line.strip()  # 去除首尾的空白字符
-
     # 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
-        return None
+    if not line or line.startswith(('!', '#', '[', ';', '//','/*','*/')):
+        return False
 
-    # 匹配 host 文件中的规则，如 '0.0.0.0 example.com' 或 '127.0.0.1 example.com'
-    parts = line.split()
-    if len(parts) == 2 and parts[0] in ('0.0.0.0', '127.0.0.1'):
-        domain = parts[1]
-        # 返回 Adblock Plus 规则格式
-        return f'||{domain}^'
-
-    # 匹配 Dnsmasq 格式的规则，如 'address=/example.com/0.0.0.0' 或 'address=/example.com/127.0.0.1'
-    if line.startswith('address=/') and (line.endswith('/0.0.0.0') or line.endswith('/127.0.0.1')):
-        # 提取域名部分并转换为 Adblock Plus 规则格式
-        domain = line.split('/')[1]
-        return f'||{domain}^'
-
-    # 如果不是 host 或 Dnsmasq 规则，保留原条目
-    return line
-
-
+    return True
 
 
 def is_valid_regex(pattern):
