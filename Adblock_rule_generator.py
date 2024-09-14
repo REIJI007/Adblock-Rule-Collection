@@ -179,9 +179,6 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
-
-import re
-
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -200,7 +197,7 @@ def is_valid_rule(line):
     # 检查是否是正则表达式规则或以 / 开头的路径匹配规则（符合 AdGuard 语法）
     if line.startswith('/'):
         if line.endswith('/'):
-            return is_valid_regex(line[1:-1])  # 假设此函数已经定义，用于检查正则表达式的有效性
+            return is_valid_regex(line[1:-1])  
         return True
 
     # 检查是否包含 '$' 或 '~' 符号的规则（高级修饰符规则）
@@ -227,11 +224,12 @@ def is_valid_rule(line):
     if re.search(r'\[\w+[\^*]?="[^"]+"\]', line):
         return True
 
-    # 检查是否是脚本注入规则或媒体规则，如 ##div:media 或 ##script:contains()
+    # 检查是否是脚本注入规则或媒体规则
     if re.search(r'(\+js|\:media|\:contains)', line):
         return True
 
     return False
+
 
 
 def is_valid_regex(pattern):
