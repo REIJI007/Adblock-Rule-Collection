@@ -7,6 +7,7 @@ import logging
 import asyncio
 import aiohttp
 import re
+import ipaddress
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
 
@@ -15,31 +16,20 @@ logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def install_packages(packages):
-    """确保所需的 Python 包已安装。
-
-    参数:
-    packages (list): 包名列表，每个包名都是一个字符串。
-    """
+    """确保所需的 Python 包已安装。"""
     for package in packages:
-        # 检查包是否已安装
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
-            # 安装包
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
             logging.info(f"Package '{package}' installed successfully.")
         else:
             logging.info(f"Package '{package}' is already installed.")
 
-# 要确保安装的包列表
 required_packages = ["aiohttp", "urllib3", "certifi"]
-
-# 安装所需的包
 install_packages(required_packages)
 
-# 忽略不安全请求警告
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
-# 过滤器 URL 列表
 filter_urls = [
     "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
@@ -175,191 +165,87 @@ filter_urls = [
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
 ]
 
-# 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def process_rule(line):
-    """处理规则行，并进行适当的转换和清理。
-
-    处理如下类型的规则：
-    - `127.0.0.1 example.com` 或 `0.0.0.0 example.com` 转换为 `||example.com^`
-    - `||IP$all` 转换为 `||IP^`
-    - 其他 IP 规则和域名规则保持适当格式
-
-    参数:
-    line (str): 规则行。
-
-    返回:
-    str or None: 转换后的规则，或 None 如果是无效规则。
-    """
-    line = line.strip()  # 去除首尾空白字符
-
-    # 忽略空行和注释行
+    """处理规则行并转换。"""
+    line = line.strip()
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return None
-
-    # 转换 `127.0.0.1 example.com` 或 `0.0.0.0 example.com` 为 `||example.com^`
     if line.startswith(('127.0.0.1', '0.0.0.0')):
         parts = line.split()
         if len(parts) == 2 and not is_ip_address(parts[1]):
-            domain = parts[1]
-            return f"||{domain}^"
-
-    # 转换 `||IP$all` 为 `||IP^`
+            return f"||{parts[1]}^"
     if line.startswith('||') and '$all' in line:
         ip_part = line.split('$')[0]
         if is_ip_address(ip_part[2:]):
             return f"{ip_part}^"
-
-    # 处理纯 IP 规则
     if is_ip_address(line):
         return f"||{line}^"
-
-    # 保持其他规则格式不变
     return line
 
 def is_ip_address(address):
-    """检查给定的字符串是否是一个有效的 IP 地址（IPv4）。"""
+    """检查是否是有效的 IP 地址（IPv4 或 IPv6）。"""
     try:
-        parts = address.split('.')
-        return len(parts) == 4 and all(part.isdigit() and 0 <= int(part) <= 255 for part in parts)
-    except Exception:
+        ipaddress.ip_address(address)
+        return True
+    except ValueError:
         return False
 
 def remove_duplicate_ip_rules(rules):
-    """去除重复的 IP 规则。
-    
-    优先保留 `||IP^` 格式的规则，去掉同一 IP 地址的 `||IP^$all` 等特殊格式。
-    
-    参数:
-    rules (list): 所有规则的列表。
-
-    返回:
-    list: 去重后的规则列表。
-    """
+    """去重 IP 规则，优先保留 `||IP^`。"""
     ip_rules = {}
     result = []
-
     for rule in rules:
         processed_rule = process_rule(rule)
         if processed_rule:
-            # 如果是 IP 规则，进行去重处理
-            if processed_rule.startswith('||') and is_ip_address(processed_rule[2:].split('^')[0]):
-                ip = processed_rule[2:].split('^')[0]  # 提取 IP
-                if ip not in ip_rules:
-                    ip_rules[ip] = processed_rule  # 首次遇到该 IP，保存
-                else:
-                    # 如果遇到 `||IP^`，将其作为最终规则，忽略任何 $all 或其他特殊规则
-                    if processed_rule == f"||{ip}^":
+            if processed_rule.startswith('||'):
+                ip = processed_rule[2:].split('^')[0]
+                if is_ip_address(ip):
+                    if ip not in ip_rules:
+                        ip_rules[ip] = processed_rule
+                    elif processed_rule == f"||{ip}^":
                         ip_rules[ip] = processed_rule
             else:
                 result.append(processed_rule)
-
-    # 将去重后的 IP 规则添加到结果中
     result.extend(ip_rules.values())
     return result
 
-def is_valid_rule(line):
-    """检查并转换规则行格式。
-    
-    这将处理规则行并将其转换为适当的格式。
-
-    参数:
-    line (str): 规则行。
-
-    返回:
-    str or None: 转换后的规则，或 None 如果是无效规则。
-    """
-    processed_rule = process_rule(line)
-    return processed_rule if processed_rule else None
-
-
 def validate_rules(rules):
-    """验证并处理规则集合，将特定格式的规则转换为正确的形式。
-
-    参数:
-    rules (set): 原始规则集合。
-
-    返回:
-    set: 经过处理和转换的规则集合。
-    """
-    validated_rules = set()
-    for rule in rules:
-        validated_rule = is_valid_rule(rule)
-        if validated_rule:  # 过滤掉注释和空行
-            validated_rules.add(validated_rule)
-    return validated_rules
+    """验证并处理规则集合。"""
+    return {process_rule(rule) for rule in rules if process_rule(rule)}
 
 def remove_duplicates(rules):
-    """显式去重规则，确保所有规则唯一。
-
-    参数:
-    rules (list): 规则列表。
-
-    返回:
-    list: 去重后的规则列表。
-    """
-    return list(set(rules))  # 使用 set 去重，然后转回 list
+    """显式去重规则。"""
+    return list(set(rules))
 
 def write_rules_to_file(rules, save_path):
-    """将过滤规则写入指定的文件。
+    """将过滤规则写入文件。"""
+    now = datetime.now(timezone(timedelta(hours=8)))
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')
 
-    参数:
-    rules (set): 要写入的规则集合。
-    save_path (str): 文件保存路径。
-    """
-    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
-
-    # 文件头部注释
     header = f"""
 !Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
-!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
-!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
-!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
 !生成时间: {timestamp}
 !有效规则数目: {len(rules)}
 """
-
-    # 去重操作
     rules = remove_duplicates(list(rules))
-
     with open(save_path, 'w', encoding='utf-8') as f:
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
-        f.write(header)  # 写入文件头
+        f.write(header)
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
+        f.writelines(f"{rule}\n" for rule in sorted(rules))
 
     logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {len(rules)}")
-
-    print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {len(rules)}")
-
 
 async def download_filter(session, url):
-    """异步下载单个过滤器文件并提取有效的规则。
-
-    参数:
-    session (aiohttp.ClientSession): aiohttp 客户端会话对象。
-    url (str): 要下载的过滤器 URL。
-
-    返回:
-    set: 一个包含所有有效规则的集合。
-    """
-    rules = set()  # 使用集合来存储唯一的规则
+    """异步下载单个过滤器文件并提取有效的规则。"""
+    rules = set()
     try:
         async with session.get(url, ssl=False) as response:
-            logging.info(f"Downloading from {url}")
             if response.status == 200:
-                logging.info(f"Successfully downloaded from {url}")
                 text = await response.text()
-                lines = text.splitlines()
-                for line in lines:
-                    line = line.strip()
-                    if line and is_valid_rule(line):
-                        rules.add(line)
+                rules.update(line.strip() for line in text.splitlines() if process_rule(line))
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
@@ -367,46 +253,23 @@ async def download_filter(session, url):
     return rules
 
 async def download_filters(urls):
-    """并行下载多个过滤器文件并返回所有过滤规则的集合。
-
-    参数:
-    urls (list): 过滤器 URL 列表。
-
-    返回:
-    set: 一个包含所有有效规则的集合。
-    """
+    """并行下载多个过滤器文件。"""
     async with aiohttp.ClientSession() as session:
-        # 创建所有下载任务
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()  # 存储所有过滤规则的集合
+        all_rules = set()
         for future in asyncio.as_completed(tasks):
-            rules = await future
-            all_rules.update(rules)  # 更新集合
+            all_rules.update(await future)
     return all_rules
 
 def main():
-    """主函数，执行过滤器下载和文件生成操作"""
+    """主函数。"""
     logging.info("Starting to download filters...")
-    print("Starting to download filters...")
-
-    # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
-
-    # 再次验证规则
-    logging.info("Validating downloaded rules...")
     rules = validate_rules(rules)
-
-    logging.info("Finished downloading filters. Writing rules to file...")
-    print("Finished downloading filters. Writing rules to file...")
-
-    # 将收集的规则写入文件
     write_rules_to_file(rules, save_path)
 
 if __name__ == "__main__":
     main()
-    
-    # 检查是否在交互式环境中运行
+
     if sys.stdin.isatty():
         input("Press Enter to exit...")
-    else:
-        print("Non-interactive mode, exiting...")
