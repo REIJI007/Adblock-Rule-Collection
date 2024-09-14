@@ -180,7 +180,7 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def process_rule(line):
     """处理规则行，并进行适当的转换和清理。
-    
+
     处理如下类型的规则：
     - `127.0.0.1 example.com` 或 `0.0.0.0 example.com` 转换为 `||example.com^`
     - `||IP$all` 转换为 `||IP^`
@@ -226,6 +226,39 @@ def is_ip_address(address):
     except Exception:
         return False
 
+def remove_duplicate_ip_rules(rules):
+    """去除重复的 IP 规则。
+    
+    优先保留 `||IP^` 格式的规则，去掉同一 IP 地址的 `||IP^$all` 等特殊格式。
+    
+    参数:
+    rules (list): 所有规则的列表。
+
+    返回:
+    list: 去重后的规则列表。
+    """
+    ip_rules = {}
+    result = []
+
+    for rule in rules:
+        processed_rule = process_rule(rule)
+        if processed_rule:
+            # 如果是 IP 规则，进行去重处理
+            if processed_rule.startswith('||') and is_ip_address(processed_rule[2:].split('^')[0]):
+                ip = processed_rule[2:].split('^')[0]  # 提取 IP
+                if ip not in ip_rules:
+                    ip_rules[ip] = processed_rule  # 首次遇到该 IP，保存
+                else:
+                    # 如果遇到 `||IP^`，将其作为最终规则，忽略任何 $all 或其他特殊规则
+                    if processed_rule == f"||{ip}^":
+                        ip_rules[ip] = processed_rule
+            else:
+                result.append(processed_rule)
+
+    # 将去重后的 IP 规则添加到结果中
+    result.extend(ip_rules.values())
+    return result
+
 def is_valid_rule(line):
     """检查并转换规则行格式。
     
@@ -239,6 +272,7 @@ def is_valid_rule(line):
     """
     processed_rule = process_rule(line)
     return processed_rule if processed_rule else None
+
 
 def validate_rules(rules):
     """验证并处理规则集合，将特定格式的规则转换为正确的形式。
