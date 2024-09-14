@@ -178,7 +178,6 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-
 def is_valid_rule(line):
     """检查一行是否是有效规则，排除注释和空行。
 
@@ -211,6 +210,22 @@ def is_valid_regex(pattern):
     except re.error:
         return False
 
+def convert_hosts_to_adblock(rule):
+    """将 hosts 格式的规则转换为 Adblock Plus 格式的规则。
+
+    参数:
+    rule (str): 要转换的规则。
+
+    返回:
+    str: 转换后的 Adblock Plus 格式规则。
+    """
+    # 匹配 hosts 规则格式
+    match = re.match(r'^(127\.0\.0\.1|0\.0\.0\.0)\s+(.+)$', rule)
+    if match:
+        domain = match.group(2).strip()
+        return f'||{domain}^'
+    return rule
+
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。
 
@@ -232,6 +247,8 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     if line and is_valid_rule(line):
+                        # 转换 hosts 规则为 Adblock Plus 格式
+                        line = convert_hosts_to_adblock(line)
                         rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -272,25 +289,6 @@ def validate_rules(rules):
             validated_rules.add(rule)
     return validated_rules
 
-def convert_ip_to_adblock_rule(rule):
-    """将 IP 地址规则转换为 Adblock Plus 格式的规则。
-
-    参数:
-    rule (str): 要转换的规则。
-
-    返回:
-    str: 转换后的规则。
-    """
-    ip_pattern = re.compile(r'^(?:\d{1,3}\.){3}\d{1,3}$')
-    if ' ' in rule:
-        rule = rule.split(' ')[1]  # 提取 IP 地址部分
-    rule = rule.strip()
-    if ip_pattern.match(rule):
-        return f"||{rule}^"
-    elif rule.endswith('$all'):
-        return f"||{rule[:-4]}^"
-    return rule
-
 def write_rules_to_file(rules, save_path):
     """将过滤规则写入指定的文件。
 
@@ -316,8 +314,7 @@ def write_rules_to_file(rules, save_path):
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
         f.write(header)  # 写入文件头
         f.write('\n')
-        for rule in sorted(rules):
-            f.write(f"{convert_ip_to_adblock_rule(rule)}\n")  # 转换规则并写入文件
+        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(rules)}")
