@@ -180,6 +180,8 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
 
+import re
+
 def is_valid_rule(line):
     """检查一行规则是否符合 Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
 
@@ -191,37 +193,46 @@ def is_valid_rule(line):
     """
     line = line.strip()  # 去除首尾的空白字符
 
-    # 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
+    # 排除空行和注释行，包括多种注释样式
+    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return False
 
     # 检查是否是正则表达式规则或以 / 开头的路径匹配规则（符合 AdGuard 语法）
     if line.startswith('/'):
         if line.endswith('/'):
-            return is_valid_regex(line[1:-1])
+            return is_valid_regex(line[1:-1])  # 假设此函数已经定义，用于检查正则表达式的有效性
         return True
 
-    # 检查是否包含 '$' 符号的规则（高级修饰符规则）
-    if "$" in line:
+    # 检查是否包含 '$' 或 '~' 符号的规则（高级修饰符规则）
+    if "$" in line or "~" in line:
         return True
 
-    # 检查是否是域名规则或 AdGuard 的特定规则
+    # 检查是否是域名规则，或以 `||`、`@@` 或 `@@||` 开头的规则
     if line.startswith(('||', '|', '@@', '@@||')):
         return True
 
-    # 处理路径规则和修饰符组合
+    # 匹配路径规则和修饰符组合，允许规则包含域名匹配和过滤条件
     if re.search(r'\|\|[^\s]+[^$]*\$', line):
         return True
 
-    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#')) or re.search(r'#\^?([^\s]+)$', line):
+    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则（包括 `+js`）
+    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#', '+js', '#@#+js')):
         return True
 
-    # 检查是否是脚本注入规则（如 +js 或 #@#+js）
-    if '+js' in line or '#@#+js' in line:
+    # 处理含有 :remove()、:has()、:contains() 伪类的 CSS 选择器
+    if re.search(r':(remove|has|contains)\(', line):
+        return True
+
+    # 检查是否是属性选择器规则，如 ##div[class^="ad"]
+    if re.search(r'\[\w+[\^*]?="[^"]+"\]', line):
+        return True
+
+    # 检查是否是脚本注入规则或媒体规则，如 ##div:media 或 ##script:contains()
+    if re.search(r'(\+js|\:media|\:contains)', line):
         return True
 
     return False
+
 
 def is_valid_regex(pattern):
     """检查给定的字符串是否为有效的正则表达式。
