@@ -186,14 +186,14 @@ def is_valid_rule(line):
         line (str): 需要处理的规则行。
 
     返回:
-        bool 或 str: 如果是有效规则行，返回转换后的 Adblock Plus 规则格式；
-                     否则返回 False。
+        str 或 None: 如果是有效规则行，返回转换后的 Adblock Plus 规则格式；
+                     如果不是有效规则，返回 None。
     """
     line = line.strip()  # 去除首尾的空白字符
 
     # 排除空行和注释行
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
-        return False
+        return None
 
     # 匹配 host 文件中的规则，如 '0.0.0.0 example.com' 或 '127.0.0.1 example.com'
     parts = line.split()
@@ -208,8 +208,9 @@ def is_valid_rule(line):
         domain = line.split('/')[1]
         return f'||{domain}^'
 
-    # 保留其他格式的规则
-    return True
+    # 非匹配规则返回 Line
+    return Line 
+
 
 
 def is_valid_regex(pattern):
