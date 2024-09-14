@@ -15,18 +15,28 @@ logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def install_packages(packages):
-    """确保所需的 Python 包已安装。"""
+    """确保所需的 Python 包已安装。
+
+    参数:
+    packages (list): 包名列表，每个包名都是一个字符串。
+    """
     for package in packages:
+        # 检查包是否已安装
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
+            # 安装包
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
             logging.info(f"Package '{package}' installed successfully.")
         else:
             logging.info(f"Package '{package}' is already installed.")
 
+# 要确保安装的包列表
 required_packages = ["aiohttp", "urllib3", "certifi"]
+
+# 安装所需的包
 install_packages(required_packages)
 
+# 忽略不安全请求警告
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
@@ -165,46 +175,57 @@ filter_urls = [
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
 ]
 
+# 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+
 def is_valid_rule(line):
-    """检查一行是否是有效规则，排除注释和空行。"""
-    line = line.strip()
+    """检查一行是否是有效规则，排除注释和空行。
+
+    参数:
+    line (str): 要检查的规则行。
+
+    返回:
+    bool: 如果该行不是空行或注释，则返回 True，否则返回 False。
+    """
+    line = line.strip()  # 去除首尾的空白字符
+
+    # 排除空行和注释行，包括多种注释样式
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return False
+
     return True
 
 
-def convert_rule(rule):
-    """将 host 规则和 IP 地址转换为 AdBlock 语法规则。"""
-    # 匹配 hosts 文件中的 host 规则
-    host_pattern = r'^(0\.0\.0\.0|127\.0\.0\.1)\s+([a-zA-Z0-9.-]+)$'
-    match_host = re.match(host_pattern, rule)
-    if match_host:
-        domain = match_host.group(2)
-        return f"||{domain}^"
-    
-    # 匹配纯 IP 地址
-    ip_pattern = r'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'
-    match_ip = re.match(ip_pattern, rule)
-    if match_ip:
-        ip = match_ip.group(1)
-        return f"||{ip}^"
 
-    # 匹配 IP$all 形式
-    ip_all_pattern = r'^\|\|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})\$all$'
-    match_ip_all = re.match(ip_all_pattern, rule)
-    if match_ip_all:
-        ip = match_ip_all.group(1)
-        return f"||{ip}^"
+def is_valid_regex(pattern):
+    """检查给定的字符串是否为有效的正则表达式。
 
-    # 对于其他规则保持不变
-    return rule
+    参数:
+    pattern (str): 要检查的正则表达式模式。
+
+    返回:
+    bool: 如果是有效的正则表达式，则返回 True，否则返回 False。
+    """
+    try:
+        re.compile(pattern)
+        return True
+    except re.error:
+        return False
+
 
 
 async def download_filter(session, url):
-    """异步下载单个过滤器文件并提取有效的规则。"""
-    rules = set()
+    """异步下载单个过滤器文件并提取有效的规则。
+
+    参数:
+    session (aiohttp.ClientSession): aiohttp 客户端会话对象。
+    url (str): 要下载的过滤器 URL。
+
+    返回:
+    set: 一个包含所有有效规则的集合。
+    """
+    rules = set()  # 使用集合来存储唯一的规则
     try:
         async with session.get(url, ssl=False) as response:
             logging.info(f"Downloading from {url}")
@@ -215,9 +236,7 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     if line and is_valid_rule(line):
-                        # 转换规则为 AdBlock 语法
-                        converted_rule = convert_rule(line)
-                        rules.add(converted_rule)
+                        rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
@@ -225,17 +244,32 @@ async def download_filter(session, url):
     return rules
 
 async def download_filters(urls):
-    """并行下载多个过滤器文件并返回所有过滤规则的集合。"""
+    """并行下载多个过滤器文件并返回所有过滤规则的集合。
+
+    参数:
+    urls (list): 过滤器 URL 列表。
+
+    返回:
+    set: 一个包含所有有效规则的集合。
+    """
     async with aiohttp.ClientSession() as session:
+        # 创建所有下载任务
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()
+        all_rules = set()  # 存储所有过滤规则的集合
         for future in asyncio.as_completed(tasks):
             rules = await future
-            all_rules.update(rules)
+            all_rules.update(rules)  # 更新集合
     return all_rules
 
 def validate_rules(rules):
-    """对规则集合进行重新验证，确保每条规则都符合格式。"""
+    """对规则集合进行重新验证，确保每条规则都符合格式。
+
+    参数:
+    rules (set): 要验证的规则集合。
+
+    返回:
+    set: 一个包含所有有效规则的集合。
+    """
     validated_rules = set()
     for rule in rules:
         if is_valid_rule(rule):
@@ -243,22 +277,35 @@ def validate_rules(rules):
     return validated_rules
 
 def write_rules_to_file(rules, save_path):
-    """将过滤规则写入指定的文件。"""
-    now = datetime.now(timezone(timedelta(hours=8)))
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')
+    """将过滤规则写入指定的文件。
+
+    参数:
+    rules (set): 要写入的规则集合。
+    save_path (str): 文件保存路径。
+    """
+    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
+
+    # 文件头部注释
     header = f"""
 !Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅
+!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
+!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
 !生成时间: {timestamp}
 !有效规则数目: {len(rules)}
 """
+
     with open(save_path, 'w', encoding='utf-8') as f:
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
-        f.write(header)
+        f.write(header)  # 写入文件头
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))
+        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
+
     logging.info(f"Successfully wrote rules to {save_path}")
+    logging.info(f"有效规则数目: {len(rules)}")
+
     print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(rules)}")
 
@@ -266,15 +313,24 @@ def main():
     """主函数，执行过滤器下载和文件生成操作"""
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
+
+    # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
+
+    # 再次验证规则
     logging.info("Validating downloaded rules...")
     rules = validate_rules(rules)
+
     logging.info("Finished downloading filters. Writing rules to file...")
     print("Finished downloading filters. Writing rules to file...")
+
+    # 将收集的规则写入文件
     write_rules_to_file(rules, save_path)
 
 if __name__ == "__main__":
     main()
+    
+    # 检查是否在交互式环境中运行
     if sys.stdin.isatty():
         input("Press Enter to exit...")
     else:
