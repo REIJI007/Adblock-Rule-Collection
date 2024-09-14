@@ -174,13 +174,6 @@ def is_valid_rule(line):
         return False
     return True
 
-def is_valid_regex(pattern):
-    """检查给定的字符串是否为有效的正则表达式。"""
-    try:
-        re.compile(pattern)
-        return True
-    except re.error:
-        return False
 
 def convert_rule(rule):
     """将 host 规则和 IP 地址转换为 AdBlock 语法规则。"""
