@@ -189,9 +189,9 @@ def main():
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
-    # 替换为真实的 URL 列表
+    # 收集合并的过滤器列表、host列表、Dnsmasq列表
     filter_urls = [
-            "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
