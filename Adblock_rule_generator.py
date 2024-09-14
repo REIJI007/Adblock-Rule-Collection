@@ -240,8 +240,6 @@ def is_valid_rule(line):
     processed_rule = process_rule(line)
     return processed_rule if processed_rule else None
 
-
-
 def validate_rules(rules):
     """验证并处理规则集合，将特定格式的规则转换为正确的形式。
 
