@@ -1,13 +1,15 @@
 import os
 import sys
 import subprocess
+import warnings
+import importlib.util
 import logging
 import asyncio
 import aiohttp
 import re
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
-
+# 设置日志配置
 logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -19,42 +21,68 @@ def install_packages(packages):
             logging.info(f"Package '{package}' installed successfully.")
         else:
             logging.info(f"Package '{package}' is already installed.")
-
+# 要确保安装的包列表
 required_packages = ["aiohttp", "urllib3", "certifi"]
+# 安装所需的包
 install_packages(required_packages)
-
+# 忽略不安全请求警告
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
+
+
+
+
+
+
+
+
+
+
 def is_valid_rule(line):
-    line = line.strip()
-    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
+    line = line.strip()  # 去除首尾的空白字符
+    # 排除空行和注释行
+    if not line or line.startswith(('!', '#', '[', ';', '//','/*','*/')):
         return False
+
     return True
 
+
+
+
 def is_ip_address(line):
+    """检查是否为纯IP地址"""
+    # 简单匹配IP地址格式（IPv4）
     return re.match(r'^\d{1,3}(\.\d{1,3}){3}$', line) is not None
 
+
 def is_host_or_dnsmasq_rule(line):
+    # 判断 Host 和 Dnsmasq 规则的简单条件
     return line.startswith('0.0.0.0') or line.startswith('127.0.0.1') or line.startswith('::') or line.startswith('address=') or line.startswith('server=')
+
 
 def process_line(line):
     line = line.strip()
     if is_ip_address(line):
         return f"||{line}^"
-    elif line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
+        # 处理IP地址
+    if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
+        # 处理 host 规则
         domain = line.split()[1]
         return f"||{domain}^"
     elif line.startswith('address='):
+        # 处理 Dnsmasq 规则
         domain = line.split('=')[1]
         return f"||{domain}^"
     elif line.startswith('server='):
+        # 处理 Dnsmasq 规则
         domain = line.split('=')[1]
         return f"||{domain}^"
     else:
+        # 不是 Host 或 Dnsmasq 规则，返回原始行
         return line
 
 async def download_filter(session, url):
-    rules = set()
+    rules = set()  # 使用集合来存储唯一的规则
     try:
         async with session.get(url, ssl=False) as response:
             logging.info(f"Downloading from {url}")
@@ -90,8 +118,9 @@ def validate_rules(rules):
     return validated_rules
 
 def write_rules_to_file(rules, save_path):
-    now = datetime.now(timezone(timedelta(hours=8)))
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')
+    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
+
     header = f"""
 !Title: Adblock-Rule-Collection
 !Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
@@ -110,13 +139,13 @@ def write_rules_to_file(rules, save_path):
     logging.info(f"有效规则数目: {len(rules)}")
     print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(rules)}")
-
 def main():
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
+    # 收集合并的过滤器列表、host列表、Dnsmasq列表
     filter_urls = [
-            "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
@@ -250,10 +279,14 @@ def main():
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
     ]
     save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
+    # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
-    validated_rules = validate_rules(rules)
-    write_rules_to_file(validated_rules, save_path)
 
+    # 验证规则
+    validated_rules = validate_rules(rules)
+
+    # 写入文件
+    write_rules_to_file(validated_rules, save_path)
 if __name__ == '__main__':
     main()
     if sys.stdin.isatty():
