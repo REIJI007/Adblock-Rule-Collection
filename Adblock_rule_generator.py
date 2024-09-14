@@ -186,7 +186,7 @@ def is_valid_rule(line):
     line (str): 要检查的规则行。
 
     返回:
-    bool: 如果该行不是空行或注释，并且格式有效，则返回 True，否则返回 False。
+    str or bool: 如果该行是有效规则且需要转换，返回转换后的规则；如果是有效规则但不需要转换，则返回原始规则；否则返回 False。
     """
     line = line.strip()  # 去除首尾的空白字符
 
@@ -194,12 +194,12 @@ def is_valid_rule(line):
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return False
 
-    # 转换 127.0.0.1 和 0.0.0.0 形式的规则为 ||example.com^
+    # 匹配 127.0.0.1 或 0.0.0.0 开头的规则并转换为 ||example.com^ 格式
     match = re.match(r"^(127\.0\.0\.1|0\.0\.0\.0)\s+([\w\.-]+)$", line)
     if match:
         domain = match.group(2)
         return f"||{domain}^"
-    
+
     return line
 
 def validate_rules(rules):
@@ -218,6 +218,8 @@ def validate_rules(rules):
         if validated_rule:  # 如果返回值不是 False
             validated_rules.add(validated_rule)
     return validated_rules
+
+
 
 
 
