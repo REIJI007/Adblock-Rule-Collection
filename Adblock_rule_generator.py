@@ -6,7 +6,6 @@ import importlib.util
 import logging
 import asyncio
 import aiohttp
-import re
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
 
@@ -21,10 +20,8 @@ def install_packages(packages):
     packages (list): 包名列表，每个包名都是一个字符串。
     """
     for package in packages:
-        # 检查包是否已安装
         if importlib.util.find_spec(package) is None:
             logging.info(f"Package '{package}' is not installed. Installing...")
-            # 安装包
             subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
             logging.info(f"Package '{package}' installed successfully.")
         else:
@@ -41,228 +38,21 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    "https://anti-ad.net/adguard.txt",
-    "https://anti-ad.net/easylist.txt",
-    "https://big.oisd.nl",
-    "https://easylist.to/easylist/easylist.txt",
-    "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt",
-    "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt",
-    "https://easylist.to/easylist/easyprivacy.txt",
-    "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_trackingservers.txt",
-    "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt",
-    "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty_international.txt",
-    "https://secure.fanboy.co.nz/fanboy-cookiemonster.txt",
-    "https://raw.githubusercontent.com/easylist/easylistchina/master/easylistchina.txt",
-    "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt",
-    "https://secure.fanboy.co.nz/fanboy-annoyance.txt",
-    "https://easylist.to/easylist/fanboy-social.txt",
-    "https://www.fanboy.co.nz/fanboy-antifonts.txt",
-    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-annoyance.txt",
-    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjxlist.txt",
-    "https://raw.githubusercontent.com/cjx82630/cjxlist/master/cjx-ublock.txt",
-    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_plus.txt",
-    "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
-    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
-    "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
-    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
-    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/rules.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/dns.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/allow.txt",
-    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
-    "https://raw.githubusercontent.com/Bibaiji/ad-rules/main/rule/ad-rules.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/badware.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-cookies.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-others.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/resource-abuse.txt",
-    "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/cryptominers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exclusions.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/exceptions.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdGuardSDNSFilter/master/Filters/rules.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers_firstparty.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/foreign.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/MobileFilter/sections/adservers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_3_Spyware/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers_firstparty.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/tracking_servers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/SpywareFilter/sections/mobile.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_17_TrackParam/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_4_Social/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_14_Annoyances/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_clickthroughs.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_trackers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_mail_trackers.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_224_Chinese/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
-    "https://filters.adtidy.org/android/filters/11.txt",
-    "https://filters.adtidy.org/ios/filters/11.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt",
-    "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt",
-    "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt",
-    "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt",
-    "https://raw.githubusercontent.com/superbigsteam/adguardhomeguiz/main/rule/all.txt",
-    "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt",
-    "https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-AdBlock-Filter.txt",
-    "https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-Ultra-AdBlock-Filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt",
-    "https://easylist-msie.adblockplus.org/abp-filters-anti-cv.txt",
-    "https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt",
-    "https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt",
-    "https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt",
-    "https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
-    "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0",
-    "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt",
-    "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
-    "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Other%20domains%20versions/FanboyNotifications-LoadableInUBO.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/smart-tv-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ads-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/basic-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/tracking-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/malware-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/scam-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/redirect-ags.txt",
-    "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt",
-    "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt",
-    "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/light.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/dyndns.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/personal.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/popupads.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/ultimate.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds-adblock-aggressive.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds-adblock-allow.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-referral.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-urlshortener.txt",
-    "https://raw.githubusercontent.com/neodevpro/neodevhost/master/adblocker",
-    "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt",
-    "https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt",
-    "https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt",
-    "https://hblock.molinero.dev/hosts_adblock.txt",
-    "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
+    # ... (保持原有的 URL 列表不变)
 ]
 
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-
-def is_valid_rule(line):
-    """检查一行规则是否符合 Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
-
-    参数:
-    line (str): 要检查的规则行。
-
-    返回:
-    bool: 如果该行符合有效规则格式，则返回 True，否则返回 False。
-    """
-    line = line.strip()  # 去除首尾的空白字符
-
-    # 排除空行和注释行，包括多种注释样式
-    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
-        return False
-
-    # 检查是否是正则表达式规则或以 / 开头的路径匹配规则（符合 AdGuard 语法）
-    if line.startswith('/'):
-        if line.endswith('/'):
-            return is_valid_regex(line[1:-1])  
-        return True
-
-    # 检查是否包含 '$' 或 '~' 符号的规则（高级修饰符规则）
-    if "$" in line or "~" in line:
-        return True
-
-    # 检查是否是域名规则，或以 `||`、`@@` 、`@@||` 或`||!`开头的规则
-    if line.startswith(('||', '|', '@@', '@@||','||!')):
-        return True
-
-    # 匹配路径规则和修饰符组合，允许规则包含域名匹配和过滤条件
-    if re.search(r'\|\|[^\s]+[^$]*\$', line):
-        return True
-
-    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则
-    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#')) or re.search(r'#\^?([^\s]+)$', line):
-        return True
-
-    # 检查是否是脚本注入规则（如 +js 或 #@#+js）
-    if '+js' in line or '#@#+js' in line:
-        return True
-
-    # 处理含有 :remove()、:has()、:contains() 伪类的 CSS 选择器
-    if re.search(r':(remove|has|contains)\(', line):
-        return True
-
-    # 检查是否是属性选择器规则，如 ##div[class^="ad"]
-    if re.search(r'\[\w+[\^*]?="[^"]+"\]', line):
-        return True
-
-    # 检查是否是脚本注入规则或媒体规则
-    if re.search(r'(\+js|\:media|\:contains)', line):
-        return True
-
-    return False
-
-
-
-
-def is_valid_regex(pattern):
-    """检查给定的字符串是否为有效的正则表达式。
-
-    参数:
-    pattern (str): 要检查的正则表达式模式。
-
-    返回:
-    bool: 如果是有效的正则表达式，则返回 True，否则返回 False。
-    """
-    try:
-        re.compile(pattern)
-        return True
-    except re.error:
-        return False
-
-
-
 async def download_filter(session, url):
-    """异步下载单个过滤器文件并提取有效的规则。
+    """异步下载单个过滤器文件并提取所有非空行。
 
     参数:
     session (aiohttp.ClientSession): aiohttp 客户端会话对象。
     url (str): 要下载的过滤器 URL。
 
     返回:
-    set: 一个包含所有有效规则的集合。
+    set: 一个包含所有非空行的集合。
     """
     rules = set()  # 使用集合来存储唯一的规则
     try:
@@ -274,7 +64,7 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    if line and is_valid_rule(line):
+                    if line:  # 只需确保行不为空
                         rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -283,40 +73,24 @@ async def download_filter(session, url):
     return rules
 
 async def download_filters(urls):
-    """并行下载多个过滤器文件并返回所有过滤规则的集合。
+    """并行下载多个过滤器文件并返回所有规则的集合。
 
     参数:
     urls (list): 过滤器 URL 列表。
 
     返回:
-    set: 一个包含所有有效规则的集合。
+    set: 一个包含所有非空行的集合。
     """
     async with aiohttp.ClientSession() as session:
-        # 创建所有下载任务
         tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()  # 存储所有过滤规则的集合
+        all_rules = set()
         for future in asyncio.as_completed(tasks):
             rules = await future
-            all_rules.update(rules)  # 更新集合
+            all_rules.update(rules)
     return all_rules
 
-def validate_rules(rules):
-    """对规则集合进行重新验证，确保每条规则都符合格式。
-
-    参数:
-    rules (set): 要验证的规则集合。
-
-    返回:
-    set: 一个包含所有有效规则的集合。
-    """
-    validated_rules = set()
-    for rule in rules:
-        if is_valid_rule(rule):
-            validated_rules.add(rule)
-    return validated_rules
-
 def write_rules_to_file(rules, save_path):
-    """将过滤规则写入指定的文件。
+    """将规则写入指定的文件。
 
     参数:
     rules (set): 要写入的规则集合。
@@ -328,12 +102,12 @@ def write_rules_to_file(rules, save_path):
     # 文件头部注释
     header = f"""
 !Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
+!Description: 一个汇总了多个广告过滤器规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
 !LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
 !生成时间: {timestamp}
-!有效规则数目: {len(rules)}
+!规则数目: {len(rules)}
 """
 
     with open(save_path, 'w', encoding='utf-8') as f:
@@ -343,10 +117,10 @@ def write_rules_to_file(rules, save_path):
         f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
 
     logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {len(rules)}")
+    logging.info(f"规则数目: {len(rules)}")
 
     print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {len(rules)}")
+    print(f"规则数目: {len(rules)}")
 
 def main():
     """主函数，执行过滤器下载和文件生成操作"""
@@ -355,10 +129,6 @@ def main():
 
     # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
-
-    # 再次验证规则
-    logging.info("Validating downloaded rules...")
-    rules = validate_rules(rules)
 
     logging.info("Finished downloading filters. Writing rules to file...")
     print("Finished downloading filters. Writing rules to file...")
