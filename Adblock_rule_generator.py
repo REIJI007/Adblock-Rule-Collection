@@ -178,7 +178,6 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
-
 def is_ip_address(value):
     """检查给定的值是否为合法的 IP 地址 (IPv4 或 IPv6)"""
     try:
@@ -193,9 +192,8 @@ def is_valid_rule(line):
     """检查并转换特定的规则行格式。
     
     如果是 '127.0.0.1 example.com' 或 '0.0.0.0 example.com' 形式的行，将其转换为 '||example.com^' 格式。
-    如果是带有 '$all' 修饰符的 IP 规则，转换为 '||IP^'。
-    如果是纯 IP 规则，转换为 '||IP^'。
-    如果是已经是 '||IP^' 格式的规则，则保持不变。
+    如果是 IP 规则，将其转换为 '||IP^' 格式，且排除已经是 '||IP^' 的规则。
+    如果是注释或空行，则排除。
 
     参数:
     line (str): 规则行。
@@ -221,12 +219,12 @@ def is_valid_rule(line):
         ip_part = line.split('$')[0]
         return f"{ip_part}^"
 
-    # 如果是纯 IP 规则，并且不是 '||IP^' 的形式，将其转换为 '||IP^'
-    if is_ip_address(line) and not line.startswith('||'):
+    # 如果是纯 IP 规则，将其转换为 '||IP^'，但排除已经是 '||IP^' 的规则
+    if is_ip_address(line):
         return f"||{line}^"
 
-    # 如果已经是 '||IP^' 格式，保持不变
-    if line.startswith('||') and is_ip_address(line[2:].strip('^')):
+    # 排除已经是 '||IP^' 的规则
+    if line.startswith('||') and line.endswith('^'):
         return line
 
     # 其他非注释和空行的规则保持原样
@@ -354,4 +352,3 @@ if __name__ == "__main__":
         input("Press Enter to exit...")
     else:
         print("Non-interactive mode, exiting...")
-
