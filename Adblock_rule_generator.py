@@ -41,7 +41,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-       "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
@@ -178,14 +178,15 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+
 def is_valid_rule(line):
-    """检查一行是否是有效规则，排除注释和空行。
+    """检查一行是否是有效规则，排除注释和空行，并将 127.0.0.1 和 0.0.0.0 的格式转换为 ||example.com^。
 
     参数:
     line (str): 要检查的规则行。
 
     返回:
-    bool: 如果该行不是空行或注释，则返回 True，否则返回 False。
+    bool: 如果该行不是空行或注释，并且格式有效，则返回 True，否则返回 False。
     """
     line = line.strip()  # 去除首尾的空白字符
 
@@ -193,38 +194,33 @@ def is_valid_rule(line):
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
         return False
 
-    return True
-
-def is_valid_regex(pattern):
-    """检查给定的字符串是否为有效的正则表达式。
-
-    参数:
-    pattern (str): 要检查的正则表达式模式。
-
-    返回:
-    bool: 如果是有效的正则表达式，则返回 True，否则返回 False。
-    """
-    try:
-        re.compile(pattern)
-        return True
-    except re.error:
-        return False
-
-def convert_hosts_to_adblock(rule):
-    """将 hosts 格式的规则转换为 Adblock Plus 格式的规则。
-
-    参数:
-    rule (str): 要转换的规则。
-
-    返回:
-    str: 转换后的 Adblock Plus 格式规则。
-    """
-    # 匹配 hosts 规则格式
-    match = re.match(r'^(127\.0\.0\.1|0\.0\.0\.0)\s+(.+)$', rule)
+    # 转换 127.0.0.1 和 0.0.0.0 形式的规则为 ||example.com^
+    match = re.match(r"^(127\.0\.0\.1|0\.0\.0\.0)\s+([\w\.-]+)$", line)
     if match:
-        domain = match.group(2).strip()
-        return f'||{domain}^'
-    return rule
+        domain = match.group(2)
+        return f"||{domain}^"
+    
+    return line
+
+def validate_rules(rules):
+    """对规则集合进行重新验证并转换特殊格式，确保每条规则都符合格式。
+
+    参数:
+    rules (set): 要验证的规则集合。
+
+    返回:
+    set: 一个包含所有有效规则的集合。
+    """
+    validated_rules = set()
+    for rule in rules:
+        # 调用 is_valid_rule 来处理规则转换和验证
+        validated_rule = is_valid_rule(rule)
+        if validated_rule:  # 如果返回值不是 False
+            validated_rules.add(validated_rule)
+    return validated_rules
+
+
+
 
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。
@@ -247,8 +243,6 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     if line and is_valid_rule(line):
-                        # 转换 hosts 规则为 Adblock Plus 格式
-                        line = convert_hosts_to_adblock(line)
                         rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
