@@ -7,8 +7,10 @@ import logging
 import asyncio
 import aiohttp
 import re
+import time
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
+
 # 设置日志配置
 logging.basicConfig(filename='adblock_rule_downloader.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,84 +23,73 @@ def install_packages(packages):
             logging.info(f"Package '{package}' installed successfully.")
         else:
             logging.info(f"Package '{package}' is already installed.")
+
 # 要确保安装的包列表
 required_packages = ["aiohttp", "urllib3", "certifi"]
+
 # 安装所需的包
 install_packages(required_packages)
+
 # 忽略不安全请求警告
 warnings.simplefilter('ignore', InsecureRequestWarning)
 
-
-
-
-
-
-
-
-
-
-
 def is_valid_rule(line):
     line = line.strip()  # 去除首尾的空白字符
-    # 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[', ';', '//','/*','*/')):
+    if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/')):
         return False
-
     return True
-
-
-
 
 def is_ip_address(line):
     """检查是否为纯IP地址"""
-    # 简单匹配IP地址格式（IPv4）
     return re.match(r'^\d{1,3}(\.\d{1,3}){3}$', line) is not None
 
-
 def is_host_or_dnsmasq_rule(line):
-    # 判断 Host 和 Dnsmasq 规则的简单条件
     return line.startswith('0.0.0.0') or line.startswith('127.0.0.1') or line.startswith('::') or line.startswith('address=') or line.startswith('server=')
-
 
 def process_line(line):
     line = line.strip()
     if is_ip_address(line):
         return f"||{line}^"
-        # 处理IP地址
     if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
-        # 处理 host 规则
         domain = line.split()[1]
         return f"||{domain}^"
     elif line.startswith('address='):
-        # 处理 Dnsmasq 规则
         domain = line.split('=')[1]
         return f"||{domain}^"
     elif line.startswith('server='):
-        # 处理 Dnsmasq 规则
         domain = line.split('=')[1]
         return f"||{domain}^"
     else:
-        # 不是 Host 或 Dnsmasq 规则，返回原始行
         return line
 
-async def download_filter(session, url):
-    rules = set()  # 使用集合来存储唯一的规则
-    try:
-        async with session.get(url, ssl=False) as response:
-            logging.info(f"Downloading from {url}")
-            if response.status == 200:
-                logging.info(f"Successfully downloaded from {url}")
-                text = await response.text()
-                lines = text.splitlines()
-                for line in lines:
-                    line = line.strip()
-                    if is_valid_rule(line):
-                        processed_line = process_line(line)
-                        rules.add(processed_line)
-            else:
-                logging.error(f"Failed to download from {url} with status code {response.status}")
-    except Exception as e:
-        logging.error(f"Error downloading {url}: {e}")
+async def download_filter(session, url, retries=5):
+    rules = set()
+    attempt = 0
+    while attempt < retries:
+        try:
+            async with session.get(url, ssl=False) as response:
+                logging.info(f"Downloading from {url}, attempt {attempt + 1}")
+                if response.status == 200:
+                    logging.info(f"Successfully downloaded from {url}")
+                    text = await response.text()
+                    lines = text.splitlines()
+                    for line in lines:
+                        line = line.strip()
+                        if is_valid_rule(line):
+                            processed_line = process_line(line)
+                            rules.add(processed_line)
+                    break
+                else:
+                    logging.error(f"Failed to download from {url} with status code {response.status}")
+        except Exception as e:
+            logging.error(f"Error downloading {url}: {e}")
+        attempt += 1
+        if attempt < retries:
+            wait_time = 2 ** attempt  # 指数回退时间，逐次递增
+            logging.info(f"Retrying in {wait_time} seconds...")
+            await asyncio.sleep(wait_time)
+        else:
+            logging.error(f"Max retries reached for {url}")
     return rules
 
 async def download_filters(urls):
@@ -139,11 +130,11 @@ def write_rules_to_file(rules, save_path):
     logging.info(f"有效规则数目: {len(rules)}")
     print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(rules)}")
+
 def main():
     logging.info("Starting to download filters...")
     print("Starting to download filters...")
 
-    # 收集合并的过滤器列表、host列表、Dnsmasq列表
     filter_urls = [
     "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
@@ -278,15 +269,14 @@ def main():
     "https://hblock.molinero.dev/hosts_adblock.txt",
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
     ]
+
     save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
-    # 下载所有过滤器并收集规则
     rules = asyncio.run(download_filters(filter_urls))
 
-    # 验证规则
     validated_rules = validate_rules(rules)
 
-    # 写入文件
     write_rules_to_file(validated_rules, save_path)
+
 if __name__ == '__main__':
     main()
     if sys.stdin.isatty():
