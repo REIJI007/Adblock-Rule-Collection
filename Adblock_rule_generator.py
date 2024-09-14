@@ -38,7 +38,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-    "https://anti-ad.net/adguard.txt",
+        "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
@@ -175,15 +175,26 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+def is_comment(line):
+    """检查一行是否为注释。
+
+    参数:
+    line (str): 要检查的行。
+
+    返回:
+    bool: 如果是注释行，则返回 True，否则返回 False。
+    """
+    return line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--'))
+
 async def download_filter(session, url):
-    """异步下载单个过滤器文件并提取所有非空行。
+    """异步下载单个过滤器文件并提取所有非空、非注释行。
 
     参数:
     session (aiohttp.ClientSession): aiohttp 客户端会话对象。
     url (str): 要下载的过滤器 URL。
 
     返回:
-    set: 一个包含所有非空行的集合。
+    set: 一个包含所有非空、非注释行的集合。
     """
     rules = set()  # 使用集合来存储唯一的规则
     try:
@@ -195,7 +206,7 @@ async def download_filter(session, url):
                 lines = text.splitlines()
                 for line in lines:
                     line = line.strip()
-                    if line:  # 只需确保行不为空
+                    if line and not is_comment(line):  # 确保行不为空且不是注释
                         rules.add(line)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -210,7 +221,7 @@ async def download_filters(urls):
     urls (list): 过滤器 URL 列表。
 
     返回:
-    set: 一个包含所有非空行的集合。
+    set: 一个包含所有非空、非注释行的集合。
     """
     async with aiohttp.ClientSession() as session:
         tasks = [download_filter(session, url) for url in urls]
