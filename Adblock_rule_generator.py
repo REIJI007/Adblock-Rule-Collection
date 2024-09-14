@@ -224,14 +224,15 @@ def is_valid_rule(line):
 
     # 如果是纯 IP 规则，将其转换为 '||IP^'，但排除已经是 '||IP^' 的规则
     if is_ip_address(line):
-        return f"||{line}^"
+        return f"||{line}^" if not line.endswith('^') else line
 
     # 排除已经是 '||IP^' 的规则
     if line.startswith('||') and line.endswith('^'):
-        return line
+        return line.rstrip('^^')  # 去掉多余的 '^'
 
     # 其他非注释和空行的规则保持原样
     return line
+
 
 def validate_rules(rules):
     """验证并处理规则集合，将特定格式的规则转换为正确的形式。
