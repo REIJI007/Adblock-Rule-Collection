@@ -224,10 +224,38 @@ def validate_rules(rules):
             validated_rules.add(validated_rule)
     return validated_rules
 
+def write_rules_to_file(rules, save_path):
+    """将过滤规则写入指定的文件。
 
+    参数:
+    rules (set): 要写入的规则集合。
+    save_path (str): 文件保存路径。
+    """
+    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
+    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
 
+    # 文件头部注释
+    header = f"""
+!Title: Adblock-Rule-Collection
+!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
+!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
+!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
+!生成时间: {timestamp}
+!有效规则数目: {len(rules)}
+"""
 
+    with open(save_path, 'w', encoding='utf-8') as f:
+        logging.info(f"Writing {len(rules)} rules to file {save_path}")
+        f.write(header)  # 写入文件头
+        f.write('\n')
+        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
 
+    logging.info(f"Successfully wrote rules to {save_path}")
+    logging.info(f"有效规则数目: {len(rules)}")
+
+    print(f"Successfully wrote rules to {save_path}")
+    print(f"有效规则数目: {len(rules)}")
 
 
 async def download_filter(session, url):
@@ -275,54 +303,6 @@ async def download_filters(urls):
             rules = await future
             all_rules.update(rules)  # 更新集合
     return all_rules
-
-def validate_rules(rules):
-    """对规则集合进行重新验证，确保每条规则都符合格式。
-
-    参数:
-    rules (set): 要验证的规则集合。
-
-    返回:
-    set: 一个包含所有有效规则的集合。
-    """
-    validated_rules = set()
-    for rule in rules:
-        if is_valid_rule(rule):
-            validated_rules.add(rule)
-    return validated_rules
-
-def write_rules_to_file(rules, save_path):
-    """将过滤规则写入指定的文件。
-
-    参数:
-    rules (set): 要写入的规则集合。
-    save_path (str): 文件保存路径。
-    """
-    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
-
-    # 文件头部注释
-    header = f"""
-!Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
-!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
-!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
-!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
-!生成时间: {timestamp}
-!有效规则数目: {len(rules)}
-"""
-
-    with open(save_path, 'w', encoding='utf-8') as f:
-        logging.info(f"Writing {len(rules)} rules to file {save_path}")
-        f.write(header)  # 写入文件头
-        f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
-
-    logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {len(rules)}")
-
-    print(f"Successfully wrote rules to {save_path}")
-    print(f"有效规则数目: {len(rules)}")
 
 def main():
     """主函数，执行过滤器下载和文件生成操作"""
