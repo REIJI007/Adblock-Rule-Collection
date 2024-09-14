@@ -173,22 +173,8 @@ filter_urls = [
     "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt"
 ]
 
-# 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
-save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
-
-def is_comment(line):
-    """检查一行是否为注释。
-
-    参数:
-    line (str): 要检查的行。
-
-    返回:
-    bool: 如果是注释行，则返回 True，否则返回 False。
-    """
-    return line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--'))
-
-def convert_host_to_adblock(rule):
-    """将 host 规则转换为 AdBlock 语法规则。
+def convert_rule(rule):
+    """将 host 规则和 IP 地址转换为 AdBlock 语法规则。
     
     参数:
     rule (str): 要转换的规则。
@@ -198,12 +184,18 @@ def convert_host_to_adblock(rule):
     """
     # 检查是否为 host 规则（0.0.0.0 或 127.0.0.1 开头）
     host_pattern = r'^(0\.0\.0\.0|127\.0\.0\.1)\s+([a-zA-Z0-9.-]+)$'
-    match = re.match(host_pattern, rule)
-    if match:
-        # 提取域名部分
-        domain = match.group(2)
-        # 转换为 AdBlock 语法
+    match_host = re.match(host_pattern, rule)
+    if match_host:
+        domain = match_host.group(2)
         return f"||{domain}^"
+    
+    # 检查是否为 IP 地址规则
+    ip_pattern = r'^([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})$'
+    match_ip = re.match(ip_pattern, rule)
+    if match_ip:
+        ip = match_ip.group(1)
+        return f"||{ip}^"
+
     return rule
 
 async def download_filter(session, url):
@@ -227,7 +219,7 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     if line and not is_comment(line):  # 确保行不为空且不是注释
-                        converted_rule = convert_host_to_adblock(line)
+                        converted_rule = convert_rule(line)
                         rules.add(converted_rule)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -235,75 +227,48 @@ async def download_filter(session, url):
         logging.error(f"Error downloading {url}: {e}")
     return rules
 
-async def download_filters(urls):
-    """并行下载多个过滤器文件并返回所有规则的集合。
+def is_comment(line):
+    """检查给定的行是否为注释。
 
     参数:
-    urls (list): 过滤器 URL 列表。
+    line (str): 要检查的行。
 
     返回:
-    set: 一个包含所有非空、非注释行的集合。
+    bool: 如果行是注释，则返回 True；否则返回 False。
     """
-    async with aiohttp.ClientSession() as session:
-        tasks = [download_filter(session, url) for url in urls]
-        all_rules = set()
-        for future in asyncio.as_completed(tasks):
-            rules = await future
-            all_rules.update(rules)
-    return all_rules
+    return line.startswith('#') or line.startswith('!')
 
-def write_rules_to_file(rules, save_path):
-    """将规则写入指定的文件。
+async def download_all_filters():
+    """下载所有过滤器并合并规则。"""
+    async with aiohttp.ClientSession() as session:
+        tasks = [download_filter(session, url) for url in filter_urls]
+        results = await asyncio.gather(*tasks)
+        all_rules = set()
+        for result in results:
+            all_rules.update(result)
+        return all_rules
+
+def save_rules(rules, filename):
+    """将规则保存到文件。
 
     参数:
-    rules (set): 要写入的规则集合。
-    save_path (str): 文件保存路径。
+    rules (set): 要保存的规则集合。
+    filename (str): 文件名。
     """
-    now = datetime.now(timezone(timedelta(hours=8)))  # 获取当前时间并设置为东八区时间
-    timestamp = now.strftime('%Y-%m-%d %H:%M:%S %Z')  # 格式化时间戳
-
-    # 文件头部注释
-    header = f"""
-!Title: Adblock-Rule-Collection
-!Description: 一个汇总了多个广告过滤器规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
-!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
-!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL3.0
-!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC%20BY-NC-SA%204.0
-!生成时间: {timestamp}
-!规则数目: {len(rules)}
-"""
-
-    with open(save_path, 'w', encoding='utf-8') as f:
-        logging.info(f"Writing {len(rules)} rules to file {save_path}")
-        f.write(header)  # 写入文件头
-        f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
-
-    logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"规则数目: {len(rules)}")
-
-    print(f"Successfully wrote rules to {save_path}")
-    print(f"规则数目: {len(rules)}")
+    with open(filename, 'w', encoding='utf-8') as file:
+        for rule in sorted(rules):
+            file.write(f"{rule}\n")
+    logging.info(f"Rules saved to {filename}")
 
 def main():
-    """主函数，执行过滤器下载和文件生成操作"""
-    logging.info("Starting to download filters...")
-    print("Starting to download filters...")
-
-    # 下载所有过滤器并收集规则
-    rules = asyncio.run(download_filters(filter_urls))
-
-    logging.info("Finished downloading filters. Writing rules to file...")
-    print("Finished downloading filters. Writing rules to file...")
-
-    # 将收集的规则写入文件
-    write_rules_to_file(rules, save_path)
+    """主函数。"""
+    logging.info("Starting filter download...")
+    try:
+        rules = asyncio.run(download_all_filters())
+        save_rules(rules, 'adblock_rules.txt')
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+    logging.info("Filter download finished.")
 
 if __name__ == "__main__":
     main()
-    
-    # 检查是否在交互式环境中运行
-    if sys.stdin.isatty():
-        input("Press Enter to exit...")
-    else:
-        print("Non-interactive mode, exiting...")
