@@ -191,16 +191,10 @@ def is_valid_rule(line):
     
     # 排除空行和注释行
     if not line or line.startswith(('!', '#', '[', ';', '//','/*','*/')):
-        return None
-
-    # 将host规则转换为广告过滤器规则格式
-    if line.startswith(('127.0.0.1', '0.0.0.0')):
-        parts = line.split()
-        if len(parts) == 2:
-            return f"||{parts[1]}^"
+        return False
 
     # 对于其他规则，返回原始规则
-    return line
+    return True
 
 
 def is_valid_regex(pattern):
