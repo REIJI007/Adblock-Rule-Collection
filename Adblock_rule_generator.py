@@ -179,26 +179,29 @@ filter_urls = [
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 def is_valid_rule(line):
-    """检查一行规则是否符合 Adblock、Adblock Plus、uBlock Origin 和 AdGuard 的有效规则格式。
+    """检查一行规则是否符合有效规则格式，并将特定规则转换为广告过滤器规则格式。
 
     参数:
     line (str): 要检查的规则行。
 
     返回:
-    bool: 如果该行符合有效规则格式，则返回 True，否则返回 False。
+    str: 如果该行符合有效规则格式，则返回转换后的规则，否则返回原始规则。
     """
     line = line.strip()  # 去除首尾的空白字符
+    
     # 排除空行和注释行
-    if not line or line.startswith(('!', '#', '[', ';', '//')):
-        return False
+    if not line or line.startswith(('!', '#', '[', ';', '//','/*','*/')):
+        return None
 
-    # host规则处理
+    # 将host规则转换为广告过滤器规则格式
     if line.startswith(('127.0.0.1', '0.0.0.0')):
         parts = line.split()
         if len(parts) == 2:
             return f"||{parts[1]}^"
-          
-    return True
+
+    # 对于其他规则，返回原始规则
+    return line
+
 
 def is_valid_regex(pattern):
     """检查正则表达式是否有效。
