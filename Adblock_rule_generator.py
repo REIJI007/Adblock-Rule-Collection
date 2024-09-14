@@ -6,6 +6,7 @@ import importlib.util
 import logging
 import asyncio
 import aiohttp
+import re
 from urllib3.exceptions import InsecureRequestWarning
 from datetime import datetime, timezone, timedelta
 
@@ -186,6 +187,25 @@ def is_comment(line):
     """
     return line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--'))
 
+def convert_host_to_adblock(rule):
+    """将 host 规则转换为 AdBlock 语法规则。
+    
+    参数:
+    rule (str): 要转换的规则。
+    
+    返回:
+    str: 转换后的规则。
+    """
+    # 检查是否为 host 规则（0.0.0.0 或 127.0.0.1 开头）
+    host_pattern = r'^(0\.0\.0\.0|127\.0\.0\.1)\s+([a-zA-Z0-9.-]+)$'
+    match = re.match(host_pattern, rule)
+    if match:
+        # 提取域名部分
+        domain = match.group(2)
+        # 转换为 AdBlock 语法
+        return f"||{domain}^"
+    return rule
+
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取所有非空、非注释行。
 
@@ -207,7 +227,8 @@ async def download_filter(session, url):
                 for line in lines:
                     line = line.strip()
                     if line and not is_comment(line):  # 确保行不为空且不是注释
-                        rules.add(line)
+                        converted_rule = convert_host_to_adblock(line)
+                        rules.add(converted_rule)
             else:
                 logging.error(f"Failed to download from {url} with status code {response.status}")
     except Exception as e:
