@@ -186,8 +186,8 @@ def is_valid_rule(line):
         line (str): 需要处理的规则行。
 
     返回:
-        str 或 None: 如果是有效规则行，返回转换后的 Adblock Plus 规则格式；
-                     如果不是有效规则，返回 None。
+        str: 如果是 host 或 Dnsmasq 规则，返回转换后的 Adblock Plus 规则格式；
+             否则返回原条目。
     """
     line = line.strip()  # 去除首尾的空白字符
 
@@ -208,8 +208,8 @@ def is_valid_rule(line):
         domain = line.split('/')[1]
         return f'||{domain}^'
 
-    # 非匹配规则返回 Line
-    return Line 
+    # 对于非 host 或 Dnsmasq 规则，直接返回原条目
+    return line
 
 
 
