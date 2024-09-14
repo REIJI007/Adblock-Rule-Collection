@@ -212,8 +212,12 @@ def is_valid_rule(line):
     if re.search(r'\|\|[^\s]+[^$]*\$', line):
         return True
 
-    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则（包括 `+js`）
-    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#', '+js', '#@#+js')):
+    # 检查是否是 CSS 选择器规则或 JavaScript 注入规则
+    if line.startswith(('##', '#@#', '#?#', '#@?#', '###', '#%#')) or re.search(r'#\^?([^\s]+)$', line):
+        return True
+
+    # 检查是否是脚本注入规则（如 +js 或 #@#+js）
+    if '+js' in line or '#@#+js' in line:
         return True
 
     # 处理含有 :remove()、:has()、:contains() 伪类的 CSS 选择器
@@ -229,6 +233,7 @@ def is_valid_rule(line):
         return True
 
     return False
+
 
 
 
