@@ -204,8 +204,8 @@ def is_valid_rule(line):
     if "$" in line or "~" in line:
         return True
 
-    # 检查是否是域名规则，或以 `||`、`@@` 或 `@@||` 开头的规则
-    if line.startswith(('||', '|', '@@', '@@||')):
+    # 检查是否是域名规则，或以 `||`、`@@` 、`@@||` 或`||!`开头的规则
+    if line.startswith(('||', '|', '@@', '@@||','||!')):
         return True
 
     # 匹配路径规则和修饰符组合，允许规则包含域名匹配和过滤条件
