@@ -180,44 +180,50 @@ save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
 
 def is_valid_rule(line):
-    """检查一行是否是有效规则，排除注释和空行，并将 127.0.0.1 和 0.0.0.0 的格式转换为 ||example.com^。
+    """检查并转换特定的规则行格式。
+    
+    如果是 '127.0.0.1 example.com' 或 '0.0.0.0 example.com' 形式的行，将其转换为 '||example.com^' 格式。
+    如果是注释或空行，则排除。
+    其他规则直接保留。
 
     参数:
-    line (str): 要检查的规则行。
+    line (str): 规则行。
 
     返回:
-    str or bool: 如果该行是有效规则且需要转换，返回转换后的规则；如果是有效规则但不需要转换，则返回原始规则；否则返回 False。
+    str or None: 转换后的规则，或 None 如果是注释/空行。
     """
-    line = line.strip()  # 去除首尾的空白字符
+    line = line.strip()  # 去除首尾空白字符
 
-    # 排除空行和注释行，包括多种注释样式
+    # 忽略空行和注释行
     if not line or line.startswith(('!', '#', '[', ';', '//', '/*', '*/', '!--')):
-        return False
+        return None
 
-    # 匹配 127.0.0.1 或 0.0.0.0 开头的规则并转换为 ||example.com^ 格式
-    match = re.match(r"^(127\.0\.0\.1|0\.0\.0\.0)\s+([\w\.-]+)$", line)
-    if match:
-        domain = match.group(2)
-        return f"||{domain}^"
+    # 转换 127.0.0.1 或 0.0.0.0 开头的规则为 '||domain^'
+    if line.startswith(('127.0.0.1', '0.0.0.0')):
+        parts = line.split()
+        if len(parts) == 2:  # 确保规则有两个部分
+            domain = parts[1]
+            return f"||{domain}^"
 
+    # 其他非注释和空行的规则保持原样
     return line
 
 def validate_rules(rules):
-    """对规则集合进行重新验证并转换特殊格式，确保每条规则都符合格式。
+    """验证并处理规则集合，将特定格式的规则转换为正确的形式。
 
     参数:
-    rules (set): 要验证的规则集合。
+    rules (set): 原始规则集合。
 
     返回:
-    set: 一个包含所有有效规则的集合。
+    set: 经过处理和转换的规则集合。
     """
     validated_rules = set()
     for rule in rules:
-        # 调用 is_valid_rule 来处理规则转换和验证
         validated_rule = is_valid_rule(rule)
-        if validated_rule:  # 如果返回值不是 False
+        if validated_rule:  # 过滤掉注释和空行
             validated_rules.add(validated_rule)
     return validated_rules
+
 
 
 
