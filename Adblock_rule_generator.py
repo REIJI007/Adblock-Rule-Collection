@@ -41,7 +41,7 @@ warnings.simplefilter('ignore', InsecureRequestWarning)
 
 # 过滤器 URL 列表
 filter_urls = [
-        "https://anti-ad.net/adguard.txt",
+       "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
@@ -178,6 +178,7 @@ filter_urls = [
 # 保存路径设定为当前工作目录下，文件名为 'ADBLOCK_RULE_COLLECTION.txt'
 save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
 
+
 def is_valid_rule(line):
     """检查一行是否是有效规则，排除注释和空行。
 
@@ -209,24 +210,6 @@ def is_valid_regex(pattern):
         return True
     except re.error:
         return False
-
-def convert_ip_rules(rule):
-    """将 IP 规则转换为 AdBlock Plus 规则格式。
-
-    参数:
-    rule (str): 原始规则。
-
-    返回:
-    str: 转换后的规则。
-    """
-    # 处理 127.0.0.1 example.com 和 0.0.0.0 example.com 规则
-    rule = re.sub(r'^(127\.0\.0\.1|0\.0\.0\.0)\s+([^\s]+)', r'||\2^', rule)
-    
-    # 处理 ||<IP>$all 和 ||<IP> 规则
-    rule = re.sub(r'^\|\|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\$all', r'||\1^', rule)
-    rule = re.sub(r'^\|\|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$', r'||\1^', rule)
-    
-    return rule
 
 async def download_filter(session, url):
     """异步下载单个过滤器文件并提取有效的规则。
@@ -285,10 +268,28 @@ def validate_rules(rules):
     """
     validated_rules = set()
     for rule in rules:
-        converted_rule = convert_ip_rules(rule)
-        if is_valid_rule(converted_rule) and is_valid_regex(converted_rule):
-            validated_rules.add(converted_rule)
+        if is_valid_rule(rule):
+            validated_rules.add(rule)
     return validated_rules
+
+def convert_ip_to_adblock_rule(rule):
+    """将 IP 地址规则转换为 Adblock Plus 格式的规则。
+
+    参数:
+    rule (str): 要转换的规则。
+
+    返回:
+    str: 转换后的规则。
+    """
+    ip_pattern = re.compile(r'^(?:\d{1,3}\.){3}\d{1,3}$')
+    if ' ' in rule:
+        rule = rule.split(' ')[1]  # 提取 IP 地址部分
+    rule = rule.strip()
+    if ip_pattern.match(rule):
+        return f"||{rule}^"
+    elif rule.endswith('$all'):
+        return f"||{rule[:-4]}^"
+    return rule
 
 def write_rules_to_file(rules, save_path):
     """将过滤规则写入指定的文件。
@@ -315,7 +316,8 @@ def write_rules_to_file(rules, save_path):
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
         f.write(header)  # 写入文件头
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 写入所有规则，每个规则占一行
+        for rule in sorted(rules):
+            f.write(f"{convert_ip_to_adblock_rule(rule)}\n")  # 转换规则并写入文件
 
     logging.info(f"Successfully wrote rules to {save_path}")
     logging.info(f"有效规则数目: {len(rules)}")
