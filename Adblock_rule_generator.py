@@ -66,19 +66,19 @@ def process_line(line):
             domain = parts[1]
             return f"||{domain}^"
     
-    # 处理Dnsmasq规则
-    # 处理以address=开头的规则
+    # 处理Dnsmasq规则，只处理将域名定向到127.0.0.1或0.0.0.0的情况
     if line.startswith('address='):
-        domain = line.split('=')[1]
-        return f"||{domain}^"
+        parts = line.split('=')
+        if len(parts) == 3:
+            domain = parts[1]
+            target_ip = parts[2]
+            # 只处理将域名指向127.0.0.1或0.0.0.0的情况
+            if target_ip == '127.0.0.1' or target_ip == '0.0.0.0':
+                return f"||{domain}^"
     
-    # 处理以server=开头的规则
-    if line.startswith('server='):
-        domain = line.split('=')[1]
-        return f"||{domain}^"
-    
-    # 对于其他未处理的规则，返回原规则
+    # 忽略其他未处理的规则，返回原规则
     return line
+
 
 
 # 异步下载过滤器规则
