@@ -1,4 +1,4 @@
-name: Release adblock rule collection  # 工作流名称
+name: Release adblock file  # 工作流名称
 
 on:
   schedule:
@@ -24,7 +24,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add -f ADBLOCK_RULE_COLLECTION.txt timestamp.txt
+          git add -f ADBLOCK_RULE_COLLECTION.txt ADBLOCK_RULE_COLLECTION_Lite.txt timestamp.txt
           git commit -m "Forced update of adblock files and timestamp"
           for attempt in {1..5}; do  # 尝试5次
             if git push origin main; then
@@ -58,4 +58,14 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}  # 使用创建发布版本步骤中的上传URL
           asset_path: ADBLOCK_RULE_COLLECTION.txt  # 要上传的文件路径
           asset_name: ADBLOCK_RULE_COLLECTION.txt  # 上传后的文件名称
+          asset_content_type: text/plain  # 文件的内容类型
+
+      - name: Upload ADBLOCK_RULE_COLLECTION_Lite.txt  # 上传ADBLOCK_RULE_COLLECTION_Lite.txt文件
+        uses: actions/upload-release-asset@v1  # 使用官方的upload-release-asset操作来上传发布资源
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}  # 使用自定义的 TOKEN 进行身份验证
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}  # 使用创建发布版本步骤中的上传URL
+          asset_path: ADBLOCK_RULE_COLLECTION_Lite.txt  # 要上传的文件路径
+          asset_name: ADBLOCK_RULE_COLLECTION_Lite.txt  # 上传后的文件名称
           asset_content_type: text/plain  # 文件的内容类型
