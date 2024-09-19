@@ -30,11 +30,11 @@
 <hr> 
 1、订阅地址: 
 
-**完整版**<br>
-**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt**<br>
+**完整版** <br>
+**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt** <br>
 
-**精简版（只包含adguard列表**<br>
-**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION_Lite.txt**<br>
+**精简版(只包含adguard列表)** <br>
+**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION_Lite.txt** <br>
 
 2、从Release中下载过滤器文件进行本地导入广告过滤器，release每20分钟自动发布一次
 <hr>
