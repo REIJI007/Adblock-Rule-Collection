@@ -54,7 +54,9 @@ def is_host_or_dnsmasq_rule(line):
 # 处理每一行规则，转换为统一格式
 def process_line(line):
     line = line.strip()
-
+    # 如果是IP地址，返回特定格式的规则
+    if is_ip_address(line):
+        return f"||{line}^"
     # 处理Host文件的格式，只转换 0.0.0.0 和 127.0.0.1 开头的行
     if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
         parts = line.split()
@@ -64,17 +66,15 @@ def process_line(line):
     
     # 如果不是0.0.0.0或127.0.0.1开头的Host规则，直接丢弃
     return None
-
     # 处理Dnsmasq规则
-    if line.startswith('address='):
+    elif line.startswith('address='):
         domain = line.split('=')[1]
         return f"||{domain}^"
     elif line.startswith('server='):
         domain = line.split('=')[1]
         return f"||{domain}^"
-    
-    # 其他情况直接返回原规则
-    return line
+    else:
+        return line  # 其他情况直接返回原规则
 
 # 异步下载过滤器规则
 async def download_filter(session, url, retries=5):
@@ -95,8 +95,7 @@ async def download_filter(session, url, retries=5):
                         line = line.strip()
                         if is_valid_rule(line):  # 验证是否是有效规则
                             processed_line = process_line(line)  # 处理规则
-                            if processed_line:  # 仅当processed_line不是None时才添加到规则集合
-                                rules.add(processed_line)
+                            rules.add(processed_line)  # 添加到规则集合
                     break
                 else:
                     logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -127,7 +126,7 @@ async def download_filters(urls):
 def validate_rules(rules):
     validated_rules = set()
     for rule in rules:
-        if rule and is_valid_rule(rule):  # 确保rule不是None并且是有效规则
+        if is_valid_rule(rule):
             validated_rules.add(rule)
     return validated_rules
 
@@ -165,7 +164,7 @@ def main():
 
     # 过滤器URL列表
     filter_urls = [
-          "https://anti-ad.net/adguard.txt",
+    "https://anti-ad.net/adguard.txt",
     "https://anti-ad.net/easylist.txt",
     "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
