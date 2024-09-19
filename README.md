@@ -26,9 +26,9 @@
 <br>
 
 ## 二、本仓库使用方式如下：
-1、订阅地址: 
 
 <hr> 
+1、订阅地址: 
 
 **完整版**<br>
 **https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt**<br>
@@ -36,10 +36,9 @@
 **精简版（只包含adguard列表**<br>
 **https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION_Lite.txt**<br>
 
+2、从Release中下载过滤器文件进行本地导入广告过滤器，release每20分钟自动发布一次
 <hr>
 
-2、从Release中下载过滤器文件进行本地导入广告过滤器，release每20分钟自动发布一次
-<br>
 
 ## 三、适用范围
 适用于ADguard,Adblock Plus,uBlock Origin,Brave Browser等各类符合Adblock Plus (ABP) 语法、uBlock Origin 语法、AdGuard 语法的浏览器插件或广告拦截程序
