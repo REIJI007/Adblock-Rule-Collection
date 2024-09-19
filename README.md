@@ -246,11 +246,11 @@
 204. [damengzhu's adblock List](https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt)  
 205. [damengzhu's DNS List](https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt)  
 206. [hectorm's adblock List](https://hblock.molinero.dev/hosts_adblock.txt)  
-207. [1Hosts's adblock list](https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt)  
+207. [1Hosts's adblock list](https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt)
+208. [DD-AD](https://raw.githubusercontent.com/afwfv/DD-AD/main/rule/all.txt)  
   
 
 
-  
 
 </details>
 
@@ -292,6 +292,7 @@
 32. [damengzhu](https://github.com/damengzhu/banad)
 33. [hectorm](https://github.com/hectorm/hblock)
 34. [badmojr](https://github.com/badmojr/1Hosts)
+35. [afwfv](https://github.com/afwfv/DD-AD)
 
   </details>
 
