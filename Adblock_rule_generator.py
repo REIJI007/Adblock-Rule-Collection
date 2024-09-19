@@ -43,19 +43,23 @@ def is_valid_rule(line):
         return False
     return True
 
-# 检查是否为纯IP地址
+# 判断是否为IP和域名映射规则
+def is_ip_domain_mapping(line):
+    return re.match(r'^\d{1,3}(\.\d{1,3}){3}\s+\S+', line) is not None
+
+# 判断是否为纯IP地址
 def is_ip_address(line):
     return re.match(r'^\d{1,3}(\.\d{1,3}){3}$', line) is not None
-
-# 判断是否为host文件或DNS规则
-def is_host_or_dnsmasq_rule(line):
-    return line.startswith('0.0.0.0') or line.startswith('127.0.0.1') or line.startswith('::') or line.startswith('address=') or line.startswith('server=')
 
 # 处理每一行规则，转换为统一格式
 def process_line(line):
     line = line.strip()
     
-    # 如果是IP地址，则返回特定格式的规则
+    # 忽略IP和域名映射规则
+    if is_ip_domain_mapping(line):
+        return None
+    
+    # 如果是纯IP地址，则返回特定格式的规则
     if is_ip_address(line):
         return f"||{line}^"
     
@@ -72,14 +76,11 @@ def process_line(line):
         if len(parts) == 3:
             domain = parts[1]
             target_ip = parts[2]
-            # 只处理将域名指向127.0.0.1或0.0.0.0的情况
             if target_ip == '127.0.0.1' or target_ip == '0.0.0.0':
                 return f"||{domain}^"
     
     # 忽略其他未处理的规则，返回原规则
     return line
-
-
 
 # 异步下载过滤器规则
 async def download_filter(session, url, retries=5):
@@ -100,7 +101,8 @@ async def download_filter(session, url, retries=5):
                         line = line.strip()
                         if is_valid_rule(line):  # 验证是否是有效规则
                             processed_line = process_line(line)  # 处理规则
-                            rules.add(processed_line)  # 添加到规则集合
+                            if processed_line is not None:  # 忽略None值
+                                rules.add(processed_line)  # 添加到规则集合
                     break
                 else:
                     logging.error(f"Failed to download from {url} with status code {response.status}")
@@ -156,9 +158,9 @@ def write_rules_to_file(rules, save_path):
         logging.info(f"Writing {len(rules)} rules to file {save_path}")
         f.write(header)
         f.write('\n')
-        f.writelines(f"{rule}\n" for rule in sorted(rules))  # 按排序写入规则
+        # 过滤掉None值，确保只写入有效的规则
+        f.writelines(f"{rule}\n" for rule in sorted(rules) if rule is not None)
     logging.info(f"Successfully wrote rules to {save_path}")
-    logging.info(f"有效规则数目: {len(rules)}")
     print(f"Successfully wrote rules to {save_path}")
     print(f"有效规则数目: {len(rules)}")
 
