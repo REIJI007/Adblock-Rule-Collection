@@ -54,27 +54,32 @@ def is_host_or_dnsmasq_rule(line):
 # 处理每一行规则，转换为统一格式
 def process_line(line):
     line = line.strip()
-    # 如果是IP地址，返回特定格式的规则
+    
+    # 如果是IP地址，则返回特定格式的规则
     if is_ip_address(line):
         return f"||{line}^"
-    # 处理Host文件的格式，只转换 0.0.0.0 和 127.0.0.1 开头的行
+    
+    # 处理Host文件的规则，仅转换以0.0.0.0或127.0.0.1开头的行
     if line.startswith('0.0.0.0') or line.startswith('127.0.0.1'):
         parts = line.split()
-        if len(parts) >= 2:  # 确保行中有IP和域名
+        if len(parts) >= 2:  # 确保行中包含IP地址和域名
             domain = parts[1]
             return f"||{domain}^"
     
-    # 如果不是0.0.0.0或127.0.0.1开头的Host规则，直接丢弃
-    return None
     # 处理Dnsmasq规则
-    elif line.startswith('address='):
+    # 处理以address=开头的规则
+    if line.startswith('address='):
         domain = line.split('=')[1]
         return f"||{domain}^"
-    elif line.startswith('server='):
+    
+    # 处理以server=开头的规则
+    if line.startswith('server='):
         domain = line.split('=')[1]
         return f"||{domain}^"
-    else:
-        return line  # 其他情况直接返回原规则
+    
+    # 对于其他未处理的规则，返回原规则
+    return line
+
 
 # 异步下载过滤器规则
 async def download_filter(session, url, retries=5):
