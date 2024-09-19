@@ -30,11 +30,11 @@
 
 <hr> 
 
-*完整版*
-*https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt*<br>
+**完整版**<br>
+**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION.txt**<br>
 
-*精简版（只包含adguard列表）*
-*https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION_Lite.txt*<br>
+**精简版（只包含adguard列表**<br>
+**https://raw.githubusercontent.com/REIJI007/Adblock-Rule-Collection/main/ADBLOCK_RULE_COLLECTION_Lite.txt**<br>
 
 <hr>
 
