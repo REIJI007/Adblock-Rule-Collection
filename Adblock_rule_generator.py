@@ -62,12 +62,11 @@ def process_line(line):
             domain = parts[1]
             return f"||{domain}^"
     
-    # 丢弃所有其他Host规则
-    if line.replace(" ", "").count('.') == 4:  # 简单判断是否为IP相关规则行
-        return None  # 丢弃不符合条件的Host规则
-    
+    # 如果不是0.0.0.0或127.0.0.1开头的Host规则，直接丢弃
+    return None
+
     # 处理Dnsmasq规则
-    elif line.startswith('address='):
+    if line.startswith('address='):
         domain = line.split('=')[1]
         return f"||{domain}^"
     elif line.startswith('server='):
@@ -76,6 +75,7 @@ def process_line(line):
     
     # 其他情况直接返回原规则
     return line
+
 
 # 异步下载过滤器规则
 async def download_filter(session, url, retries=5):
