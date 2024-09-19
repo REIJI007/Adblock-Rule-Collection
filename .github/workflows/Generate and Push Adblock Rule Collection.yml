@@ -27,7 +27,7 @@ jobs:
         pip install requests aiohttp  # 安装requests和aiohttp库
 
     - name: Run Adblock Rule Generator
-      run: python Adblock_rule_generator.py  # 运行脚本生成广告过滤器文件
+      run: python Adblock_Rule_Generator.py  # 运行脚本生成广告过滤器文件
 
     - name: Commit and push changes
       id: push_changes  # 设置步骤ID以供后续引用
