@@ -218,7 +218,7 @@ def main():
     "https://raw.githubusercontent.com/uniartisan/adblock_list/master/adblock_privacy.txt",
     "https://raw.githubusercontent.com/Cats-Team/AdRules/main/adblock_plus.txt",
     "https://raw.githubusercontent.com/Cats-Team/AdRules/main/dns.txt",
-    "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockdns.txt",
+  
     "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/adblock.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/dns.txt",
@@ -255,14 +255,12 @@ def main():
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_207_AdblockWarningRemovalList/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_208_Online_Malicious_URL_Blocklist/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_209_ADgkMobileChinalist/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_210_Spam404/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_211_AntiAdblockKillerReek/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_219_ChinaListAndEasyList/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_220_CJXsAnnoyanceList/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_228_xinggsf/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_229_IdontCareAboutCookies/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_239_FanboyAntifonts/filter.txt",
-    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_240_BarbBlock/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_241_FanboyCookiemonster/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_242_NoCoin/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/ThirdParty/filter_250_DandelionSproutAnnoyances/filter.txt",
@@ -342,14 +340,10 @@ def main():
     "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/TrackParamFilter/sections/allowlist.txt",
     "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/TrackParamFilter/sections/general_url.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/rules.txt",
-    "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/dns.txt",
     "https://raw.githubusercontent.com/Lynricsy/HyperADRules/master/allow.txt",
-    "https://raw.githubusercontent.com/guandasheng/adguardhome/main/rule/all.txt",
     "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt",
     "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt",
     "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt",
-    "https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-AdBlock-Filter.txt",
-    "https://raw.githubusercontent.com/jerryn70/GoodbyeAds/master/Formats/GoodbyeAds-Ultra-AdBlock-Filter.txt",
     "https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt",
     "https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt",
     "https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt",
@@ -364,7 +358,7 @@ def main():
     "https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt",
     "https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt",
     "https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt",
-    "https://raw.githubusercontent.com/Spam404/lists/master/adblock-list.txt",
+    
     "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt",
     "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt",
     "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt",
@@ -376,26 +370,10 @@ def main():
     "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt",
     "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
     "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/AdGuard%20Home%20Compilation%20List/AdGuardHomeCompilationList.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/smart-tv-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ads-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/basic-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/tracking-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/malware-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/scam-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/phishing-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/ransomware-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/fraud-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/abuse-ags.txt",
-    "https://raw.githubusercontent.com/blocklistproject/Lists/master/adguard/redirect-ags.txt",
+  
     "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt",
-    "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt",
-    "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt",
-    
-    "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt",
-    "https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt",
-    "https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt",
-    "https://hblock.molinero.dev/hosts_adblock.txt",
-    "https://raw.githubusercontent.com/afwfv/DD-AD/main/rule/all.txt"
+    "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt"
+   
     ]
 
     # 设置保存文件路径
