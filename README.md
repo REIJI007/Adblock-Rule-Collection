@@ -264,6 +264,8 @@
 </details>
 
 ## 五、特别致谢
+
+
 <details>
   <summary>致谢名单</summary>
 
@@ -302,8 +304,10 @@
 33. [hectorm](https://github.com/hectorm/hblock)
 34. [badmojr](https://github.com/badmojr/1Hosts)
 35. [afwfv](https://github.com/afwfv/DD-AD)
+36. [paulgb](https://github.com/paulgb/BarbBlock)
 
   </details>
+
 
 
 
