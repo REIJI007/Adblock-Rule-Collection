@@ -390,25 +390,11 @@ def main():
     "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt",
     "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt",
     "https://raw.githubusercontent.com/Perflyst/PiHoleBlocklist/master/SmartTV-AGH.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/fake.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/light.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/dyndns.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/personal.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/popupads.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/ultimate.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds-adblock-aggressive.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/spam-tlds-adblock-allow.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-referral.txt",
-    "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/whitelist-urlshortener.txt",
-    "https://raw.githubusercontent.com/neodevpro/neodevhost/master/adblocker",
+    
     "https://raw.githubusercontent.com/notracking/hosts-blocklists/master/adblock/adblock.txt",
     "https://raw.githubusercontent.com/damengzhu/banad/main/jiekouAD.txt",
     "https://raw.githubusercontent.com/damengzhu/banad/main/dnslist.txt",
     "https://hblock.molinero.dev/hosts_adblock.txt",
-    "https://raw.githubusercontent.com/badmojr/1Hosts/master/Pro/adblock.txt",
     "https://raw.githubusercontent.com/afwfv/DD-AD/main/rule/all.txt"
     ]
 
