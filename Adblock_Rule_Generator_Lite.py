@@ -219,7 +219,7 @@ def main():
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/annoyances-others.txt",
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/resource-abuse.txt",
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/unbreak.txt",
-        "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/filter_2_Base/filter.txt",
+    "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/filter_2_Base/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/filter_3_Spyware/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/filter_4_Social/filter.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/refs/heads/master/filters/filter_11_Mobile/filter.txt",
