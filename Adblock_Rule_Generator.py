@@ -377,8 +377,8 @@ def main():
     ]
 
     # 设置保存文件路径
-    save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
-    
+   # save_path = os.path.join(os.getcwd(), 'ADBLOCK_RULE_COLLECTION.txt')
+    save_path = os.path.join(os.getcwd(), 'adguardRuleSuper.txt')
     # 异步下载并处理过滤器规则
     rules = asyncio.run(download_filters(filter_urls))
 
