@@ -47,55 +47,6 @@
 
 
 
-## 四、特别致谢
-
-
-<details>
-  <summary>致谢名单</summary>
-
-1. [anti-AD](https://github.com/privacy-protection-tools/anti-AD)
-2. [easylist](https://github.com/easylist/easylist)
-3. [cjxlist](https://github.com/cjx82630/cjxlist)
-4. [uniartisan](https://github.com/uniartisan/adblock_list)
-5. [Cats-Team](https://github.com/Cats-Team/AdRules)
-6. [217heidai](https://github.com/217heidai/adblockfilters)
-7. [GOODBYEADS](https://github.com/8680/GOODBYEADS)
-8. [AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule)
-9. [uBlockOrigin](https://github.com/uBlockOrigin/uAssets)
-10. [ADguardTeam](https://github.com/AdguardTeam/AdGuardFilters)
-11. [HyperADRules](https://github.com/Lynricsy/HyperADRules)
-12. [guandasheng](https://github.com/guandasheng/adguardhome)
-13. [xinggsf](https://github.com/xinggsf/Adblock-Plus-Rule)
-14. [hoshsadiq](https://github.com/hoshsadiq/adblock-nocoin-list)
-15. [jerryn70](https://github.com/jerryn70/GoodbyeAds)
-16. [malware-filter](https://gitlab.com/malware-filter)
-17. [abp-filters](https://gitlab.com/eyeo/anti-cv/abp-filters-anti-cv)
-18. [banbendalao](https://github.com/banbendalao/ADgk)
-19. [yokoffing](https://github.com/yokoffing/filterlists)
-20. [Spam404](https://github.com/Spam404/lists)
-21. [brave](https://github.com/brave/adblock-lists)
-22. [Peter Lowe](https://pgl.yoyo.org/adservers/)
-23. [DandelionSprout](https://github.com/DandelionSprout/adfilt)
-24. [blocklistproject](https://github.com/blocklistproject/Lists)
-25. [reek](https://github.com/reek/anti-adblock-killer)
-26. [durablenapkin](https://github.com/durablenapkin/scamblocklist)
-27. [oisd](https://github.com/sjhgvr/oisd)
-28. [Perflyst](https://github.com/Perflyst/PiHoleBlocklist)
-29. [hagezi](https://github.com/hagezi/dns-blocklists)
-30. [neodevpro](https://github.com/neodevpro/neodevhost)
-31. [notracking](https://github.com/notracking/hosts-blocklists)
-32. [damengzhu](https://github.com/damengzhu/banad)
-33. [hectorm](https://github.com/hectorm/hblock)
-34. [badmojr](https://github.com/badmojr/1Hosts)
-35. [afwfv](https://github.com/afwfv/DD-AD)
-36. [paulgb](https://github.com/paulgb/BarbBlock)
-
-  </details>
-
-
-
-
-
 
 <br>
 <br>
