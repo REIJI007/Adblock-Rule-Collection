@@ -218,7 +218,6 @@ def main():
   
     "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/adblock.txt",
-    "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/dns.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/allow.txt",
     "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
@@ -341,35 +340,17 @@ def main():
     "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/rule.txt",
     "https://raw.githubusercontent.com/xinggsf/Adblock-Plus-Rule/master/mv.txt",
     "https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/phishing-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt",
-    "https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt",
     "https://easylist-msie.adblockplus.org/abp-filters-anti-cv.txt",
     "https://raw.githubusercontent.com/banbendalao/ADgk/master/ADgk.txt",
     "https://raw.githubusercontent.com/yokoffing/filterlists/main/annoyance_list.txt",
     "https://raw.githubusercontent.com/yokoffing/filterlists/main/privacy_essentials.txt",
     
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-ios-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-android-specific.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-lists/brave-firstparty-cname.txt",
-    "https://raw.githubusercontent.com/brave/adblock-lists/master/brave-unbreak.txt",
     "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_10_Useful/filter.txt",
-    "https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0",
     "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareAdGuard.txt",
     "https://raw.githubusercontent.com/DandelionSprout/adfilt/master/Alternate%20versions%20Anti-Malware%20List/AntiMalwareABP.txt",
-    "https://raw.githubusercontent.com/DandelionSprout/adfilt/refs/heads/master/AdGuard%20Home%20Compilation%20List/AdGuardHomeCompilationList.txt",
   
-    "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt",
-    "https://raw.githubusercontent.com/durablenapkin/scamblocklist/master/adguard.txt"
+  
+    "https://raw.githubusercontent.com/reek/anti-adblock-killer/master/anti-adblock-killer-filters.txt"
    
     ]
 
