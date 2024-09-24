@@ -171,9 +171,6 @@ def main():
 
     # 过滤器URL列表
     filter_urls = [
-    "https://anti-ad.net/adguard.txt",
-    "https://anti-ad.net/easylist.txt",
-    "https://big.oisd.nl",
     "https://easylist.to/easylist/easylist.txt",
     "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_adservers.txt",
     "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt",
