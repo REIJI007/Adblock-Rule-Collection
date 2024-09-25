@@ -32,9 +32,11 @@
 
 **完整版** <br>
 **https://raw.githubusercontent.com/Shura23/Adguard-Rule-Collection/refs/heads/main/ADBLOCK_RULE_COLLECTION.txt** <br>
+加速链接：https://ghp.ci/https://raw.githubusercontent.com/Shura23/Adguard-Rule-Collection/refs/heads/main/ADBLOCK_RULE_COLLECTION.txt
 
 **精简版** <br>
 **https://raw.githubusercontent.com/Shura23/Adguard-Rule-Collection/refs/heads/main/ADBLOCK_RULE_COLLECTION_Lite.txt** <br>
+加速链接：https://ghp.ci/https://raw.githubusercontent.com/Shura23/Adguard-Rule-Collection/refs/heads/main/ADBLOCK_RULE_COLLECTION_Lite.txt
 
 2、从Release中下载过滤器文件进行本地导入广告过滤器，release每20分钟自动发布一次
 <hr>
