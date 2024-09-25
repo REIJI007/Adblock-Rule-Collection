@@ -220,7 +220,7 @@ def main():
     "https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/adblock.txt",
     "https://raw.githubusercontent.com/8680/GOODBYEADS/master/data/rules/allow.txt",
-    "https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/AWAvenue-Ads-Rule.txt",
+ 
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
     "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
