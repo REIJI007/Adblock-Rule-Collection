@@ -1,0 +1,65 @@
+name: Generate and Push Adblock Rule Collection Lite
+
+on:
+  schedule:
+    - cron: "*/20 * * * *"  # 每20分钟运行一次
+  push:
+    branches:
+      - main  # 确保在main分支上运行
+  workflow_dispatch:  # 允许手动触发工作流
+
+jobs:
+  generate_and_push:
+    runs-on: ubuntu-latest  # 使用最新的Ubuntu环境
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3  # 签出仓库的代码
+
+    - name: Set up Python
+      uses: actions/setup-python@v4  # 设置Python环境
+      with:
+        python-version: '3.x'  # 指定Python版本
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip  # 升级pip
+        pip install requests aiohttp  # 安装requests和aiohttp库
+
+    - name: Run Adblock Rule Generator Lite
+      run: python Adblock_Rule_Generator_Lite.py  # 运行脚本生成广告过滤器文件
+
+    - name: Commit and push changes
+      id: push_changes  # 设置步骤ID以供后续引用
+      run: |
+        # 配置git用户信息
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add ADBLOCK_RULE_COLLECTION_Lite.txt
+        
+        # 尝试提交更改
+        git commit -m "Update Adblock rules" || echo "No changes to commit"
+        
+        # 尝试推送更改前先拉取远程仓库
+        for attempt in {1..5}; do
+          echo "Attempt $attempt: Pulling latest changes from remote..."
+          if git pull --rebase; then
+            echo "Pull successful."
+          else
+            echo "Pull failed, skipping pull and continuing to push."
+          fi
+
+          # 尝试推送更改
+          if git push; then
+            echo "Push successful."
+            exit 0  # 退出脚本
+          else
+            echo "Push failed, retrying in $((attempt * 10)) seconds..."
+            sleep $((attempt * 10))  # 指数级退避，首次等待10秒，第二次20秒，依此类推
+          fi
+        done
+        
+        echo "Push failed after multiple attempts, exiting with error."
+        exit 1  # 最终失败退出
+      env:
+        GITHUB_TOKEN: ${{ secrets.TOKEN }}
