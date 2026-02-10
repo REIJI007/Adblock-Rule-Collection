@@ -1,0 +1,117 @@
+name: Generate AdBlock Host List
+
+# 触发条件
+on:
+  schedule:
+    - cron: '*/20 * * * *'  # 每20分钟执行一次
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  filter-rules:
+    runs-on: ubuntu-latest
+    steps:
+      # 步骤1: 检出仓库
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # 步骤2: 设置Python环境
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'  # 使用最新的Python 3版本
+
+      # 步骤3: 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytz  # 安装pytz库用于处理时区
+
+      # 步骤4: 处理AdBlock规则
+      - name: Process AdBlock rules
+        run: |
+          python3 << EOF
+          import datetime
+          import pytz
+          import re
+
+          # DNS域名验证正则表达式，符合DNS规范
+          dns_domain_regex = re.compile(
+              r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$'
+          )
+
+          def process_file(input_file, output_file, title):
+              with open(input_file, 'r', encoding='utf-8') as f:
+                  rules = []
+                  for line in f:
+                      line = line.strip()
+                      match = re.match(r'^\|\|([a-zA-Z0-9.-]+)\^$', line)
+                      if match:
+                          domain = match.group(1)
+                          if not re.match(r'^\d+\.\d+\.\d+\.\d+$', domain) and dns_domain_regex.match(domain):
+                              rules.append(f"0.0.0.0 {domain}")
+              
+              tz = pytz.timezone('Asia/Shanghai')
+              timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
+              
+              header = f"""
+          #Title: {title}
+          #Description: 一个汇总了多个广告过滤器过滤规则的Host文件，每20分钟更新一次，确保即时同步上游减少误杀
+          #Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+          #LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
+          #LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
+          #生成时间: {timestamp}
+          #有效规则数目: {len(rules)}
+          """
+              
+              with open(output_file, 'w', encoding='utf-8') as f:
+                  f.write(header + '\n')
+                  f.write('\n'.join(rules) + '\n')
+              
+              print(f"Processed {input_file}. Total rules: {len(rules)}")
+
+          process_file('ADBLOCK_RULE_COLLECTION.txt', 'ADBLOCK_RULE_COLLECTION_HOST.txt', 'Adblock-Rule-Collection-Host')
+          process_file('ADBLOCK_RULE_COLLECTION_Lite.txt', 'ADBLOCK_RULE_COLLECTION_HOST_Lite.txt', 'Adblock-Rule-Collection-Host-Lite')
+          EOF
+
+      # 步骤5: 提交和推送更改
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git add -A  # 添加所有更改
+          
+          attempt=0
+          max_attempts=5
+          success=false
+
+          git fetch origin main  
+          git merge origin/main --strategy-option=ours || git merge --abort || echo "Merge conflicts resolved automatically using 'ours' strategy."
+
+          while [ $attempt -lt $max_attempts ]; do
+              git commit -m "Update AdBlock Host Rules with strict filtering" && success=true && break
+              attempt=$((attempt + 1))
+              echo "Commit failed, retrying in 10 seconds... (Attempt $attempt of $max_attempts)"
+              sleep 10
+          done
+          
+          if [ "$success" = true ]; then
+              attempt=0
+              success=false
+              while [ $attempt -lt $max_attempts ]; do
+                  git push origin main && success=true && break
+                  attempt=$((attempt + 1))
+                  echo "Push failed, retrying in 10 seconds... (Attempt $attempt of $max_attempts)"
+                  sleep 10
+              done
+              
+              if [ "$success" = false ]; then
+                  echo "Push failed after $max_attempts attempts. Continuing workflow."
+              else
+                  echo "Push successful."
+              fi
+          else
+              echo "Commit failed after $max_attempts attempts. Continuing workflow."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
