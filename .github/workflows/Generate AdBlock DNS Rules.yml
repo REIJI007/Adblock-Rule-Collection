@@ -1,0 +1,143 @@
+name: Generate AdBlock DNS Rules
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+jobs:
+  filter-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytz
+      - name: Process AdBlock rules to DNS filter
+        shell: python3 {0}
+        run: |
+          import datetime
+          import pytz
+          import re
+
+          # 任何不在此列表的修饰符 → 整条规则直接忽略（严格执行）
+          DNS_ALLOWED_MODIFIERS = frozenset([
+              'important',    # 提升优先级
+              'badfilter',    # 禁用匹配规则
+              'dnsrewrite',   # 重写 DNS 响应
+              'dnstype',      # 按 DNS 查询类型过滤
+              'client',       # 按客户端过滤
+              'ctag',         # 按客户端标签过滤（AdGuard Home）
+              'denyallow',    # 从广义规则中白名单特定域名（新增，官方支持）
+              # 'network' 已移除：官方文档中不存在，保留即违背严格遵循原则
+          ])
+          
+          def _all_modifiers_dns_safe(rule_line):
+              """
+              严格校验修饰符：使用 rsplit('$', 1) 取最后一个 $ 后的部分
+              仅保留 key 部分（dnsrewrite=REFUSED;; → 只取 'dnsrewrite'）
+              任意一个修饰符不在白名单 → False（整条规则丢弃）
+              """
+              if '$' not in rule_line:
+                  return True
+              _, modifier_str = rule_line.rsplit('$', 1)
+              modifiers = [m.split('=')[0].strip() for m in modifier_str.split(',') if m.strip()]
+              return all(m in DNS_ALLOWED_MODIFIERS for m in modifiers)
+          
+          def is_valid_adguard_dns_rule(line):
+              """仅保留 100% 符合官方 AdGuard DNS 语法的规则"""
+              line = line.strip()
+              if not line:
+                  return False
+              
+              # 1. 忽略注释
+              if line.startswith('!') or line.startswith('#'):
+                  return False
+              
+              # 2. 直接丢弃浏览器专属规则（DNS 完全不支持）
+              if re.search(r'##|#@#|#\$\#|#%#|\$\@\$|\$popup|\$generichide|\$elemhide', line, re.IGNORECASE):
+                  return False
+              
+              # 3. 修饰符校验（任意非法修饰符 → 整条忽略）
+              if not _all_modifiers_dns_safe(line):
+                  return False
+              
+              # 提取 pattern 部分（用于后续类型判断）
+              if '$' in line:
+                  pattern, _ = line.rsplit('$', 1)
+                  pattern = pattern.strip()
+              else:
+                  pattern = line.strip()
+              
+              # 4. 严格模式匹配（仅以下 3 类官方支持的 pattern）
+              # A. 正则表达式规则 /.../
+              if re.match(r'^/[^/]+/$', pattern):
+                  return True
+              
+              # B. /etc/hosts 风格（官方明确支持）
+              if re.match(r'^(0\.0\.0\.0|127\.0\.0\.1|::[0-9a-f:]*|\d{1,3}(\.\d{1,3}){3})\s+[a-z0-9.-]+\.[a-z]{2,}$', 
+                          pattern, re.IGNORECASE):
+                  return True
+              
+              # C. 域名规则（支持 || ^ | * @@ 等全部官方锚点与通配符）
+              # 覆盖：example.com、||example.com^、@@||example.com^、example.com|、|example.com、*example.com、||*.example.com^ 等
+              domain_re = r'^(@@)?(\|\||\|)?[a-z0-9*.-]+(\^|\|)?$'
+              if re.match(domain_re, pattern, re.IGNORECASE):
+                  # 额外防垃圾：必须包含至少一个 . 或 *（防止纯 IP 或无效字符串）
+                  if '.' in pattern or '*' in pattern or pattern.startswith(('|', '@@')):
+                      return True
+              
+              # 任何未命中以上 3 类 → 严格忽略
+              return False
+          
+          def process_file(input_file, output_file, title):
+              with open(input_file, 'r', encoding='utf-8', errors='ignore') as f:
+                  rules = [line.strip() for line in f if is_valid_adguard_dns_rule(line.strip())]
+              
+              # 去重（保持原始出现顺序）
+              seen = set()
+              unique_rules = [rule for rule in rules if rule and not (rule in seen or seen.add(rule))]
+              
+              tz = pytz.timezone('Asia/Shanghai')
+              timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
+              
+              header = (
+                  f"!Title: {title}\n"
+                  f"!Description: 严格转为 AdGuard DNS 过滤器语法的订阅，"
+                  f"每20分钟更新一次，确保即时同步上游\n"
+                  f"!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection\n"
+                  f"!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0\n"
+                  f"!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0\n"
+                  f"!生成时间: {timestamp}\n"
+                  f"!有效规则数目: {len(unique_rules)}\n"
+              )
+              
+              with open(output_file, 'w', encoding='utf-8') as f:
+                  f.write(header + '\n')
+                  if unique_rules:
+                      f.write('\n'.join(unique_rules) + '\n')
+              
+              print(f"Processed {input_file} → {output_file}. Total valid DNS rules: {len(unique_rules)}")
+          
+          # 处理两个文件
+          process_file('ADBLOCK_RULE_COLLECTION.txt', 'ADBLOCK_RULE_COLLECTION_DNS.txt', 'Adblock-Rule-Collection-Dns')
+          process_file('ADBLOCK_RULE_COLLECTION_Lite.txt', 'ADBLOCK_RULE_COLLECTION_DNS_Lite.txt', 'Adblock-Rule-Collection-Dns-Lite')
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git fetch origin main
+          git merge origin/main --strategy-option=ours || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update AdBlock DNS Rules"
+            git push origin main
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
