@@ -1,0 +1,302 @@
+name: Generate AdBlock DNS Rules
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: generate-adblock-dns-rules
+  cancel-in-progress: true
+
+jobs:
+  filter-rules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytz
+
+      - name: Strict AdGuard DNS Filtering Compiler
+        shell: python3 {0}
+        run: |
+          import re
+          import ipaddress
+          import datetime
+          import pytz
+
+          # =========================
+          # AdGuard DNS App 白名单修饰符（严格版）
+          # =========================
+          ALLOWED_MODIFIERS = {
+              "dnsrewrite",
+              "client",
+              "ctag",
+              "important",
+              "denyallow"
+          }
+
+          DOMAIN_RE = re.compile(
+              r'^(?=.{1,253}$)'
+              r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+'
+              r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$',
+              re.IGNORECASE
+          )
+
+          BLOCK_MARKERS = ("##", "#@#", "#$#", "#%#", "#?#")
+
+          # =========================
+          # 基础清洗
+          # =========================
+          def clean(line: str) -> str:
+              if not line:
+                  return ""
+              if line.startswith(("!", "#")):
+                  return ""
+              if "#" in line:
+                  line = line.split("#", 1)[0]
+              return line.strip()
+
+          # =========================
+          # 域名合法性
+          # =========================
+          def is_domain(d: str) -> bool:
+              if not d:
+                  return False
+              d = d.strip().lower().rstrip(".")
+              if "*" in d:
+                  return False
+              return bool(DOMAIN_RE.match(d))
+
+          # =========================
+          # hosts 解析（严格）
+          # =========================
+          def parse_hosts(line: str):
+              parts = line.split()
+              if len(parts) < 2:
+                  return None
+              try:
+                  ipaddress.ip_address(parts[0])
+              except:
+                  return None
+
+              domains = []
+              for d in parts[1:]:
+                  if is_domain(d):
+                      domains.append(d.strip().lower().rstrip("."))
+
+              if not domains:
+                  return None
+
+              return [(parts[0], d) for d in domains]
+
+          # =========================
+          # 拆分规则
+          # =========================
+          def split(line: str):
+              for i, c in enumerate(line):
+                  if c == "$":
+                      return line[:i].strip(), line[i+1:].strip()
+              return line.strip(), ""
+
+          # =========================
+          # modifier 过滤（严格白名单）
+          # =========================
+          def parse_mod(mod: str):
+              if not mod:
+                  return []
+              out = []
+              for m in mod.split(","):
+                  key = m.split("=")[0].strip()
+                  if key in ALLOWED_MODIFIERS:
+                      out.append(m)
+              return out
+
+          # =========================
+          # DNS base 判断
+          # =========================
+          def is_dns_base(base: str) -> bool:
+              base = base.strip()
+
+              if is_domain(base):
+                  return True
+
+              if base.startswith("||") and base.endswith("^"):
+                  return is_domain(base[2:-1])
+
+              if base.startswith("@@||") and base.endswith("^"):
+                  return is_domain(base[4:-1])
+
+              return False
+
+          # =========================
+          # 规则类型识别
+          # =========================
+          def rule_type(line: str):
+              if parse_hosts(line):
+                  return "hosts"
+              if is_domain(line):
+                  return "domain"
+              if line.startswith("||") and line.endswith("^"):
+                  return "adblock"
+              if line.startswith("@@||") and line.endswith("^"):
+                  return "adblock_allow"
+              return None
+
+          # =========================
+          # 合法性校验（核心）
+          # =========================
+          def valid(line: str) -> bool:
+              line = clean(line)
+              if not line:
+                  return False
+
+              if any(x in line for x in BLOCK_MARKERS):
+                  return False
+
+              if line.startswith("/") and line.endswith("/"):
+                  return False
+
+              if parse_hosts(line):
+                  return True
+
+              base, mod = split(line)
+
+              if not is_dns_base(base):
+                  return False
+
+              mods = parse_mod(mod)
+
+              # 严格检查非法 modifier
+              for m in mods:
+                  key = m.split("=")[0]
+                  if key not in ALLOWED_MODIFIERS:
+                      return False
+
+              return True
+
+          # =========================
+          # 规则规范化输出
+          # =========================
+          def canonicalize(line: str):
+              line = clean(line)
+              if not line:
+                  return None
+
+              hosts = parse_hosts(line)
+              if hosts:
+                  return [f"{ip} {d}" for ip, d in hosts]
+
+              base, mod = split(line)
+              mods = parse_mod(mod)
+
+              if not is_dns_base(base):
+                  return None
+
+              # domain → adblock DNS rule
+              if is_domain(base):
+                  if mods:
+                      return [f"||{base.rstrip('.')}^${','.join(mods)}"]
+                  return [f"||{base.rstrip('.')}^"]
+
+              # already adblock rule
+              if base.startswith("||") or base.startswith("@@||"):
+                  if mods:
+                      return [base + "$" + ",".join(mods)]
+                  return [base]
+
+              return None
+
+          # =========================
+          # 主处理流程
+          # =========================
+          def process(inp, out, title, timestamp):
+              raw_rules = []
+
+              with open(inp, "r", encoding="utf-8", errors="ignore") as f:
+                  for line in f:
+                      if not valid(line):
+                          continue
+                      r = canonicalize(line)
+                      if r:
+                          raw_rules.extend(r)
+
+              # 去重
+              seen = set()
+              rules = []
+              for r in raw_rules:
+                  if r not in seen:
+                      seen.add(r)
+                      rules.append(r)
+
+              header = (
+                  f"!Title: {title}\n"
+                  f"!Description: AdGuard DNS Filtering strict whitelist compiler (App compatible)\n"
+                  f"!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection\n"
+                  f"!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0\n"
+                  f"!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0\n"
+                  f"!Generated: {timestamp}\n"
+                  f"!RuleCount: {len(rules)}\n"
+              )
+
+              with open(out, "w", encoding="utf-8") as f:
+                  f.write(header + "\n")
+                  if rules:
+                      f.write("\n".join(rules) + "\n")
+
+              print(f"{inp} -> {out} | rules: {len(rules)}")
+
+          # =========================
+          # 时间
+          # =========================
+          ts = datetime.datetime.now(
+              pytz.timezone("Asia/Shanghai")
+          ).strftime("%Y-%m-%d %H:%M:%S")
+
+          # =========================
+          # 执行
+          # =========================
+          process(
+              "ADBLOCK_RULE_COLLECTION.txt",
+              "ADBLOCK_RULE_COLLECTION_DNS.txt",
+              "Adblock-Rule-Collection-DNS",
+              ts
+          )
+
+          process(
+              "ADBLOCK_RULE_COLLECTION_Lite.txt",
+              "ADBLOCK_RULE_COLLECTION_DNS_Lite.txt",
+              "Adblock-Rule-Collection-DNS-Lite",
+              ts
+          )
+
+      - name: Commit and push changes
+        run: |
+          set -e
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+
+          git commit -m "Update AdBlock DNS rules"
+          git fetch origin main
+          git merge --no-edit origin/main
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
