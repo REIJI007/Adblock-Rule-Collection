@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-23 04:29:27 (UTC+8)
-! Total rules: 1588447
+! Generated: 2026-10-23 04:39:49 (UTC+8)
+! Total rules: 1588450
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -134732,6 +134732,7 @@ buffet-crampon.com##.doyoulikecookies
 buffsports.*##.btn-danger.btn
 buffsports.*##.h-100.position-absolute.w-100
 buffsports.io##a[role="button"][href="#"]
+buffsports.stream###pr
 buffsports.stream,sportcast.life###pr
 buffstreamz.com##+js(acs, $, modal)
 buffstreamz.com##+js(nowebrtc)
@@ -789012,6 +789013,7 @@ zzzyk.com###Tinfo
 ||bxgg.site^$all
 ||bxgz.cc^
 ||bxhnfmijbikzg.space^
+||bxhnjzyusvery.website^
 ||bxiaev.linvosges.com^
 ||bxjnbeubkxxmw.site^
 ||bxkhoojkyzdbn.website^
@@ -1121914,6 +1121916,7 @@ zzzyk.com###Tinfo
 ||eqhvb-98ffe.web.app^
 ||eqhvb-98ffe.web.app^$all
 ||eqhvwwxtztvqi.website^
+||eqhxahzdtmhoq.website^
 ||eqidtjiskmjoo.site^
 ||eqilyppdackel.website^
 ||eqingl.ivet.bg^
