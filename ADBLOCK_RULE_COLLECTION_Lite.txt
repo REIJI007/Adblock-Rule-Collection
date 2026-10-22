@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-23 00:26:22 (UTC+8)
-! Total rules: 1335541
+! Generated: 2026-10-23 01:00:39 (UTC+8)
+! Total rules: 1335548
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -58992,7 +58992,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /^https?:\/\/kan\.znds\.com\/public\/home\/images\/[0-9]+-[0-9]+\.gif\?v=/$domain=kan.znds.com
 /^https?:\/\/m\.anysex\.com\/[a-zA-Z]{1,4}\/[a-zA-Z]+\.php$/$image,script,domain=m.anysex.com
 /^https?:\/\/picturelol\.com\/[a-z\d]+\.(js)$/$domain=picturelol.com
-/^https?:\/\/pikabu\.ru\/ajax\/{1,2}[^?]+\?[A-Za-z0-9]+=[A-Za-z0-9_%-]*[0-9a-f]{20,}_[a-z0-9_]+/$xmlhttprequest,domain=pikabu.ru
+/^https?:\/\/pikabu\.ru\/ajax\/{1,2}[^?]+\?[A-Za-z0-9]+=[A-Za-z0-9_%.-]*[0-9a-f]{20,}_[a-z0-9_]+/$xmlhttprequest,domain=pikabu.ru
 /^https?:\/\/pov\.spectrum\.net\/[a-zA-Z0-9]{14,}\.js/$script,domain=spectrum.net
 /^https?:\/\/qqh[0-9]\.mom\//$document,to=mom
 /^https?:\/\/reddit-\d{1,2}\.[a-z]{4}\.(?:net|org|pw)\//$document,to=net|org|pw|~reddit.com
@@ -69526,9 +69526,12 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 11px.cn##.zz
 11px.cn##.zz_nr
 11st.co.kr##.c-ad-banner
+11st.co.kr##.c-fixed-bottom:has(a[href^="http://m.11st.co.kr/MW/Gate/executeApp.tmall?"])
+11st.co.kr##.c-reward-info__cta
 11st.co.kr##.c_product_btn_share
 11st.co.kr#$##banner-gnb { display: none !important; }
 11st.co.kr#%#//scriptlet('remove-class', 'header-fixed--banner', '#wrap')
+11st.co.kr#%#//scriptlet('set-cookie', 'web2AppPopupDisable', 'Y')
 11teamsports.com###TrackingTipp
 11teamsports.com,agrar-fachversand.com,akkuline.de,alorelia.de,altabadialat.it,ausserhofer.bz,ballaro.eu,barax.de,bellaffair.de,biere-aus-franken.de,bieronlineshop.ch,bonsai-auer.com,bzheartbeat.it,coding4kids.it,consoles4you.ch,cosmeticexpress.com,doriskaradar.com,e-biker.de,ebike24.com,ecomove.cc,europa-shop-apotheke.de,fleurop.nl,folioverlag.com,global-messer.shop,glutenfrei-bier.com,hanako-koi.de,interaquaristik.de,kdshop.it,koi-company.de,koifuttershop.de,korodrogerie.de,leguano.eu,max-hamster.de,miavitas.com,mountainshop.online,muehldorfer.com,pharmasana.de,pircher24.it,prantner.it,preisteufel.at,rudi-delago.com,schildkroet.de,sportsonline.ch,svsound.de,swords-and-more.com,thermal-grizzly.com,tieroase-lorsch.de,trauttmansdorff.it,tropical-deutschland.de,vinumpetri.com,viologic.com,wbv.de,webshop.asus.com,xn--schildkrt-sport-gtb.com##.cookie-permission-container
 120.12.138.133$network
@@ -551201,6 +551204,7 @@ zzzyk.com###Tinfo
 ||achermanrmalerch.click^$all
 ||acheworry.com^
 ||achffe.blogspot.ch^$all
+||achggnfnubxum.online^
 ||achhd.theofficeofangelascott.com^
 ||achicih.gitee.io^$third-party
 ||achievablecpmrevenue.com^
@@ -583619,6 +583623,7 @@ zzzyk.com###Tinfo
 ||azygotesonless.com^
 ||azyrak.aureumcollective.com^
 ||azystyles.com^$all
+||azyxzdhtjhkgr.site^
 ||azzmtrfehtqce.site^
 ||azzncoswof.com^
 ||azznwuc.com^
@@ -923152,7 +923157,6 @@ zzzyk.com###Tinfo
 ||error-analytics-production.shopifysvc.com^
 ||error-analytics-sessions-production.shopifysvc.com^
 ||error-collector.ted.com^
-||error-report.com^
 ||error-report.com^$badfilter
 ||error-tracker.pages.dev^
 ||error-tracking.arvancloud.com^
@@ -945633,6 +945637,7 @@ zzzyk.com###Tinfo
 ||fstats.xyz^$third-party
 ||fstaw.com^
 ||fstmoney.xyz^
+||fstqyvpwbwnvf.space^
 ||fstrk.net/api/tracker/
 ||fstrk.net^$third-party
 ||fstrkchat.com/widget/$third-party
@@ -1035840,6 +1035845,7 @@ zzzyk.com###Tinfo
 ||kpsxmpevuhdwf.space^
 ||kpt-cruise-control.councilbbb.tt.omtrdc.net^
 ||kpt32165s.com^
+||kptlsmwckktvt.space^
 ||kptmv.madcha.com^
 ||kptve.trualchemyskin.com^
 ||kptve4tbc6bm2.calgary.tt.omtrdc.net^
@@ -1131404,7 +1131410,6 @@ zzzyk.com###Tinfo
 ||pijiagui.cn^
 ||pijper.io/visits/
 ||pik.ad-zahnzentrum-dortmund.de^
-||pikabu.ru/ajax//$xmlhttprequest
 ||pikabu.ru/ajax/analytics.php
 ||pikabu.ru/apps/*/analytics.js
 ||pikabu.ru/stat/
@@ -1241164,6 +1241169,7 @@ zzzyk.com###Tinfo
 ||swarmscape.com^
 ||swarmspokenfunds.com^$all
 ||swarmwastefultried.com^$all
+||swarmylenismutton.qpon^
 ||swarovskichile.com^$all
 ||swarovskidubai.com^$all
 ||swarovskifactoryoutlet.com^$all
@@ -1329871,6 +1329877,7 @@ zzzyk.com###Tinfo
 ||zhouyi.cool^
 ||zhouziwang.cn^
 ||zhownsplpphyu.online^
+||zhoytqwswnmtp.site^
 ||zhoz.com^
 ||zhpcleaner.com^$document
 ||zhpfl.cn^
