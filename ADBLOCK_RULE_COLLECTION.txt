@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-23 01:01:19 (UTC+8)
-! Total rules: 1588382
+! Generated: 2026-10-23 01:25:18 (UTC+8)
+! Total rules: 1588394
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -431825,7 +431825,6 @@ latestly.com###showMe
 latestly.com##.lhs_adv_970x90_div
 latestly.com##.social_share_blk
 latestly.com##div[style^="min-width: 300px; min-height: 250px;"]
-latestly.com,cryptobriefing.com,huskers.com,rule34-videos.com,gifyu.com,topperlearning.com,aap.org,bbcgoodfood.com,gardenersworld.com,historyextra.com,ndtv.com##.ad-banner
 latestmanga.net#%#//scriptlet("abort-on-property-write", "onClickTrigger")
 latestpornvideo.com##iframe[src^="https://willingcease.com/"]
 latexport.lv###notification
@@ -463954,7 +463953,6 @@ nuvid.com##.rel_right
 nuvid.com##a[class$="_premium_bar"]
 nuvid.com,nuvid.tv##div[style="height:477px; margin-bottom:15px;"]
 nuvid.tv##.footer-live-cam
-nuvid.tv,porn4fans.me,porn4fans.com##.ID_live_cam_inner
 nuvolari.biz##.wrapper-newsletter-block
 nuvomagazine.com##+js(trusted-set-local-storage-item, consent_preferences, '{"analytics_storage":"denied","ad_storage":"denied","ad_user_data":"denied","ad_personalization":"denied"}')
 nuxeo.com#$##cookie-inform-message ~ div.modal-overlay { display: none !important; }
@@ -487518,6 +487516,7 @@ respublika.lt##.p2_social
 respublika.lt##div.news_swipable_desktop:has(> iframe.stpd-responsive-iframe)
 respublika.lt#$##news_comment_container { filter: none !important }
 respublika.lt#$#[class^=com_] { user-select: unset !important; -webkit-user-select: unset !important; -moz-user-select: unset !important }
+respublika.lt#?#div.news_swipable_desktop:has(> iframe.stpd-responsive-iframe)
 restart.run#%#//scriptlet('trusted-set-local-storage-item', 'userConsent', '{"necessary":true,"preferences":true,"analytics":false,"marketing":true}')
 restate.ru##.cow
 restate.ru#?#body > div[class][style]:has(> .hide-from-print p  a[href$="/personaldata.html"])
@@ -522157,7 +522156,6 @@ tubeon.com#?#.contain > div.c-appellation:has(> div.c-medappellation-output > h2
 tubeon.com#?#.envelope-coverap > div.contain:has(> div.c-appellation > div.c-medtitle-output > h2:contains(/Advertising|Reklama|Werbung|Publicité|Anuncio|Advertentie|Pubblicità|Anúncio|Реклама|広告/))
 tubeon.com#?#.envelope-coverap > div.contain:has(> div.livecams)
 tubeon.com,tubeon.net###banner_overlay-postitial-video
-tubeon.com,tubeon.net###spot_video_underplayer_livecams
 tubeon.com,tubeon.net##.cams-opener
 tubeon.com,tubeon.net##.player_premium_bar
 tubeon.com,tubeon.net##a[href^="https://fhgte.com/"]
@@ -751133,6 +751131,7 @@ zzzyk.com###Tinfo
 ||api.ateliedosbaloesoficial.com^
 ||api.atelierafapicolotto.com.br^
 ||api.atlassian.com/metal/ingest
+||api.atmosvere.eu/api/*/traffic/*/collect-update
 ||api.atrax.com.br^
 ||api.atriadedoconstrutor.com.br^
 ||api.auchan.fr/tracking/
@@ -760450,6 +760449,7 @@ zzzyk.com###Tinfo
 ||athens.toto.nl^
 ||athensvoice.gr/content/dist/app/Plugins/pageTrack.js
 ||atheslkgczrrp.online^
+||athingjocelin.qpon^
 ||athl.lsusports.net^
 ||athlet.ge^
 ||athlet.ge^$all
@@ -774388,6 +774388,7 @@ zzzyk.com###Tinfo
 ||beusable.net^
 ||beusable.net^$third-party
 ||beutavpysjojf.site^
+||beuvgqdnqlexe.space^
 ||bevaultav.assets.net.daraz.com^
 ||bevcndpulchmedotcom.management.net.daraz.com^
 ||bevelscouriewarnt.cfd^
@@ -1139803,6 +1139804,7 @@ zzzyk.com###Tinfo
 ||flats.pro^$all
 ||flattee.com^$all
 ||flattermonumentsbarren.com^
+||flatwayspoofer.qpon^
 ||flatworldsolutions.actonservice.com^
 ||flavamovie.com^$all
 ||flavg.drinkfreespirits.com^
@@ -1165510,6 +1165512,7 @@ zzzyk.com###Tinfo
 ||glaboratorytlab.c.ns.emalaboratorylvlaboratoryslaboratoryon.net.daraz.com^
 ||glabtewlabyns.emlabilvision.net.daraz.com^
 ||glaccountsbal-b.ns.emailvisiaccountsn.net.daraz.com^
+||glaceslawmakeoctarch.cyou^
 ||glacial-spire-9043.tt.omtrdc.net^
 ||glacier-beta.chat.tt.omtrdc.net^
 ||glacier.itg.tt.omtrdc.net^
@@ -1195499,6 +1195502,7 @@ zzzyk.com###Tinfo
 ||haaretz.co.il/_next/static/chunks/*.js$replace=/return n&&"paying"/return; n&&"paying"/
 ||haauospr.zerow.it^
 ||hab.co.jp/news/img/sidebar_app.png
+||hababmayda.cyou^
 ||habbot.boyfriend.show^
 ||habd.as/js/modules/toxic-swamp/webminer.min.js
 ||habeascerises.cyou^
@@ -1258203,6 +1258207,7 @@ zzzyk.com###Tinfo
 ||lddvxfmswnnxny.com^
 ||ldentid5s.weebly.com^
 ||ldentid5s.weebly.com^$all
+||ldfttidohyreh.online^
 ||ldger-livee.wixstudio.com^
 ||ldger-livee.wixstudio.com^$all
 ||ldgerlive.framer.ai^
@@ -1259791,6 +1259796,7 @@ zzzyk.com###Tinfo
 ||lendirqu.stream/wp-content/themes/retrotube/assets/js/skip-link-focus-fix.js$all
 ||lendirqu.stream/wp-includes/js/jquery/jquery.min.js$all
 ||lendopolis.actonservice.com^
+||lendubittium.cfd^
 ||lendvioletmutton.com^$all
 ||lenfjmydpizvn.site^
 ||lengoudc.antidark.dk^
@@ -1290173,6 +1290179,7 @@ zzzyk.com###Tinfo
 ||lwsskdedoiwvp.website^
 ||lwtxt.net/gaogao/
 ||lwucmsmkumxsh.space^
+||lwuntajpwadku.online^
 ||lwuqoiaontbru.online^
 ||lwusnt.yogibo.kr^
 ||lwvbqkyckqbnn.space^
@@ -1303342,6 +1303349,7 @@ zzzyk.com###Tinfo
 ||mechawerk.shop^$all
 ||mechirearlish.cfd^
 ||mecio.farmhousefreshgoods.com^
+||meconbalms.qpon^
 ||meconcoupler.cyou^
 ||mecrowdstrikesnowstandalone.azurewebsites.net^$doc
 ||mecrowdstrikesnowstandalone.azurewebsites.net^$document
@@ -1354834,6 +1354842,7 @@ zzzyk.com###Tinfo
 ||pennynetwork.com^$third-party
 ||pennyotcstock.com^
 ||pennyweb.com^
+||penochidune.cyou^
 ||penrod.co/scripts/Penrod.HCWT-min.js$all
 ||penrodellisfdd.tt.omtrdc.net^
 ||pensebig.com.br^
@@ -1371966,6 +1371975,7 @@ zzzyk.com###Tinfo
 ||pumemfun.com^$all
 ||pumemfunja.com^$all
 ||pumhpxdttyblz.site^
+||pumicerernst.qpon^
 ||pumlim.com^$all
 ||pumlmb.netcologne.de^
 ||pumpbead.com^
@@ -1384365,6 +1384375,7 @@ zzzyk.com###Tinfo
 ||quertumlux.shop^$all
 ||query*.petametrics.com^
 ||query.capitalontap.com^
+||query.reachit.network/*?l=
 ||query1.petametrics.com^
 ||queryto63.net^
 ||quesalbarking.qpon^
@@ -1548947,6 +1548958,7 @@ zzzyk.com###Tinfo
 ||welbljmkjmvwm.top^
 ||welchedcamletairflow.qpon^
 ||welchencharaktersollichnehmen.de^$all
+||welchhoke.cyou^
 ||welcome-begin-trezo-en.typedream.app^
 ||welcome-begin-trezo-en.typedream.app^$all
 ||welcome-bhd-credi.lovable.app^
