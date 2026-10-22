@@ -1,0 +1,214 @@
+name: Generate AdBlock Host List
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/20 * * * *'
+  push:
+    paths:
+      - "ADBLOCK_RULE_COLLECTION.txt"
+      - "ADBLOCK_RULE_COLLECTION_Lite.txt"
+      - ".github/workflows/Generate AdBlock Host List.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-adblock-hosts-ipv4
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate IPv4 Hosts lists
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import ipaddress
+          import re
+          from pathlib import Path
+
+          SOURCES = [
+              ("ADBLOCK_RULE_COLLECTION.txt",
+               "ADBLOCK_RULE_COLLECTION_Hosts.txt"),
+              ("ADBLOCK_RULE_COLLECTION_Lite.txt",
+               "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt"),
+          ]
+
+          DOMAIN_RE = re.compile(
+              r"^(?:\|\|)([a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)\^$",
+              re.IGNORECASE,
+          )
+
+          def normalize_domain(value):
+              value = value.strip().rstrip(".").lower()
+              if not value or len(value) > 253:
+                  return None
+              try:
+                  value = value.encode("idna").decode("ascii")
+              except UnicodeError:
+                  return None
+
+              labels = value.split(".")
+              if len(labels) < 2:
+                  return None
+
+              for label in labels:
+                  if (
+                      not label
+                      or len(label) > 63
+                      or not re.fullmatch(
+                          r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+                          label,
+                      )
+                  ):
+                      return None
+
+              try:
+                  ipaddress.ip_address(value)
+                  return None
+              except ValueError:
+                  pass
+
+              return value
+
+          def parse_rules(path):
+              lines = path.read_text(
+                  encoding="utf-8-sig", errors="replace"
+              ).splitlines()
+
+              blocked = set()
+              exceptions = set()
+              badfilters = set()
+
+              for raw in lines:
+                  line = raw.strip()
+                  if not line or line.startswith(("!", "#", "[")):
+                      continue
+
+                  # Only support plain domain rules with no modifiers.
+                  match = DOMAIN_RE.fullmatch(line)
+                  if match:
+                      domain = normalize_domain(match.group(1))
+                      if domain:
+                          blocked.add(domain)
+                      continue
+
+                  # Domain-wide exceptions: @@||example.com^
+                  if line.startswith("@@||"):
+                      exception_match = re.fullmatch(
+                          r"@@\|\|([a-z0-9.-]+)\^",
+                          line,
+                          re.IGNORECASE,
+                      )
+                      if exception_match:
+                          domain = normalize_domain(
+                              exception_match.group(1)
+                          )
+                          if domain:
+                              exceptions.add(domain)
+                      continue
+
+                  # $badfilter disables the exact corresponding rule.
+                  if "$badfilter" in line.lower():
+                      base = re.sub(
+                          r"\$badfilter(?:,|$)",
+                          "",
+                          line,
+                          flags=re.IGNORECASE,
+                      ).rstrip("$,")
+                      base_match = DOMAIN_RE.fullmatch(base)
+                      if base_match:
+                          domain = normalize_domain(base_match.group(1))
+                          if domain:
+                              badfilters.add(domain)
+
+              # Remove only exact disabled rules, not every subdomain.
+              blocked.difference_update(badfilters)
+
+              # Hosts cannot express exception semantics. Remove blocked
+              # domains covered by an exception, including their subdomains.
+              blocked = {
+                  domain for domain in blocked
+                  if not any(
+                      domain == exc or domain.endswith("." + exc)
+                      for exc in exceptions
+                  )
+              }
+
+              return sorted(blocked)
+
+          for source_name, output_name in SOURCES:
+              source = Path(source_name)
+              if not source.is_file():
+                  raise SystemExit(f"Missing input file: {source_name}")
+
+              domains = parse_rules(source)
+              output = Path(output_name)
+
+              header = [
+                  "# Generated automatically by GitHub Actions.",
+                  "# IPv4 Hosts format: 0.0.0.0 domain",
+                  "# Only plain ||domain^ rules are supported.",
+                  "# Exception rules are applied before output.",
+                  "",
+              ]
+
+              output.write_text(
+                  "\n".join(header + [
+                      f"0.0.0.0 {domain}" for domain in domains
+                  ]) + "\n",
+                  encoding="utf-8",
+              )
+
+              print(f"{source_name}: {len(domains)} domains -> {output_name}")
+          PY
+
+      - name: Validate generated files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          files = [
+              "ADBLOCK_RULE_COLLECTION_Hosts.txt",
+              "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt",
+          ]
+
+          for name in files:
+              path = Path(name)
+              if not path.is_file():
+                  raise SystemExit(f"Output missing: {name}")
+
+              for line in path.read_text(encoding="utf-8").splitlines():
+                  if not line or line.startswith("#"):
+                      continue
+                  if not re.fullmatch(
+                      r"0\.0\.0\.0 [a-z0-9.-]+", line
+                  ):
+                      raise SystemExit(
+                          f"Invalid IPv4 Hosts line in {name}: {line}"
+                      )
+              print(f"Validated: {name}")
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ADBLOCK_RULE_COLLECTION_Hosts.txt \
+                  ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Update IPv4 Hosts lists"
+            git push
+          else
+            echo "No changes to commit."
+          fi
