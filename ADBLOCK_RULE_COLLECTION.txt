@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-23 20:22:49 (UTC+8)
-! Total rules: 1591219
+! Generated: 2026-10-23 20:27:11 (UTC+8)
+! Total rules: 1591221
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -124826,6 +124826,7 @@ bahnhof-apo.de,prostata-hilfe-deutschland.de###ccModal
 bahnhof.se##.top-line-block
 bahnland-bayern.de,eezy.nrw,nationalexpress.de##+js(set-local-storage-item, contao-privacy-center.hidden, 1)
 bahnland-bayern.de,eezy.nrw,nationalexpress.de#%#//scriptlet('ubo-set-local-storage-item', 'contao-privacy-center.hidden', '1')
+bahrain.bh,chemistwarehouse.co.nz,cognizantee.tekstac.com,xbox-store-checker.com##.eupopup-container
 bahrain.bh,cognizantee.tekstac.com,xbox-store-checker.com##.eupopup-container
 baibako.tv##.topserial > a
 baic.cz##+js(set-local-storage-item, gdprConsent, false)
@@ -386734,8 +386735,6 @@ enmods.com,deblocker.merkulov.design,jobnoid.net,ceneval.shop,arigl.com,biovetro
 enmods.com,deblocker.merkulov.design,jobnoid.net,ceneval.shop,arigl.com,biovetro.net,katoikos.world,freepatternsarea.com,sampledrive.org,sharedwebs.com,fitnessplanss.com,mcxlive.org,okpeliz.com,bluedollar.net,nulljungle.com,cehennemstream.xyz,mangacrab.org,arigl.online,s0ft4pc.com,boyfuck.me,freereadnovel.online,idlixvip.asia,javboys.tv,asianboy.fans,techedubyte.com,yomucomics.com,tuktukcinma.com#$#body > div[class*=" active"][style] { display: none !important; }
 enmods.com,deblocker.merkulov.design,jobnoid.net,ceneval.shop,arigl.com,biovetro.net,katoikos.world,freepatternsarea.com,sampledrive.org,sharedwebs.com,fitnessplanss.com,mcxlive.org,okpeliz.com,bluedollar.net,nulljungle.com,cehennemstream.xyz,mangacrab.org,arigl.online,s0ft4pc.com,boyfuck.me,freereadnovel.online,idlixvip.asia,javboys.tv,asianboy.fans,techedubyte.com,yomucomics.com,tuktukcinma.com#$?#body > div[class*=" active"][style] + div[class]:has(> .active > [class*="-content"]) { display: none !important; }
 enmods.com,scriptsrbx.com,3dzip.info#%#//scriptlet('abort-on-stack-trace', 'Object.entries', 'wp-content')
-ennebiservice.shipping-portal.com#$#.cookie-consent-change__container { display: none !important; }
-ennebiservice.shipping-portal.com#$#body { overflow: auto !important; }
 enorth.com.cn##DIV.guanggao
 enorth.com.cn##div[class^="guanggao"]
 enostech.com##[class^="wp-image-41"]
@@ -634475,6 +634474,7 @@ zzzyk.com###Tinfo
 ||19vcd.com/mid/
 ||1a28484fbe.e452be28aa.com^
 ||1a715b8q5m3j.www.logology.co^
+||1a7pxa2r7.com^
 ||1a8e54b24f.1b0bcb385f.com^
 ||1a8f9rq9c.de^
 ||1a9cb1c203.7d7a497317.com^
@@ -739539,6 +739539,7 @@ zzzyk.com###Tinfo
 ||ailla.abphotos.link^
 ||ailmalcf.curology.com^
 ||ailmalcf.withagency.com^
+||ailtuvhxtaxbc.com^
 ||ailzgt.cyberport.at^
 ||aim-tag.hcn.health^
 ||aim.cloudflare.com/__log
@@ -1375601,6 +1375602,7 @@ zzzyk.com###Tinfo
 ||pwbxyinigxrju.website^
 ||pwc.tt.omtrdc.net^
 ||pwcitalyemeaptrsd.tt.omtrdc.net^
+||pwdh28pof.com^
 ||pwe.epochbase.com/api/config/tracking?
 ||pwe.epochbase.com/libs/mixpanel-
 ||pwfkn.thepopcornfactory.com^
