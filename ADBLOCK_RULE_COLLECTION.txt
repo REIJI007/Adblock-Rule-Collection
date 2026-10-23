@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-24 01:26:05 (UTC+8)
-! Total rules: 1602049
+! Generated: 2026-10-24 01:28:20 (UTC+8)
+! Total rules: 1602048
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -124838,7 +124838,6 @@ bahnhof.se##.top-line-block
 bahnland-bayern.de,eezy.nrw,nationalexpress.de##+js(set-local-storage-item, contao-privacy-center.hidden, 1)
 bahnland-bayern.de,eezy.nrw,nationalexpress.de#%#//scriptlet('ubo-set-local-storage-item', 'contao-privacy-center.hidden', '1')
 bahrain.bh,chemistwarehouse.co.nz,cognizantee.tekstac.com,xbox-store-checker.com##.eupopup-container
-bahrain.bh,cognizantee.tekstac.com,xbox-store-checker.com##.eupopup-container
 baibako.tv##.topserial > a
 baic.cz##+js(set-local-storage-item, gdprConsent, false)
 baic.cz#%#//scriptlet('ubo-set-local-storage-item', 'gdprConsent', 'false')
