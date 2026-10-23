@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-24 01:28:20 (UTC+8)
-! Total rules: 1602048
+! Generated: 2026-10-24 04:38:34 (UTC+8)
+! Total rules: 1602095
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
 ###ACClayerBackground
@@ -55923,7 +55923,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 *$3p,denyallow=cloudflare.net|fontawesome.com|google.com|googleapis.com|gstatic.com|hwcdn.net|jquery.com|up-load.download,domain=up-load.io
 *$3p,denyallow=google.com|googleapis.com|gstatic.com,domain=uplinkto.*
 *$3p,popup,domain=babesxworld.com
-*$3p,popup,to=~com|~io|~net|~org|~to|~co|~mixdrop.ag|~vik1ngfile.site,from=1cloudfile.com|akirabox.com|akirabox.to|bowfile.com|buzzheavier.com|bzzhr.co|bzzhr.to|cg-gamespc.net|datavaults.co|devuploads.com|dodi-repacks.site|file-me.top|file-upload.org|filemirage.com|fuckingfast.*|game-repack.site|gamedrive.*|getfreegames.net|go.zovo.ink|koramaup.com|mirrored.to|multiup.io|nathanmichaelphoto.com|ranoz.gg|repack-games.com|reloadedsteam.com|rootz.so|steam-repacks.net|steamgg.net|steamunderground.net|swiftuploads.com|torupload.com|up-4ever.net|uploadrar.*|usersdrive.com|vik1ngfile.site|worldofpcgames.com|zeilink.net|zovo2.top|zpaste.net|fileq.net
+*$3p,popup,to=~com|~io|~net|~org|~to|~co|~mixdrop.ag|~vik1ngfile.site,from=1cloudfile.com|akirabox.com|akirabox.to|bowfile.com|buzzheavier.com|bzzhr.co|bzzhr.to|cg-gamespc.net|datavaults.co|devuploads.com|dodi-repacks.site|file-me.top|file-upload.org|filemirage.com|fuckingfast.*|game-repack.site|gamedrive.*|getfreegames.net|go.zovo.ink|koramaup.com|mirrored.to|multiup.io|nathanmichaelphoto.com|ranoz.gg|repack-games.com|reloadedsteam.com|rootz.so|steam-repacks.net|steamgg.net|steamunderground.net|swiftuploads.com|torupload.com|up-4ever.net|uploadrar.*|usersdrive.com|vik1ngfile.site|worldofpcgames.com|zeilink.net|zovo2.top|zpaste.net|fileq.net|zovo.ink|zovo.to
 *$3p,script,redirect=noopjs,domain=lolalytics.com
 *$3p,xhr,domain=ceesty.com|corneey.com|destyy.com|festyy.com|gestyy.com
 *$app=com.miui.systemAdSolution
@@ -59043,7 +59043,6 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /:\/\/[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].[a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9].com\/.*.js/$third-party,script,domain=perverzija.com|xtremestream.co
 /:\/\/[a-z]{2}\.[a-z]{7,10}\.com/$app=com.dlmsapp.v4appprofree
 /:\/\/fmovies.[a-z]+\/[A-Za-z0-9]+$/$domain=fmovies.cab
-/:\/\/pahe.ink\/[a-z0-9]+/[a-z0-9]+$/$script,domain=pahe.ink
 /:\/\/pahe.ink\/[a-z0-9]+\/[a-z0-9]+-\w$/$domain=pahe.ink
 /:\/\/rkn.gov.ru\/[a-g0-9]{30,}.gif/$domain=rkn.gov.ru
 /:\/\/shatter-box\.com\/wp-content\/uploads\/[A-Za-z0-9]+\/[A-Za-z0-9]+\.js/$domain=shatter-box.com
@@ -80684,18 +80683,18 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 1cloudfile.com#$#body .advert-wrapper { position: absolute !important; left: -3000px !important; display: block !important; }
 1cloudfile.com#%#//scriptlet('prevent-window-open')
 1cloudfile.com#@#.advert-wrapper
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(acs, Function.prototype.constructor, '"+"')
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(acs, RegExp.prototype.exec.constructor, '"+"')
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(aeld, click, /document.createElement|window.open/)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(aost, Document.prototype.addEventListener.call, anonymous@https)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(aost, document.addEventListener, anonymous@https)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(nowoif, .cfd)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(prevent-innerHTML, script, !/document|window|const|var|let/)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(rmnt, script, '"+"', excludes, /self\.__next|recaptcha|document|window|const|var|let/)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(rmnt, script, /"\+"g|"\+"'a|self\.__next.*?\,typeof document|self\.__next&&|\|\|self\.__next\,\(|\("\+"t|'\+'F|0\|\|window|\}\)\(\)\,typeof|'\+'s/g, excludes, /^self\.__next_f\.push/)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(set, Element.prototype.closest, falseFunc)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(set, HTMLElement.prototype.click.apply, noopFunc)
-1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net##+js(set, HTMLElement.prototype.click.call, noopFunc)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(acs, Function.prototype.constructor, '"+"')
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(acs, RegExp.prototype.exec.constructor, '"+"')
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(aeld, click, /document.createElement|window.open/)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(aost, Document.prototype.addEventListener.call, anonymous@https)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(aost, document.addEventListener, anonymous@https)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(nowoif, .cfd)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(prevent-innerHTML, script, !/document|window|const|var|let/)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(rmnt, script, '"+"', excludes, /self\.__next|recaptcha|document|window|const|var|let/)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(rmnt, script, /"\+"g|"\+"'a|self\.__next.*?\,typeof document|self\.__next&&|\|\|self\.__next\,\(|\("\+"t|'\+'F|0\|\|window|\}\)\(\)\,typeof|'\+'s/g, excludes, /^self\.__next_f\.push/)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(set, Element.prototype.closest, falseFunc)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(set, HTMLElement.prototype.click.apply, noopFunc)
+1cloudfile.com,akirabox.com,akirabox.to,bowfile.com,buzzheavier.com,bzzhr.co,bzzhr.to,cg-gamespc.net,datavaults.co,devuploads.com,dodi-repacks.site,file-me.top,file-upload.org,filemirage.com,fuckingfast.*,game-repack.site,gamedrive.*,getfreegames.net,go.zovo.ink,koramaup.com,mirrored.to,multiup.io,nathanmichaelphoto.com,ranoz.gg,repack-games.com,reloadedsteam.com,rootz.so,steam-repacks.net,steamgg.net,steamunderground.net,swiftuploads.com,torupload.com,up-4ever.net,uploadrar.*,usersdrive.com,vik1ngfile.site,worldofpcgames.com,zeilink.net,zovo2.top,zpaste.net,fileq.net,zovo.*##+js(set, HTMLElement.prototype.click.call, noopFunc)
 1cloudfile.com,koramaup.com,doodrive.com##.uk-position-bottom-right
 1day.sk##+js(set-cookie, verified4, 1)
 1day.sk#%#//scriptlet('ubo-set-cookie', 'verified4', '1')
@@ -100534,6 +100533,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 @@||log.mmstat.com/eg.js^$script
 @@||log.mmstat.com^|
 @@||log.onmas.kt.com^$app=com.ktshow.cs
+@@||log.rlsbb.in^$stealth=ip
 @@||log.strm.yandex.ru/log?StreamPlayer=*&error=YASP_WORKER_UNHANDLED_REJECTION$domain=kinopoisk.ru
 @@||log000.goo.ne.jp/gcgw.js$domain=nttxstore.jp
 @@||logcg.content-delivery.top/wp-content/plugins/bwp-minify/min/?f=
@@ -122466,13 +122466,10 @@ audiobookbay.is##a[href^="/dl-14-days-trial"]
 audiobookbay.is##div[style*="margin-bottom:"].ski
 audiobookbay.lu###rsidebar > ul > li:has(> h2:contains(ADs))
 audiobookbay.lu##.postContent > table > tbody > tr:has(> td > a > img)
-audiobookbay.lu##.sky
-audiobookbay.lu##a[href^="/didl1-now"]
 audiobookbay.lu##a[href^="/dl-14-days-trial"]
 audiobookbay.lu##div[itemprop="description"] + div > a > span > img[style]
 audiobookbay.lu#?##rsidebar > ul > li:has(> h2:contains(ADs))
-audiobookbay.lu#?#.postContent > table > tbody > tr:has(> td > a[href="/ddeaatr"])
-audiobookbay.lu#?#tr:has(> td:last-child > span > a[href*="?"])
+audiobookbay.lu#?#.postContent > table > tbody > tr:has(> td > a > img)
 audiobooksnow.com##.sticky_consent_footer
 audioboom.com##+js(trusted-set-cookie, cookie_preferences, '[{"type":"essential","status":"on"},{"type":"statistics","status":"off"},{"type":"performance","status":"off"},{"type":"marketing","status":"off"}]', , , reload, 1)
 audioboom.com#$#body { overflow: visible !important; padding-right: 0 !important; }
@@ -125720,7 +125717,6 @@ banki.ru#?#div[data-test="news-all-markdown"] > p:has(> span[style] > span:conta
 banki.ru#?#div[data-test="news-all-markdown"] > p:has(> span[style] > span:contains(/^Дебетовая карта/)) ~ p:has(> a[href="https://www.banki.ru/news/daytheme/?id=11004160"])
 banki.ru#?#div[data-test="news-all-markdown"] > p:has(> span[style] > span:contains(/^Дебетовая карта/)) ~ p:has(> a[href^="https://www.banki.ru/products/debitcards/"])
 banki.ru,apowersoft-tr.com##div[data-share]
-banki.ru,gs24.pl,infobae.com,hna.de,indiatoday.in,clubic.com,semana.com,xataka.com.br,glavred.net,metropoles.com,autoevolution.com##a[href^="https://profile.google.com/cp/"]
 banki.ru,neowin.net,unionesarda.it#@#.article-share
 banki24.by##.content_right > div.row:has(> div > a[href="https://t.me/banki24_news"])
 banki24.by##.knopka-podelitsya
@@ -158586,6 +158582,7 @@ dizajnkonyha.hu,smartinhome.pl,lgcnews.com##body > div[data-elementor-type="foot
 dizelyator.ru##.imgsoc
 dizhanw.com,jiangjunzy.com##div[style="background: #fff;padding:5px;"]
 dizidoktoru.com##.social-buttons > a[data-platform-name][href="javascript:;"]:not(.btn-info)
+dizifilmizle.to##div.hidden.md\:flex > div.flex.items-center:has(> div.flex > button[title])
 diziizle.net###facebook-takipet
 diziizle.net###spopup
 diziizle.top###reklam-sticky
@@ -159136,6 +159133,10 @@ dobreprogramy.pl#?#div[role="list"] > div[role="listitem"]:has(> div > div > div
 dobreprogramy.pl,polygamia.pl##button[title="Kliknij, aby udostępnić"]
 dobro.mail.ru##.dobro-popup-subscribe
 dobro.mail.ru##.dobro-subscription_inline
+dobro.ru##.widget-icon
+dobro.ru##div.footer-column > div.tw\:v-stack:has(> div.tw\:v-stack > div.tw\:flex a[href^="https://www.rustore.ru/catalog/app"])
+dobro.ru##div.footer-column > form.tw\:v-stack:has(> .tw\:relative > div input[placeholder])
+dobro.ru##div[class^="CookiesModal-module"]
 dobro.ru##div[class^="CookiesModal_cookies__"]
 dobro.ru##div[class^="WeAreTogetherModal_modal__"]
 dobro.systems#@#.adv-box
@@ -410335,7 +410336,6 @@ hdporncomics.com##div[data-ad-injected]
 hdporncomics.com#?##menu-menu > li.menu-item:has(> a[href][target="_blank"][rel="nofollow noopener sponsored"])
 hdporncomics.com#?#.hover\:shadow-xl:has(> .adsbyexoclick)
 hdporner.me,rahaporn.com,wankzone.com,pornmk.com,myhentai.us,taboovideosx.com,fxpornhd.com,thevoyeurmania.com,pornolatinox.com,fistingplanet.com##.happy-related-videos-mobile
-hdporner.me,yespornhd.com,milfnut.com,mangatrend.org,sezonlukdizi.cc,adslink.pw,vpnjantit.com,pitube.net,dromendra.com,vercomicporno.com,reelsuites.tv,tonkacine.xyz,tonkacine.watch,hunkypinoy.com,pxp.farm,pxp.guru,pxp.*,rawmiu.net,rawjx.net,boyplus.net,pxp.news,anime-odcinki.pl,3d-porn.org,yummyanime.tv,thotchicks.com,leakav.com,braflix.win,fileserve.com,desikamababa.com,premiumporn.org,nlcosplay.com,mangatv.net,pornosubtitula2.com,leakslove.com,pornobae.com,novelaplay.com,pelis182.net,pelimeli.com,mmsmasala27.com,isekaitube.com,jav.li,coomer1.net,manhuarmtl.com,turkleak1.live,taboodude.com,bingato.com,bellezashot.com,daemon-hentai.com,pornxp.ph,paipancon.com,jut-su.net,manhwa68.com,mangarawad.fit,thebarchive.com,primewire.*,archived.moe,hentaivox.com,pastelink.net,chikianimation.org,hornyfap.tv,tesbox.my.id,axomtube.in,pahe.plus,watchfreejavonline.co,hanime1-me.icu,hanime1-me.top,kisshentaiz.com,odiafresh.com,aninavi.blog,kiradream.blog,mikohub.blog,vintagepornfun.com,pantieshub.net,ansuko.net,7bit.link,yesjavplease.fun,pornxp.org,areabokep.com,gayfor.us,hentaiasmr.moe,sexpin.net,asiangaysex.net,huurshe.com,kahanighar.com,kuronavi.blog,gomuraw.blog,sweeteroticart.com,apnablogs.in,mangaraw1001.cc,redretti.com,watchmmafull.com,pinayflix.me,asmroger.*,hentaianimezone.com,manhwatop.com,shinshi-manga.net,japangaysex.com,sharinghubs.com,darknaija.com,erokomiksi.com,raw18.*,gayxx.net,xhamster.fm,gosexy.mobi,mangaraw.*,rawkuro.net,mangarawjp.me,mangaraw18.net,mangakoma01.*,echiman.com,earnfromarticles.com,smarttrend.xyz,banglachotigolpo.xyz,onlinework4all.com,likemanga.ink,love4u.net,safefileku.com,turboimagehost.com,otomi-games.com,2girls1cup.ca,nicomanga.com,kmansin09.org,kmansin09.top,rawinu.com,vipstand.*,kaliscan.*,ddd-smart.net,shemale6.com,piratehaven.xyz,raw1001.net,poapan.xyz,theblank.net,javboys.com,nudeslegion.com,sxyprn.com,fucksporn.com,fullxcinema1.com,pornxp.com,pornktubes.net,porhubvideo.com,yesleaks.com,bigojav.com,weloma.*,porn00.org,kisscos.net,besthdgayporn.com,latinohentai.com,vegvorous.com,gigmature.com,xmegadrive.com,gogoanime.*,urbharat.xyz,91.208.197.24,adslink.pw,pornohubonline.com,movieskafanda.xyz,mangamovil.net,tatli.biz,naijauncut.com,10convert.com,moviesjoy.*,javenspanish.com,jav-asia.top,komiklokal.xyz,leermanga.net,leechall.com,watchfreenet.com,javxxx.me,yifysubtitles.vip,justcastingporn.com,justfamilyporn.com,simply-hentai.com#%#//scriptlet('abort-current-inline-script', 'document.createElement', 'l.parentNode.insertBefore(s')
 hdporner.me,yespornhd.com,rahaporn.com,wankzone.com,pornbuz.com,sxyland.com,pornmk.com,myhentai.us,taboovideosx.com,fxpornhd.com,thevoyeurmania.com,pornolatinox.com,familyxxxhd.com,erotic-hentai.com,villagesexvideos.com,xxxvideoindian2.com,fistingplanet.com##.happy-footer-mobile
 hdporner.tv,sxyporn.tv#%#//scriptlet('prevent-addEventListener', 'message', 'handleTrigger')
 hdpornfree.xxx##.container:has(> iframe[src^="//hdpornfree.xxx/sup/"])
@@ -448573,6 +448573,7 @@ merkur.de##.player.pip
 merkur.de##revenue-reel-anchor + revenue-reel
 merkur.de#?#.id-Container-content > .id-Teaser > div[class]:has(> div[data-id-advertdfpconf])
 merkur.de#?#.id-SiteMain > .id-g > div[data-id-module]:has(> .id-Container--hasNoHeadline > div > div[data-id-advertdfpconf])
+merkur.de,banki.ru,gs24.pl,infobae.com,hna.de,indiatoday.in,clubic.com,semana.com,xataka.com.br,glavred.net,metropoles.com,autoevolution.com##a[href^="https://profile.google.com/cp/"]
 merkur.de,fandom.com,zekamashi.net,nlab.itmedia.co.jp,dictionary.cambridge.org,hb-nippon.com,myinstants.com,mamastar.jp,uppercutmma.com,pockettactics.com,automobile-catalog.com,robbreport.com,rollingstone.com,deadline.com,vibe.com,goldderby.com,artnews.com,gearjunkie.com,urldecoder.org,base64decode.org,merkmal-biz.jp,bike-news.jp,index.hr,willyweather.com.au,fandom.com,higherorlowergame.com,euronews.com,girlschannel.net,calculatorsoup.com,scribd.com,egolf.jp,otonanswer.jp,vague.style,magmix.jp,trafficnews.jp,langenscheidt.com,merinfo.se,9gag.com,petbook.de,boardingarea.com,ukaudiomart.com,canuckaudiomart.com,newatlas.com$$script[data-cfasync="false"][nowprocket]
 merkur.de,heidelberg24.de#$?#.cmp-modal-open { overflow: auto !important; }
 merkur.de,looopings.nl,przegladsportowy.onet.pl,myinstants.com,coachweb.com,walesonline.co.uk,gry-online.pl,f150lightningforum.com,hna.de,onemileatatime.com,merkmal-biz.jp,bike-news.jp,yorkshireeveningpost.co.uk,lasisa.net,onlineradiobox.com,notebookcheck.com,notebookcheck.net,notebookcheck.org,notebookcheck.biz,notebookcheck.it,notebookcheck.nl,notebookcheck.pl,notebookcheck.info,notebookcheck-ru.com,notebookcheck-tr.com,notebookcheck.se,notebookcheck-cn.com,notebookcheck-hu.com,tunebat.com,jikayosha.jp,macanevowners.com,fourfourtwo.com,gamebanana.com,weerplaza.nl,cardcluster.com,tbsradio.jp,mopo.de,trilltrill.jp,capital.fr,kurashiru.com,daily.co.jp,voici.fr,motorbikecatalog.com,greenwichmeantime.com,tomshardware.com,windowscentral.com,glianec.com,hochi.news,willyweather.com,motorsport.com,wordshake.com,cotemaison.fr,higherorlowergame.com,melaterevancha.com,resultadostris.com,football-ukraine.com,hbrfrance.fr,oraridiapertura24.it,befa.lt,pockettactics.com,pcgamesn.com,wargamer.com,portsmouth.co.uk,pakkotoisto.com,fandom.com,tacoma4g.com,mavericktruckclub.com,f150gen14.com,4runner6g.com,lfpress.com,cheezburger.com,cracked.com,tipsandtrickskorea.com,afrotech.com,blavity.com,majorleaguepickleball.co,newcastleworld.com,northernirelandworld.com,sunderlandecho.com,travelnoire.com,index.hr,automobile-catalog.com,tvtv.us,taycanforum.com,deltiasgaming.com,broncosportforum.com,macheforum.com,all-nationz.com,ontariofarmer.com,247wallst.com,yorkshirepost.co.uk,upstyledaily.com,jlwranglerforums.com,cybertruckownersclub.com,adrenaline.com.br,pcgamer.com,urbandictionary.com,ottawasun.com,ottawacitizen.com,calgarysun.com,nationalreview.com,gerbeaud.com,hollywoodlife.com,robbreport.com,goldderby.com,vibe.com,km77.com,milestomemories.com,torontosun.com,buchstaben.com,livescience.com,elnacional.cat,parade.com,tj.news,thestarphoenix.com,leaderpost.com,athlonsports.com,edmontonsun.com,calgaryherald.com,theprovince.com,canoe.com,driving.ca,vancouversun.com,canada.com,financialpost.com,geo.fr,oeffnungszeitenbuch.de,followfollow.com,skinmc.net,pcgamebenchmark.com,thingiverse.com,mrexcel.com,nemzetisport.hu,montrealgazette.com,girlschannel.net,aussieaudiomart.com,programme-tv.net,base64decode.org,urldecoder.org,edmontonjournal.com,itavisen.no,hk01.com,calculatorsoup.com,russianmachineneverbreaks.com,scribd.com,bg-mania.jp,egolf.jp,otonanswer.jp,vague.style,magmix.jp,langenscheidt.com,trafficnews.jp,parents.com,merinfo.se,crosswordsolver.com,natalie.mu,petbook.de,egitim.net.tr,9gag.com,manchesterworld.uk,watchdocumentaries.com,canuckaudiomart.com,windsorstar.com,inverse.com,pons.com,bz-berlin.de,myhomebook.de,fitbook.de,techbook.de,travelbook.de,twopeasandtheirpod.com,onceuponachef.com,dict.cc,fansided.com,nationalpost.com,chloeting.com,sinemalar.com,zeilen.nl,wielerrevue.nl,ukaudiomart.com,woxikon.de,wort-suchen.de,dexerto.com,happyinshape.com,thetruthaboutcars.com,foodandwine.com,tips-and-tricks.co,lejdd.fr,edinburghnews.scotsman.com,sussexexpress.co.uk,lerobert.com,myrecipes.com,treehugger.com,ldoceonline.com,lifewire.com,thoughtco.com,yorkshirepost.co.uk,marthastewart.com,eatingwell.com,thespruceeats.com,simplyrecipes.com,liquor.com,seriouseats.com,mamastar.jp,collinsdictionary.com,andrewzimmern.com,tipsandtricksjapan.com,homesicktexan.com,oxfordlearnersdictionaries.com,dictionary.cambridge.org,bab.la,redcurrantbakery.com,gonnawantseconds.com,thegunnysack.com,bestfriendsforfrosting.com,savvysavingcouple.net,thesoccermomblog.com,iambaker.net,bakeplaysmile.com,crayonsandcravings.com,realhousemoms.com,bunsinmyoven.com,dinnersdishesanddesserts.com,chelseasmessyapron.com,julieseatsandtreats.com,cafedelites.com,dinneratthezoo.com,jamjarkitchen.com,laurenslatest.com,tablefortwoblog.com,learnmetrics.com,liveandletsfly.com,kuruma-news.jp,infinityfree.com,autobild.de,toyokeizai.net,usaudiomart.com,slideshare.net,motorradfrage.net,sportlerfrage.net,finanzfrage.net,reisefrage.net,gesundheitsfrage.net,computerfrage.net,autofrage.net,gutefrage.net,newatlas.com,fossbytes.com,perezhilton.com,exceljet.net,sportico.com,wwd.com,neoseeker.com,indiewire.com,helpdeskgeek.com,akinator.com,dnevnik.hr,rollingstone.com,billboard.com,variety.com,hollywoodreporter.com,nouvelobs.com,deadline.com,computerbild.de,divinedaolibrary.com,omnicalculator.com,thelayoff.com,sourceforge.net,welt.de,boardingarea.com,doviz.com,oricon.co.jp#%#//scriptlet('trusted-replace-argument', 'Element.prototype.setAttribute', '1', 'replace:/.+(error-report|new Promise|:window|&&window,|\|\|window,|void 0\]|\)\.join\(String\.fromCharCode|html-load\.com[\s\S]*_onerror).+//g')
@@ -471513,7 +471514,6 @@ pahe.plus##+js(set, blurred, false)
 pahe.plus##a[href^="https://s0-greate.net/"]
 pahe.plus##footer, .text-left, #link-view > [href], .box-main > [href]
 pahe.plus##form#link-view > a
-pahe.plus#%#//scriptlet('abort-on-property-write', '__aw')
 pahe.plus,srnky.com,clksz.com,vplink.in,mydverse.com,link99.bid,fbol.top,cuttlinks.com,cuttty.com,exe-links.com,mrproblogger.com,kecapku.com,cuttyy.com,cutynow.com,travelironguide.com,kreditexperte.online,telcit.site,shortnest.com,exnion.com,wordcount.im,shrinkme.ink,megafire.net,firepaste.com,zovo.ink,upfiles.app,exe-urls.com,link.codevn.net,oii.la,upfiles-urls.com,tpi.li,evernia.site,falpus.com,cloutgist.com,tvi.la,iir.la,oei.la,clk.kim,ijvam.com,exuce.com,kiddyshort.com,cl1ca.com,4br.me,fir3.net,seulink.*,encurtalink.*,link.paid4link.com,doshrink.com,link.almaftuchin.com,easycut.io,linkpoi.me,casperhd.com,link4earn.com,safelink.asia,xpshort.com,animerigel.com,linx.cc,rgl.vn,wu8.in,paid4file.com,atglinks.com,tii.la,exeo.app,smallinfo.in,adrinolinks.in,disheye.com,veganab.co,faucetcrypto.net,download.windowslite.net,oko.sh,ckk.ai,forex-trnd.com,paylinnk.com,loptelink.com,adslink.pw,shortx.net,haonguyen.top,bestcash2020.com,wealthystyle.online,easysky.in,techgeek.digital,csd.xmod.in,adsafelink.com,akashort.com,insurance-space.xyz,rajsayt.xyz,insurglobal.xyz,clk.asia,wplink.*,filmyzilla-in.xyz,samaa-pro.com,earnme.club,myshrinker.com,adshort.*,seulink.online,encurta.eu,adurly.cc,linkjust.com,crazyblog.in,swzz.xyz,try2link.com,baominh.tech,bblink.com,za.uy,upshrink.com,link.turkdown.com,beingtek.com,insuranceblog.xyz,linkfly.*,link1s.com,enagato.com,dl.tech-story.net,123link.biz,go.gets4link.com,musicc.xyz,xfiles.io,upfiles.com,dz-linkk.com,cslink.in,shrink.icu,hoastie.com,tei.ai,exey.*,claimfreebits.com,zshort.io,jameeltips.us,payskip.org,shrinke.me,oncehelp.com,enrt.eu,tui.click,short.food-royal.com,galaxy-link.space,linkebr.com,smoner.com,charexempire.com,gplinks.co,adomainscan.com,linkshorts.*,cuts-url.com,gainbtc.click,modapk.link,gplinks.co,miklpro.com,afly.pro,exe.app,adcorto.xyz,cuturl.in,apkshrt.com,droplink.co,linksfire.co,linksly.co,ilinks.in,bitfly.io,imagenesderopaparaperros.com,c-ut.com,shrinkme.in,fir3.net,link1s.net,clk.ink,apksvip.com,pkr.pw,stfly.me,bolssc.com,cutdl.xyz,srt.leechpremium.link,tmearn.com,samapro.me,mondainai.moe,popimed.com,aii.sh,miuiku.com,slink.bid,7r6.com,iir.ai,biroads.com,win10.vn,mitly.us,tii.ai,linkrex.net,shorterall.com,fc.lc,shrinkme.io#%#//scriptlet("set-constant", "blurred", "false")
 pahe.plus,uiil.ink,exeygo.com,exe-links.com,mrproblogger.com,cuttyy.com,fc-lc.xyz,link4earn.com,atglinks.com,tii.la,ckk.ai,xpshort.com,rajsayt.xyz,insurglobal.xyz,cutp.in,try2link.com,filmyzilla-in.xyz,samaa-pro.com,earnme.club,adshort.*,adurly.cc,swzz.xyz,crazyblog.in,baominh.tech,seulink.online,ez4short.com,upshrink.com,beingtek.com,link.rota.cc,insuranceblog.xyz,webo.one,linkfly.io,coinadfly.com,ownurl.site,clk.ink,dl.tech-story.net,link.asiaon.top,xfiles.io,upfiles.*,dz-linkk.com,shorterall.com,promo-visits.site,shrink.icu,rshrt.com,tei.ai,exey.*,claimfreebits.com,jameeltips.us,turkdown.com,tui.click,short.food-royal.com,linkpoi.me,galaxy-link.space,finanzas-vida.com,linkebr.com,smoner.com,charexempire.com,forex-trnd.com,linkshorts.*,mycut.me,cuts-url.com,gainbtc.click,st23q.com,hotel.menjelajahi.com,ccurl.net,shrt10.com,shrinkforearn.in,seulink.net,modapk.link,miklpro.com,afly.pro,exe.app,adcorto.xyz,droplink.co,curto.win,linksfire.co,illink.net,ilinks.in,bitfly.io,imagenesderopaparaperros.com,url.namaidani.com,c-ut.com,4cash.me,shrinkme.in,fir3.net,link1s.net,apksvip.com,pkr.pw,shrinke.me,stfly.me,bolssc.com,cutdl.xyz,shortearn.in,linksly.co,link1s.*,tmearn.com,samapro.me,mondainai.moe,pnd.*,popimed.com,tipsforce.com,aii.sh,7r6.com,iir.ai,tii.ai,biroads.com,dz4link.com,linkad.in,fc.lc,rifurl.com,oncehelp.com,shortpaid.com,slink.bid,encurta.eu,leechpremium.link,readnnews.com,gplinks.co,memoo.xyz,linkviet.top,salez.site,caat.site,earnload.com,gplinks.in,stfly.io,eio.io,cutwin.com,uii.io,techbeast.xyz,zoom-link.com,short.pe,myhealthlytips.com,clik.pw,payskip.org,shrinkme.io,ex-foary.com,linkfinal.com,exe.io,liclink.com,adsafelink.com,enrt.eu,suqdz.com,getlink.deadtoonsindia.net,bollyreveal.com,shrtfly.net,mysiterank.org#%#//scriptlet('set-constant', 'app_vars.force_disable_adblock', 'undefined')
 pahe.win#%#//scriptlet("adjust-setInterval", "count", "", "0.02")
@@ -702012,6 +702012,7 @@ zzzyk.com###Tinfo
 ||6ju3b825voty2uoz.naruspot.net.daraz.com^
 ||6ju3b825voty2uoz.partner.net.daraz.com^
 ||6ju3b825voty2uoz.webappr-oa-2.net.daraz.com^
+||6jumq8b12z17mfnu5.rest^
 ||6jypv36yyh2jj54jg.cfd^
 ||6k.com/g1000/$script
 ||6k1alauto.com^
@@ -735331,6 +735332,7 @@ zzzyk.com###Tinfo
 ||ads.nguoiduatin.vn^
 ||ads.nhadatmoi.net^
 ||ads.nicovideo.jp^
+||ads.nijiurachan.net^
 ||ads.nj.com^
 ||ads.nola.com^
 ||ads.nordichardware.com^
@@ -740906,6 +740908,7 @@ zzzyk.com###Tinfo
 ||ahwdctomlghib.space^
 ||ahwrin88tl.com^$all
 ||ahxbpm.com^
+||ahxeukmkoexjx.space^
 ||ahxpudoydaraw.site^
 ||ahxqqfgmfumpo.website^
 ||ahyau.com^
@@ -765231,6 +765234,7 @@ zzzyk.com###Tinfo
 ||attainder41.com^
 ||attaingeoffrey.com^
 ||attainnumerous.com^
+||attainstupelos.cfd^
 ||attalidtunisia.com^
 ||attbelieve.net.daraz.com^
 ||attblablufhnfg.boxmode.io^
@@ -784948,6 +784952,7 @@ zzzyk.com###Tinfo
 ||bluhst2096cpsess75410338883rdpartyroundcube.weebly.com^
 ||bluhst2096cpsess75410338883rdpartyroundcube.weebly.com^$all
 ||bluishalmosterror.com^$all
+||blumecedingbaltic.cfd^
 ||blumenwiese.business-db.com^
 ||blumesoaps.com^
 ||blunderfluffy.com^$all
@@ -788432,6 +788437,7 @@ zzzyk.com###Tinfo
 ||brahmibindiscorcass.cfd^
 ||brahmicassurer.qpon^
 ||brahmswicky.shop^
+||brahuimiswendgranat.cfd^
 ||braiderbojite.cfd^
 ||brailedharpulaearworm.cyou^
 ||braillealphabet.org^$all
@@ -808712,6 +808718,7 @@ zzzyk.com###Tinfo
 ||cgvzp.gethommey.com^
 ||cgw46pe4.xyz^
 ||cgwebmetrics.capgroup.com^
+||cgxjeqitxwmtp.online^
 ||cgxyrukl2jhfyktuyikgcjt5kk-fhrytuhk2gzsrydtufyig.teemill.com^
 ||cgxyrukl2jhfyktuyikgcjt5kk-fhrytuhk2gzsrydtufyig.teemill.com^$all
 ||cgyurxmdccrbd.space^
@@ -822881,6 +822888,7 @@ zzzyk.com###Tinfo
 ||cloudinary.net/skin/frontend/default/classic-arms-19/dist/js/critical.js$all
 ||cloudinary.net/skin/frontend/default/classic-arms-19/dist/js/main.js$all
 ||cloudinary.net/skin/frontend/default/classic-arms-19/dist/js/vendor.js$all
+||cloudinaryy.net^
 ||cloudinery.net^
 ||cloudinfra.fiestahotelsresorts.tt.omtrdc.net^
 ||cloudinfra.zsassociatesindiapvt.tt.omtrdc.net^
@@ -822983,6 +822991,8 @@ zzzyk.com###Tinfo
 ||cloudn-switchppr-ht-2.net.daraz.com^
 ||cloudnaery.net^
 ||cloudnairy.net^
+||cloudnary.net^
+||cloudnery.net^
 ||cloudnet.hentai-moon.com/candyai/
 ||cloudnet.tt.omtrdc.net^
 ||cloudnetworkontcar31.net.daraz.com^
@@ -835329,6 +835339,7 @@ zzzyk.com###Tinfo
 ||cosmos.undergroundgameshow.com^
 ||cosmosjackson.com^
 ||cosmoskellegk.cfd^
+||cosokxsztwhfz.website^
 ||cosplay-porn.me/swps.js
 ||cosplaygalaxy.com^
 ||cosplayporntube.com/creatives/
@@ -838693,6 +838704,7 @@ zzzyk.com###Tinfo
 ||croosetalk.shop^
 ||cropenjoymentstellar.com^
 ||croplake.com^
+||croppasmotter.com^
 ||croquettangos.qpon^
 ||croshi.cyou^
 ||cross-a.net^
@@ -842389,6 +842401,7 @@ zzzyk.com###Tinfo
 ||cvastico.com^
 ||cvastico.com^$popup
 ||cvbdlmcuzahza.site^
+||cvbjetgbzkhpm.site^
 ||cvcheck.actonservice.com^
 ||cvcu10.weebly.com^
 ||cvcu10.weebly.com^$all
@@ -843215,6 +843228,7 @@ zzzyk.com###Tinfo
 ||czpf4n6om00ebsnw.net.daraz.com^
 ||czpgj.cleannutra.com^
 ||czpidg.unisportstore.fr^
+||czpjygfmfkjyy.online^
 ||czpush.com^
 ||czpvcjyjgpxza.site^
 ||czpwm.com^
@@ -859719,7 +859733,7 @@ zzzyk.com###Tinfo
 ||dev95048.tt.omtrdc.net^
 ||dev96.net.daraz.com^
 ||dev98a.tt.omtrdc.net^
-||dev^$3p,xhr,stylesheet,domain=1cloudfile.com|akirabox.com|akirabox.to|bowfile.com|buzzheavier.com|bzzhr.co|bzzhr.to|cg-gamespc.net|datavaults.co|devuploads.com|dodi-repacks.site|file-me.top|file-upload.org|filemirage.com|fuckingfast.*|game-repack.site|gamedrive.*|getfreegames.net|go.zovo.ink|koramaup.com|mirrored.to|multiup.io|nathanmichaelphoto.com|ranoz.gg|repack-games.com|reloadedsteam.com|rootz.so|steam-repacks.net|steamgg.net|steamunderground.net|swiftuploads.com|torupload.com|up-4ever.net|uploadrar.*|usersdrive.com|vik1ngfile.site|worldofpcgames.com|zeilink.net|zovo2.top|zpaste.net|fileq.net
+||dev^$3p,xhr,stylesheet,domain=1cloudfile.com|akirabox.com|akirabox.to|bowfile.com|buzzheavier.com|bzzhr.co|bzzhr.to|cg-gamespc.net|datavaults.co|devuploads.com|dodi-repacks.site|file-me.top|file-upload.org|filemirage.com|fuckingfast.*|game-repack.site|gamedrive.*|getfreegames.net|go.zovo.ink|koramaup.com|mirrored.to|multiup.io|nathanmichaelphoto.com|ranoz.gg|repack-games.com|reloadedsteam.com|rootz.so|steam-repacks.net|steamgg.net|steamunderground.net|swiftuploads.com|torupload.com|up-4ever.net|uploadrar.*|usersdrive.com|vik1ngfile.site|worldofpcgames.com|zeilink.net|zovo2.top|zpaste.net|fileq.net|zovo.ink|zovo.to
 ||devacton.simpleviewinc.com^
 ||devad.net.daraz.com^
 ||devae2-ns2.viviotech.net.daraz.com^
@@ -1144141,11 +1144155,14 @@ zzzyk.com###Tinfo
 ||flickering-bed.com^
 ||flickering.tt.omtrdc.net^
 ||flickerprobabilityset.com^$all
+||flickier.net^
 ||flickker.net^
 ||flickpoetly.qpon^
 ||flickr.com/badge_code$third-party
 ||flickr.com/embedr/embedr-47ad26da5deade67d472950b12c94b6c.js$all
 ||flickr1.tt.omtrdc.net^
+||flickrnet.net^
+||flickrr.net^
 ||flidgemesem.com^
 ||fliffuscatalpa.com^
 ||fliggerthring.cfd^
@@ -1152659,6 +1152676,7 @@ zzzyk.com###Tinfo
 ||funeraltimes.com/images/Banner-ad
 ||fungamecheats.com^
 ||fungames.vip^
+||fungicdiauloschemmy.qpon^
 ||fungidcolder.com^
 ||funil.webjasper.com.br^
 ||funinformatique.com^
@@ -1154226,6 +1154244,7 @@ zzzyk.com###Tinfo
 ||fxuenhhaucscs.online^
 ||fxuuakhpzrcgx.space^
 ||fxuzrinlbacql.site^
+||fxvdrrcjoqana.website^
 ||fxvpyocs.analytics-hs-test.admin-silver-cicd.tt-qe5.omtrdc.net^
 ||fxwlyddrjhupc.store^
 ||fxx0fzab2j.standardspro.de^
@@ -1158697,6 +1158716,7 @@ zzzyk.com###Tinfo
 ||gdfc0563.com^
 ||gdfkbvbifnncj.online^
 ||gdfkrt.cartorionobrasil.com.br^
+||gdfnyjnaqxhcc.space^
 ||gdfot.summerfridays.com^
 ||gdfp.gifshow.com^
 ||gdfqsdf.com^
@@ -1206157,6 +1206177,7 @@ zzzyk.com###Tinfo
 ||hh788.com^
 ||hh7lj32z7igoj57.cfd^
 ||hh88-email.com^
+||hhaedafcq.com^
 ||hhasihanov.wixstudio.com^
 ||hhasihanov.wixstudio.com^$all
 ||hhb.explore.novonesis.com^
@@ -1207978,6 +1207999,7 @@ zzzyk.com###Tinfo
 ||hm99-free7apo.gift^$doc
 ||hm99-free7apo.gift^$document
 ||hm9l.li2gmepmyqjpo8987kkxr334q4v.cyou^
+||hmadkixrebk.in^
 ||hmafbkrm.com^
 ||hmai.jp^$doc
 ||hmai.jp^$document
@@ -1224862,6 +1224884,7 @@ zzzyk.com###Tinfo
 ||indahonline.com/js/disable-devtool.js$script,1p
 ||indapass.hu/jsfejlec2/ident.min.js$all
 ||indapass.hu/jsfejlec2/passportHeader.js$all
+||indazinassumer.com^
 ||indbjfnmwazcp.online^
 ||indd.adobe.com/view/08d6258c-36cc-4244-b830-7a3663f73a13^$all
 ||indd.adobe.com/view/0e7d6953-8852-4f6a-9858-7e07e91b085b^$all
@@ -1251451,6 +1251474,7 @@ zzzyk.com###Tinfo
 ||kbpdm.manscaped.io^
 ||kbpljd.aydin.edu.tr^
 ||kbpqd.indacloud-vip.com^
+||kbqgggnlabptd.space^
 ||kbqgv.ruffwear.co.uk^
 ||kbqtbd.littlehipstar.com^
 ||kbr23k89xz.com^
@@ -1255451,6 +1255475,7 @@ zzzyk.com###Tinfo
 ||kqawipdwetqqd.space^
 ||kqbdwsglqapzu.com^
 ||kqbgqbylklejl.online^
+||kqbitpjbsmmzy.site^
 ||kqbvwuvfrydcby2p.sparta.members.tt.omtrdc.net^
 ||kqbxjkzsyuygg.site^
 ||kqchxa.denizbutik.com^
@@ -1273126,6 +1273151,7 @@ zzzyk.com###Tinfo
 ||lively-items-080933.framer.app^
 ||lively-items-080933.framer.app^$all
 ||livelybreast.cfd^
+||livelycanoe.com^
 ||livelylaugh.com^
 ||livelymatter.com^
 ||livelyreward.com^
@@ -1273721,6 +1273747,7 @@ zzzyk.com###Tinfo
 ||llqutk.skechers.com.au^
 ||llrce.goldandhoney.com^
 ||llrcuclntbhft.space^
+||llrlykvedxhxr.site^
 ||llrmdpyqhduad.store^
 ||llrrtxisnhsuw.online^
 ||lls.lumberliquidators.com^
@@ -1294102,6 +1294129,7 @@ zzzyk.com###Tinfo
 ||lumbering-motor.com^
 ||lumberjack-metrics.razorpay.com^
 ||lumberliquidators.tt.omtrdc.net^
+||lumbersavians.cyou^
 ||lumbu.naturallife.com^
 ||lume.paganahora.io^
 ||lumen-app-backend.firebaseapp.com^
@@ -1301609,7 +1301637,6 @@ zzzyk.com###Tinfo
 ||manaus.ondec.com.br^
 ||manaus2026.ondec.com.br^
 ||manauslidera2026.ondec.com.br^
-||manawell.net^
 ||manbipll.duckdns.org^
 ||manbipll.duckdns.org^$all
 ||manbycus.com^$popup
@@ -1322641,6 +1322668,7 @@ zzzyk.com###Tinfo
 ||mossdistractionposture.com^$all
 ||mossdrawing.com^
 ||mossfast.com^
+||mossnight.com^
 ||mosspf.com^
 ||mosspf.net^
 ||mossru.com^
@@ -1325895,8 +1325923,10 @@ zzzyk.com###Tinfo
 ||mwllnmobmruyj.online^
 ||mwllnzblxxylc.space^
 ||mwnfizmdfgcxs.space^
+||mwotyunctxlxx.site^
 ||mwozucdauekyx.site^
 ||mwp.motowippe.de^
+||mwpenbxfathop.site^
 ||mwpetersonn.wixstudio.com^
 ||mwpetersonn.wixstudio.com^$all
 ||mwqxkshueflnl.site^
@@ -1340934,6 +1340964,7 @@ zzzyk.com###Tinfo
 ||nwajdf.zakzak.co.jp^
 ||nwajobs.com^$all
 ||nwaxgbg.com^
+||nwaxqpoxcmfsh.space^
 ||nwayheohicfbo.online^
 ||nwbfmp.qzms.online^
 ||nwbmvq.jockey.com^
@@ -1341083,6 +1341114,7 @@ zzzyk.com###Tinfo
 ||nxedge.io/wp-includes/js/jquery/ui/datepicker.min.js$all
 ||nxedge.io/wp-includes/js/wp-emoji-release.min.js$all
 ||nxeioyakjqusf.space^
+||nxekzdilibvet.space^
 ||nxet1.360doc.cn^
 ||nxethnjxkujoa.site^
 ||nxeucoqhoahnj.website^
@@ -1344428,6 +1344460,7 @@ zzzyk.com###Tinfo
 ||okul110.tt-stage-ci1.omtrdc.net^
 ||okumura-shoten.go-static.info^
 ||okunhl.tt.omtrdc.net^
+||okuofhyeuuoqyk.com^
 ||okurijyoinji.tt.omtrdc.net^
 ||okurka.xxxdasi.net^
 ||okvbecexijgfp.site^
@@ -1361319,6 +1361352,7 @@ zzzyk.com###Tinfo
 ||pexels.com^*/sponsored-media/
 ||pexels.com^*/sponsored_
 ||pexelss.net^
+||pexelsx.net^
 ||pexi.nl^
 ||pexls.net^
 ||pexmjwvdpjjdd.space^
@@ -1362866,6 +1362900,7 @@ zzzyk.com###Tinfo
 ||pilatesreforma.cl^
 ||pilatesreforma.cl^$all
 ||pilau.oddo-bhf.com^
+||pilausamotion.com^
 ||pilawsmeetly.qpon^
 ||pileateotolite.cfd^
 ||piledpear.com^$all
@@ -1363561,6 +1363596,7 @@ zzzyk.com###Tinfo
 ||pix2.services.tvn.pl^
 ||pixabay.com/static/img/publisher/*_ad_
 ||pixabay.com^$cookie=anonymous_user_id
+||pixabayy.net^
 ||pixad.com.tr^
 ||pixad.com.tr^$third-party
 ||pixair.openapp.link^
@@ -1389432,6 +1389468,7 @@ zzzyk.com###Tinfo
 ||qrvce.smallenginewarehouse.com^
 ||qrvsnt.citygrounds.com^
 ||qrvtxlktyfxm.com^
+||qrvwplpqiowbx.online^
 ||qrvypmegddrdp.space^
 ||qrwmgz.bettysbeauty.jp^
 ||qrwoayzreybmz.top^
@@ -1436417,6 +1436454,7 @@ zzzyk.com###Tinfo
 ||sandytaco.com^
 ||saneeloisehat.com^
 ||sanejudgment.pro^
+||sanescatula.cfd^
 ||sanestruggle.com^
 ||sangbtyuol.tyvsalagbnu.workers.dev^
 ||sangbtyuol.tyvsalagbnu.workers.dev^$all
@@ -1447631,6 +1447669,7 @@ zzzyk.com###Tinfo
 ||sfxuq2nx17nxtku0.ae29-sjc12-dr01.net.daraz.com^
 ||sfxuq2nx17nxtku0.partner.net.daraz.com^
 ||sfyafvkqzyfaj.online^
+||sfyitoouevweo.site^
 ||sfyxdeilpnpij.online^
 ||sfz023.com^
 ||sfzeqzazjmowe.space^
@@ -1497403,6 +1497442,7 @@ zzzyk.com###Tinfo
 ||swniihebhwxip.site^
 ||swnptn.cn^
 ||swnr0b7c.xyz^
+||swnviqgqvltkw.website^
 ||swoatoirdyqnr.site^
 ||swobbottsintrail.cfd^
 ||swogo.net/bundles/v4/cdon/swogo.js$all
@@ -1503974,6 +1504014,7 @@ zzzyk.com###Tinfo
 ||tdusj.sportsetrvc.com^
 ||tduyrmtrvwamunb-p.linkomo.fr^
 ||tduzo.novalights.com.au^
+||tdvgmrzzkeuac.online^
 ||tdxqjr.tessuti.co.uk^
 ||tdxs5.cc/m
 ||tdxvywascdazw.online^
@@ -1511730,6 +1511771,7 @@ zzzyk.com###Tinfo
 ||tmgrup.com.tr/videojs/js/lib/tmdcs-v2.js$all
 ||tmgrup.com.tr^*/tmdconsent-
 ||tmh.meiser-hotels.de^
+||tmhacgjcb.com^
 ||tmhgma.juwelo.de^
 ||tmhptoix9l4l2nlyo7u.cfd^
 ||tmhwidens.com^
@@ -1530624,6 +1530666,7 @@ zzzyk.com###Tinfo
 ||tzovkp.aboutyou.at^
 ||tzovwj.treningspartner.no^
 ||tzp61mplc.com^
+||tzpcxvxbhemet.site^
 ||tzpiz.racecraftaus.com^
 ||tzpzc.com^$all
 ||tzqbdrwhse.com^
@@ -1533551,6 +1533594,7 @@ zzzyk.com###Tinfo
 ||ulaen.com^
 ||ulahimel.abrdns.com^
 ||ulahimel.abrdns.com^$all
+||ulakmnnxbithg.online^
 ||ulamafluxive.com^
 ||ulaodqkxrgard.website^
 ||ulas.www-11smtpr1csr41.net.daraz.com^
@@ -1534652,7 +1534696,6 @@ zzzyk.com###Tinfo
 ||uniformdating.com^$document
 ||uniforminjury.shop^
 ||unifully.com^$all
-||unifybots.com^
 ||unifyintent.com/analytics/
 ||unifyintent.com/v1/ChnBc1FWdQ3r8kPoo98GTL/script.js$all
 ||unifyintent.com/v1/UkNUi5VExQmKvEkVFcpqMx/script.js$all
@@ -1535490,10 +1535533,12 @@ zzzyk.com###Tinfo
 ||unsolefumbled.cfd^
 ||unsoulxenyl.com^
 ||unsp1ash.net^
+||unspalsh.net^
 ||unspec.0-058.net.daraz.com^
 ||unspeednoddi.cyou^
 ||unspicysarcel.shop^
 ||unsplach.net^
+||unsplah.net^
 ||unsplasc.net^
 ||unsplash.com/nabc^
 ||unsplash.com/nmetrics
@@ -1537194,6 +1537239,7 @@ zzzyk.com###Tinfo
 ||uqwaeymuxdghe.website^
 ||uqwalfgltohug.com^
 ||uqx2.jjkeller.tt.omtrdc.net^
+||uqxjearmigixi.site^
 ||uqxjunryq.com^
 ||uqxtyjclokxex.website^
 ||uqydjn.rals.co.jp^
@@ -1564191,6 +1564237,7 @@ zzzyk.com###Tinfo
 ||whyystaging.stagingmastaram.net.daraz.com^
 ||whyystagingmymangaonline.net.daraz.com^
 ||whzcfgbrzaljw.site^
+||whzeop3nvbwoc6l.cfd^
 ||whzqk.legendarywallart.com^
 ||whzshoes.com^
 ||whztzugqxuedt.space^
