@@ -1,0 +1,252 @@
+name: Generate Block Domain List
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+jobs:
+  filter-rules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytz
+
+      - name: Process AdBlock rules
+        run: |
+          python3 << 'EOF'
+          import datetime
+          import pytz
+          import re
+          import textwrap
+
+          dns_domain_regex = re.compile(
+              r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$'
+          )
+
+          def is_valid_domain(domain):
+              return (
+                  not re.fullmatch(r'\d+\.\d+\.\d+\.\d+', domain)
+                  and dns_domain_regex.fullmatch(domain) is not None
+              )
+
+          def extract_domains(lines):
+              blocks = set()
+              exceptions = set()
+              badfilters = set()
+
+              for raw_line in lines:
+                  line = raw_line.strip()
+
+                  if not line or line.startswith(('!', '#')):
+                      continue
+
+                  line = line.lower()
+
+                  # A $badfilter rule cancels only its corresponding rule.
+                  # Accept it here only when removing $badfilter leaves a pure
+                  # domain rule; other modifiers change the rule's identity.
+                  bad_match = re.fullmatch(
+                      r'(?P<exception>@@)?\|\|(?P<domain>[a-z0-9.-]+)\^\$badfilter',
+                      line
+                  )
+                  if bad_match:
+                      domain = bad_match.group('domain')
+                      if is_valid_domain(domain):
+                          badfilters.add((bool(bad_match.group('exception')), domain))
+                      continue
+
+                  # Only unconditional domain exceptions can safely be applied
+                  # to a DNS-wide list. Exceptions with modifiers (for example,
+                  # # $script) are resource-specific and are intentionally ignored.
+                  exception_match = re.fullmatch(
+                      r'@@\|\|([a-z0-9.-]+)\^',
+                      line
+                  )
+                  if exception_match:
+                      domain = exception_match.group(1)
+                      if is_valid_domain(domain):
+                          exceptions.add(domain)
+                      continue
+
+                  # Only pure domain-block rules are included in this list.
+                  block_match = re.fullmatch(
+                      r'\|\|([a-z0-9.-]+)\^',
+                      line
+                  )
+                  if block_match:
+                      domain = block_match.group(1)
+                      if is_valid_domain(domain):
+                          blocks.add(domain)
+
+              # $badfilter removes only the exact matching domain rule.
+              # In particular, it must not erase independently-listed subdomains.
+              active_blocks = {
+                  domain for domain in blocks
+                  if (False, domain) not in badfilters
+              }
+
+              # Likewise, a badfilter can disable an exception rule. Apply only
+              # exceptions that remain active, then exclude their matching subtree.
+              active_exceptions = {
+                  domain for domain in exceptions
+                  if (True, domain) not in badfilters
+              }
+
+              return sorted(
+                  domain for domain in active_blocks
+                  if not any(
+                      domain == exception or domain.endswith("." + exception)
+                      for exception in active_exceptions
+                  )
+              )
+
+          def run_regression_tests():
+              cases = [
+                  (
+                      "badfilter only cancels the exact block rule",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||other.example.net^",
+                          "||example.com^$badfilter",
+                      ],
+                      ["child.example.com", "other.example.net"],
+                  ),
+                  (
+                      "exception-only domains are never added to the block list",
+                      [
+                          "@@||allow.example.com^",
+                      ],
+                      [],
+                  ),
+                  (
+                      "unconditional exception excludes its subtree",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||keep.example.net^",
+                          "@@||example.com^",
+                      ],
+                      ["keep.example.net"],
+                  ),
+                  (
+                      "badfilter disables the matching exception",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "@@||example.com^",
+                          "@@||example.com^$badfilter",
+                      ],
+                      ["child.example.com", "example.com"],
+                  ),
+                  (
+                      "badfilter with another modifier does not cancel a pure rule",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||example.com^$important,badfilter",
+                      ],
+                      ["child.example.com", "example.com"],
+                  ),
+                  (
+                      "resource-specific exception is not applied globally",
+                      [
+                          "||example.com^",
+                          "@@||example.com^$script",
+                      ],
+                      ["example.com"],
+                  ),
+              ]
+
+              for name, rules, expected in cases:
+                  actual = extract_domains(rules)
+                  if actual != expected:
+                      raise AssertionError(
+                          f"Regression test failed: {name}; "
+                          f"expected {expected}, got {actual}"
+                      )
+
+              print(f"Passed {len(cases)} domain-list regression tests.")
+
+          def process_file(input_file, output_file, title):
+              with open(input_file, 'r', encoding='utf-8') as f:
+                  domains = extract_domains(f)
+
+              tz = pytz.timezone('Asia/Shanghai')
+              timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
+
+              # 使用 textwrap.dedent 去除多行字符串的缩进和前导空白
+              header = textwrap.dedent(f"""\
+              #Title: {title}
+              #Description: 一个汇总了多个广告过滤器过滤规则的拦截域名列表，每20分钟更新一次，确保即时同步上游减少误杀
+              #Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+              #LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
+              #LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
+              #生成时间: {timestamp}
+              #有效域名数目: {len(domains)}""")
+
+              with open(output_file, 'w', encoding='utf-8') as f:
+                  f.write(header + '\n')
+                  f.write('\n'.join(domains) + '\n')
+
+              print(f"Processed {input_file}. Total domains: {len(domains)}")
+
+          run_regression_tests()
+          process_file('ADBLOCK_RULE_COLLECTION.txt', 'ADBLOCK_RULE_COLLECTION_DOMAIN.txt', 'Adblock-Rule-Collection-Domain')
+          process_file('ADBLOCK_RULE_COLLECTION_Lite.txt', 'ADBLOCK_RULE_COLLECTION_DOMAIN_Lite.txt', 'Adblock-Rule-Collection-Domain-Lite')
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add -A
+
+          attempt=0
+          max_attempts=5
+          success=false
+
+          git fetch origin main
+          git merge origin/main --strategy-option=ours || git merge --abort || echo "Merge conflicts resolved automatically using 'ours' strategy."
+
+          while [ $attempt -lt $max_attempts ]; do
+              git commit -m "Update AdBlock Domain rules" && success=true && break
+              attempt=$((attempt + 1))
+              echo "Commit failed, retrying in 10 seconds... (Attempt $attempt of $max_attempts)"
+              sleep 10
+          done
+
+          if [ "$success" = true ]; then
+              attempt=0
+              success=false
+
+              while [ $attempt -lt $max_attempts ]; do
+                  git push origin main && success=true && break
+                  attempt=$((attempt + 1))
+                  echo "Push failed, retrying in 10 seconds... (Attempt $attempt of $max_attempts)"
+                  sleep 10
+              done
+
+              if [ "$success" = false ]; then
+                  echo "Push failed after $max_attempts attempts. Continuing workflow."
+              else
+                  echo "Push successful."
+              fi
+          else
+              echo "Commit failed after $max_attempts attempts. Continuing workflow."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
