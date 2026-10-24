@@ -7,6 +7,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 from adguard_dns_converter import (  # noqa: E402
     extract_badfilter,
+    classify_and_convert,
     parse_adguard_dns_rule,
     parse_hosts_as_adguard,
     validate_dnsrewrite_value,
@@ -121,6 +122,16 @@ class AdGuardDnsConversionTests(unittest.TestCase):
         self.assertTrue(recognized)
         self.assertIsNone(rules)
         self.assertIn("non-blocking Hosts IP mapping", error)
+
+        recognized, rules, error = parse_hosts_as_adguard("192.0.2.1")
+        self.assertFalse(recognized)
+        self.assertIsNone(rules)
+        self.assertIsNone(error)
+
+        converted, kind, reason = classify_and_convert("192.0.2.1")
+        self.assertEqual(converted, ["192.0.2.1"])
+        self.assertEqual(kind, "adblock-style")
+        self.assertIsNone(reason)
 
     def test_badfilter_keeps_exception_prefix_and_other_modifiers(self):
         enabled, target = extract_badfilter(
