@@ -413,7 +413,15 @@ def compile_dns_rule(line: str) -> str:
 
         # A regex explicitly matching a URL scheme already has URL scope, so
         # preserving its original pattern retains the target matcher semantics.
-        if re.search(r"https?\s*:", regex_body, re.IGNORECASE):
+        # Some DNS feeds use a literal "https?:" regex prefix and escaped
+        # slashes. Detect that textual URL-scope form before treating the regex
+        # as a hostname matcher.
+        has_url_scope = (
+            "https?:" in regex_body.lower()
+            or "http?:" in regex_body.lower()
+            or re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+        )
+        if has_url_scope:
             translated = ("@@" if exception else "") + "/" + regex_body + "/"
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
