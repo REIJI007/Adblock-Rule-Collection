@@ -202,8 +202,18 @@ jobs:
                       quote = char
                       current.append(char)
                   elif char == separator:
-                      parts.append("".join(current).strip())
-                      current = []
+                      # A dollar sign inside a slash-delimited regex is part of the
+                      # pattern, not the modifier delimiter.
+                      if (
+                          separator == "$"
+                          and current
+                          and current[0] == "/"
+                          and "".join(current).rfind("/") == 0
+                      ):
+                          current.append(char)
+                      else:
+                          parts.append("".join(current).strip())
+                          current = []
                   else:
                       current.append(char)
 
@@ -437,7 +447,11 @@ jobs:
                           normalized += "$" + normalized_modifiers
                       return normalized, None
 
-              if pattern.startswith("||") and pattern.endswith("^"):
+              if (
+                  pattern.startswith("||")
+                  and pattern.endswith("^")
+                  and "*" not in pattern[2:-1]
+              ):
                   # 标准形式：匹配域名及其全部子域名
                   domain_pattern = pattern[2:-1]
 
