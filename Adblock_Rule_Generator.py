@@ -375,8 +375,10 @@ def normalize_native_domain_rule(line: str) -> str:
     if bare_ipv4:
         try:
             ip_literal = str(ipaddress.IPv4Address(bare_ipv4.group("ip")))
-        except ipaddress.AddressValueError:
-            pass
+        except ipaddress.AddressValueError as error:
+            raise CompilationError(
+                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
+            ) from error
         else:
             return (
                 (bare_ipv4.group("exception") or "")
@@ -1679,6 +1681,12 @@ def run_regression_tests() -> None:
     check("bare IPv4 host normalization preserves important modifier",
           compile_line("adblock", "37.1.213.100$important")[0],
           ["||37.1.213.100^$important"])
+    try:
+        compile_line("adblock", "999.1.213.100")
+    except CompilationError:
+        tests.append(("invalid dotted-quad IP is rejected", True, True))
+    else:
+        raise AssertionError("invalid IPv4 literals must not be published as raw rules")
     try:
         compile_line("adblock", "||37.1.213.100^$network")
     except CompilationError:
