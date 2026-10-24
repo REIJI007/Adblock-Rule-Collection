@@ -1756,21 +1756,19 @@ def main() -> int:
         print("ABORTED: compilation produced zero rules; existing output was not changed.", file=sys.stderr)
         return 2
 
-    timestamp = dt.datetime.now(dt.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S %z")
-    header = [
-        "! Title: Adblock-Rule-Collection",
-        "! Description: Semantically compiled upstream rules for AdGuard browser filtering",
-        "! Target: " + args.target,
-        "! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
-        "! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0",
-        "! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0",
-        "! Generated: " + timestamp,
-        "! RuleCount: " + str(len(rules)),
-        "! CompileReport: " + report_path.name,
-    ]
-    if source_failures or state.issues or state.target_exclusions:
-        header.append("! WARNING: Some source rules were excluded for target incompatibility or compilation errors; see the JSON report.")
-    document = "\n".join(header) + "\n\n" + "\n".join(rules) + "\n"
+    tz_utc8 = dt.timezone(dt.timedelta(hours=8))
+    timestamp = dt.datetime.now(tz_utc8).strftime("%Y-%m-%d %H:%M:%S")
+
+    num_rules = len(rules)
+    header = f"""! Title: Adblock-Rule-Collection
+! Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
+! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
+! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
+! Generated: {timestamp} (UTC+8)
+! Total rules: {num_rules}
+"""
+    document = header + "\n".join(rules) + "\n"
     atomic_write_text(output_path, document)
 
     print(f"Published {len(rules)} unique rules to {output_path}")
