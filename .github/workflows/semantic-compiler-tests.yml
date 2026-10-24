@@ -46,16 +46,16 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           echo "strict_compiler_exit_code=$code" > semantic-live-audit-status.txt
           echo "Strict compilation exit code: $code"
-          # A strict rejection is an audit result, not an infrastructure failure.
-          # Keep the job alive so the report can be uploaded for review.
+          # Keep this step alive so the audit summary and artifact upload can run.
+          # The summary step will fail the job if strict compilation was rejected.
           exit 0
       - name: Summarize strict audit
         if: always()
         shell: bash
         run: |
           if [ ! -f semantic-live-audit.json ]; then
-            echo "The compiler did not produce a JSON report."
-            exit 0
+            echo "::error::The compiler did not produce a JSON report."
+            exit 1
           fi
           python - <<'PY'
           import collections
@@ -66,8 +66,10 @@ jobs:
           print("Target:", report.get("target"))
           print("Sources:", report.get("source_count"))
           print("Unique compiled rules:", report.get("unique_rule_count"))
+          print("Sources skipped because their semantics do not match the browser target:", report.get("sources_skipped_by_target"))
+          print("Input lines skipped by target:", report.get("input_lines_skipped_by_target"))
           print("Source fetch failures:", len(report.get("source_failures", [])))
-          print("Unsupported rules or source-level incompatibilities:", report.get("unsupported_count"))
+          print("Unsupported in-scope rules:", report.get("unsupported_count"))
           by_source = collections.Counter(issue.get("source", "") for issue in report.get("unsupported_rules", []))
           for source, count in by_source.most_common(20):
               print(f"Unsupported entries: {count:>6}  {source}")
@@ -75,6 +77,11 @@ jobs:
           for reason, count in by_reason.most_common(20):
               print(f"Reason: {count:>6}  {reason}")
           PY
+          code="$(sed -n 's/^strict_compiler_exit_code=//p' semantic-live-audit-status.txt | tail -n 1)"
+          if [ "${code:-unknown}" != "0" ]; then
+            echo "::error::Strict compilation did not pass (exit code ${code:-unknown}). Review the uploaded audit artifact."
+            exit 1
+          fi
       - name: Upload live audit report
         if: always()
         uses: actions/upload-artifact@v4
