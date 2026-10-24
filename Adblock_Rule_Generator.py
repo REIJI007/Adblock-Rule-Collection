@@ -67,14 +67,27 @@ SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname"}
 # target-specific browser filter, not a multi-platform FiltersRegistry build.
 KNOWN_CONDITION_FLAGS = {
     "adguard", "adguard_app_windows", "adguard_app_mac", "adguard_app_android",
-    "adguard_app_ios", "adguard_ext_safari", "adguard_ext_chromium",
-    "adguard_ext_firefox", "adguard_ext_edge", "adguard_ext_opera",
-    "adguard_ext_android_cb", "ext_ublock",
+    "adguard_app_ios", "adguard_app_cli", "adguard_ext_safari",
+    "adguard_ext_chromium", "adguard_ext_chromium_mv3", "adguard_ext_firefox",
+    "adguard_ext_edge", "adguard_ext_edge_mv3", "adguard_ext_opera",
+    "adguard_ext_opera_mv3", "adguard_ext_android_cb", "ext_ublock",
+    "ext_ubol", "ext_abp", "env_mobile", "env_safari", "env_chromium",
+    "env_firefox", "env_edge", "env_mv3", "cap_html_filtering",
 }
 TARGET_PROFILES = {
-    "chromium": {"adguard": True, "adguard_ext_chromium": True},
-    "firefox": {"adguard": True, "adguard_ext_firefox": True},
-    "safari": {"adguard": True, "adguard_ext_safari": True},
+    # chromium means the AdGuard Chromium MV2 profile; use chromium-mv3 for MV3.
+    "chromium": {
+        "adguard": True, "adguard_ext_chromium": True, "env_chromium": True,
+    },
+    "chromium-mv3": {
+        "adguard": True, "adguard_ext_chromium_mv3": True, "env_chromium": True,
+    },
+    "firefox": {
+        "adguard": True, "adguard_ext_firefox": True, "env_firefox": True,
+    },
+    "safari": {
+        "adguard": True, "adguard_ext_safari": True, "env_safari": True,
+    },
     "generic": {"adguard": True},
 }
 MAX_INCLUDE_DEPTH = 12
@@ -88,7 +101,7 @@ NON_PORTABLE_NATIVE_PATTERNS = (
     (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() has no verified AdGuard equivalent"),
     (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator has no verified AdGuard equivalent"),
 )
-DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag)(?:=|,|$)", re.IGNORECASE)
+DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag|network)(?:=|,|$)", re.IGNORECASE)
 
 class CompilationError(RuntimeError):
     pass
@@ -828,7 +841,30 @@ def expand_filter_preprocessor(
             active = frame["parent_active"]
             continue
 
-        include_match = re.fullmatch(r"!#include\s+(.+)", line)
+        affinity_begin = re.fullmatch(r"!#safari_cb_affinity\(([^)]*)\)", line)
+        if affinity_begin:
+            if not active:
+                continue
+            if target == "safari":
+                raise CompilationError(
+                    f"{source.url}:{line_number}: Safari content-blocker affinity "
+                    "cannot be preserved in one flat filter file"
+                )
+            # Affinity only partitions Safari content blockers; for non-Safari
+            # targets the enclosed rules remain active but the metadata is removed.
+            continue
+
+        if re.fullmatch(r"!#safari_cb_affinity", line):
+            if not active:
+                continue
+            if target == "safari":
+                raise CompilationError(
+                    f"{source.url}:{line_number}: Safari content-blocker affinity "
+                    "cannot be preserved in one flat filter file"
+                )
+            continue
+
+                include_match = re.fullmatch(r"!#include\s+(.+)", line)
         if include_match:
             if not active:
                 continue
@@ -1039,8 +1075,14 @@ def run_regression_tests() -> None:
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
-    check("Chromium preprocessor condition evaluates true",
+    check("Chromium MV2 preprocessor condition evaluates true",
           evaluate_filter_condition("adguard && adguard_ext_chromium && !adguard_ext_safari", target_condition_flags("chromium")), True)
+    check("Chromium MV3 gets the MV3 condition, not the MV2 condition",
+          evaluate_filter_condition("adguard_ext_chromium_mv3 && !adguard_ext_chromium", target_condition_flags("chromium-mv3")), True)
+    check("uBlock-only conditions are false for AdGuard output",
+          evaluate_filter_condition("ext_ublock || ext_ubol || ext_abp", target_condition_flags("chromium-mv3")), False)
+    check("Chromium environment condition is true",
+          evaluate_filter_condition("env_chromium && !env_mobile", target_condition_flags("chromium-mv3")), True)
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
@@ -1151,7 +1193,7 @@ def run_regression_tests() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compile upstream blocklists into an AdGuard browser filter with explicit semantic-loss reporting.")
-    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default="chromium", help="AdGuard preprocessor profile for one target browser (default: chromium)")
+    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default="chromium-mv3", help="AdGuard target profile (default: chromium-mv3)")
     parser.add_argument("--output", default=OUTPUT_DEFAULT, help=f"compiled filter path (default: {OUTPUT_DEFAULT})")
     parser.add_argument("--report", default=REPORT_DEFAULT, help=f"JSON compilation report (default: {REPORT_DEFAULT})")
     parser.add_argument("--allow-lossy", action="store_true", help="explicitly publish only translatable rules; report all omitted rules")
