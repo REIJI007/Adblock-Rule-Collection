@@ -1131,7 +1131,7 @@ def compile_fetched_sources(
             url=metadata_config_url,
             kind="source-metadata",
             status="loaded",
-            metadata_patterns=len(source_exclusions),
+            metadata_patterns=sum(metadata_pattern_counts.values()),
         )
 
     # CNAME original-tracker lists require a CNAME-aware request scanner.
@@ -1258,7 +1258,7 @@ def run_regression_tests() -> None:
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     exclusion_matchers = parse_hostlist_exclusion_patterns(
-        "! comment\n||excluded.example^\n*track*\n/^https?:\/\/ads\.example\//\n"
+        "! comment\n||excluded.example^\n*track*\n/ads\\.example/\n"
     )
     check("plain exclusion uses case-sensitive substring semantics",
           exclusion_matchers[0].matches("||excluded.example^"), True)
