@@ -318,7 +318,7 @@ jobs:
                   expression = pattern[1:-1]
                   # AdGuard DNS uses RE2-like regex semantics; reject Python-only
                   # lookarounds/backreferences instead of silently changing meaning.
-                  if re.search(r"\(\?(?:[=!<]|P=|[a-zA-Z])|\\[1-9]", expression):
+                  if re.search(r"\(\?(?:[=!]|<[=!]|P=|\()|\\[1-9]|\\k<", expression):
                       return None, "regex construct is not portable to AdGuard DNS"
                   try:
                       re.compile(expression)
@@ -348,6 +348,17 @@ jobs:
                   return None, "separator or anchor is only supported at pattern boundaries"
               if len(body) > 253 or ".." in body:
                   return None, "invalid hostname mask length or empty label"
+
+              # A bare IP has a defined AdGuard DNS meaning (match domains resolving
+              # to that IP). Anchoring it as a hostname mask is not equivalent.
+              try:
+                  ip_literal = ipaddress.ip_address(body)
+              except ValueError:
+                  ip_literal = None
+              if ip_literal is not None:
+                  if prefix or suffix:
+                      return None, "IP literals cannot be used as anchored hostname masks"
+                  return str(ip_literal), None
 
               if "*" not in body and not body.startswith("."):
                   normalized_domain = canonical_domain(body, allow_underscore=True)
@@ -1046,7 +1057,7 @@ jobs:
                   "||example.org^$script",
                   "||example.org^$ctag=device_pc",
                   "||example.org^$dnsrewrite=NOERROR;CAA;0 issue \"ca.example\"",
-                  "/example(?=\.org)/",
+                  r"/example(?=\.org)/",
               ):
                   _, error = parse_adguard_dns_rule(unsupported_rule)
                   if not error:
