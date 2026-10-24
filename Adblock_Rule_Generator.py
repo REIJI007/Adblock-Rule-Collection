@@ -202,11 +202,25 @@ def classify_source(url: str) -> str:
     ):
         return "dns"
 
-    if (
-        hostname == "adguardteam.github.io"
-        and path.startswith("/cname-trackers/data/")
-    ):
-        return "cname"
+    if hostname == "adguardteam.github.io" and path.startswith("/cname-trackers/data/"):
+        # The CNAME-tracker project publishes two semantically different families:
+        # disguised tracker hostnames are ordinary browser-blocking rules, whereas
+        # original trackers and microsites require CNAME-aware DNS inspection.
+        if (
+            "/data/microsites/" in path
+            or "/data/combined_original_trackers" in path
+        ):
+            return "cname"
+        if (
+            any(part in path for part in (
+                "/data/ads/",
+                "/data/clickthroughs/",
+                "/data/trackers/",
+                "/data/mail_trackers/",
+            ))
+            or "/data/combined_disguised_" in path
+        ):
+            return "adblock"
 
     if "adguardteam/cname-trackers/" in lowered:
         if "/data/combined_original_trackers.txt" in path:
@@ -1413,6 +1427,12 @@ def run_regression_tests() -> None:
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
               "https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt",
           ), True)
+    check("disguised CNAME ad-domain lists keep ordinary browser-filter semantics",
+          classify_source("https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"),
+          "adblock")
+    check("CNAME microsite lists retain DNS-aware semantics",
+          classify_source("https://adguardteam.github.io/cname-trackers/data/microsites/example.txt"),
+          "cname")
     check("arbitrary cross-origin preprocessor include is rejected",
           allow_preprocessor_include(
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
