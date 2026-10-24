@@ -124,6 +124,13 @@ jobs:
                       ["child.example.com", "other.example.net"],
                   ),
                   (
+                      "exception-only domains are never added to the block list",
+                      [
+                          "@@||allow.example.com^",
+                      ],
+                      [],
+                  ),
+                  (
                       "unconditional exception excludes its subtree",
                       [
                           "||example.com^",
