@@ -61,7 +61,7 @@ HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 # Example: SOURCE_FORMAT_OVERRIDES["https://example.org/domains.txt"] = "domains"
 # Allowed values: adblock, hosts, domains, dns, cname.
 SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
-SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname"}
+SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname", "exclusions"}
 
 # AdGuard preprocessor conditions are platform-dependent. The output is one
 # target-specific browser filter, not a multi-platform FiltersRegistry build.
@@ -155,6 +155,15 @@ def classify_source(url: str) -> str:
 
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
+
+    # In AdGuardSDNSFilter, exclusions.txt is metadata consumed by the hostlist
+    # compiler to remove matching source rules; it is not an active blocklist.
+    if (
+        hostname == "raw.githubusercontent.com"
+        and path.startswith("/adguardteam/adguardsdnsfilter/")
+        and path.endswith("/filters/exclusions.txt")
+    ):
+        return "exclusions"
 
     if (
         "adguardteam/adguardsdnsfilter/" in lowered
@@ -656,6 +665,12 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
             "filter cannot preserve that source-level behavior"
         )
 
+    if kind == "exclusions":
+        raise CompilationError(
+            "this is an exclusion selector file, not an active blocklist; it must be "
+            "applied to its designated source group rather than emitted as rules"
+        )
+
     if kind == "dns":
         # DNS/domain-list formats permit inline comments after whitespace. A
         # hostname cannot legally contain '#', so removing this suffix is safe.
@@ -958,14 +973,20 @@ def compile_fetched_sources(
                 input_lines=len(text.splitlines()),
             )
 
-    # CNAME original-tracker lists require a CNAME-aware request scanner. Record
-    # one source-level issue instead of pretending each domain is a browser rule.
+    # CNAME original-tracker lists require a CNAME-aware request scanner.
+    # Exclusions files are compiler metadata, not active rules. Both must be
+    # represented as source-level issues instead of being turned into block rules.
     cname_active: dict[str, int] = {}
+    exclusion_active: dict[str, int] = {}
     for expanded in expanded_lines:
         source = expanded.source
         if source.kind == "cname":
             if not is_comment_or_header(expanded.text.strip()):
                 cname_active[source.url] = cname_active.get(source.url, 0) + 1
+            continue
+        if source.kind == "exclusions":
+            if not is_comment_or_header(expanded.text.strip()):
+                exclusion_active[source.url] = exclusion_active.get(source.url, 0) + 1
             continue
 
         summary = state.summaries[source.url]
@@ -999,6 +1020,23 @@ def compile_fetched_sources(
             "reason": (
                 "this source is intended for CNAME-chain-aware scanning; "
                 "mapping it to an ordinary browser URL rule would change its scope"
+            ),
+            "affected_rule_count": active_count,
+        })
+
+    for source_url, active_count in exclusion_active.items():
+        summary = state.summaries[source_url]
+        summary.unsupported_lines += active_count
+        state.issues.append({
+            "source": source_url,
+            "format": "exclusions",
+            "line": None,
+            "rule": "<source-level exclusion selectors>",
+            "reason": (
+                "this file is used by AdGuardSDNSFilter's hostlist compiler to exclude "
+                "matching rules from designated source inputs. Applying it globally or "
+                "emitting it as blocking rules changes semantics; the source-to-exclusion "
+                "relationship must be configured before this metadata can be consumed"
             ),
             "affected_rule_count": active_count,
         })
@@ -1075,6 +1113,9 @@ def run_regression_tests() -> None:
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
+    check("AdGuardSDNSFilter exclusions are metadata, not block rules",
+          classify_source("https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/Filters/exclusions.txt"),
+          "exclusions")
     check("Chromium MV2 preprocessor condition evaluates true",
           evaluate_filter_condition("adguard && adguard_ext_chromium && !adguard_ext_safari", target_condition_flags("chromium")), True)
     check("Chromium MV3 gets the MV3 condition, not the MV2 condition",
