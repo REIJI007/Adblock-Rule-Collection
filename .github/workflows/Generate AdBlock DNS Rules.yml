@@ -598,7 +598,7 @@ jobs:
                       numbers = [
                           int(number)
                           for number in repetition.groups()
-                          if number is not None
+                          if number not in (None, "")
                       ]
                       if any(number > 1000 for number in numbers):
                           return "regex repetition exceeds the target engine limit"
@@ -1207,6 +1207,16 @@ jobs:
                           "Semantic self-test failed: invalid hostname-regex shape "
                           f"was accepted: {source_rule!r}; normalized={actual!r}"
                       )
+
+              # Open-ended counted repetition is valid; an empty upper bound
+              # must not be passed to int().
+              open_ended_regex = r"/[a-z0-9]{32,}\.example/"
+              actual, error = parse_adguard_dns_rule(open_ended_regex)
+              if error or actual != open_ended_regex:
+                  raise RuntimeError(
+                      "Semantic self-test failed for open-ended repetition: "
+                      f"{open_ended_regex!r}; error={error!r}"
+                  )
 
               print("Semantic self-tests passed.")
 
