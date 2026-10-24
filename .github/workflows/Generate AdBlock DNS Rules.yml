@@ -73,23 +73,25 @@ jobs:
               "client",
               "denyallow",
               "dnstype",
+              "dnsrewrite",
               "important",
+              "respgeo",
           }
 
           class FatalConversionError(RuntimeError):
               # 致命错误：继续发布会导致规则语义不安全，必须中止整个流程
               pass
 
-          def canonical_domain(value: str):
-              # 校验主机名，成功则返回小写 ASCII（IDNA）形式，失败返回 None
-              # 允许尾随的根点（会被移除）；拒绝通配符、空标签、URL 语法与 IP 字面量
+          def canonical_domain(value: str, allow_underscore: bool = False):
+              # Normalize a DNS name without changing its matching scope.
+              # Underscore labels are accepted only where DNS owner names require them,
+              # e.g. _sip._tcp.example.org in SRV-related rules.
               if not value or value != value.strip():
                   return None
 
               if value.endswith(".."):
                   return None
 
-              # 去掉 DNS 根点
               if value.endswith("."):
                   value = value[:-1]
 
@@ -103,23 +105,28 @@ jobs:
 
                   ascii_labels = []
                   for label in labels:
-                      # 国际化域名转为 punycode 并统一小写
-                      ascii_label = label.encode("idna").decode("ascii").lower()
+                      if allow_underscore and "_" in label:
+                          ascii_label = label.lower()
+                          if not re.fullmatch(
+                              r"[a-z0-9_](?:[a-z0-9_-]{0,61}[a-z0-9_])?",
+                              ascii_label,
+                          ):
+                              return None
+                      else:
+                          ascii_label = label.encode("idna").decode("ascii").lower()
+                          if len(ascii_label) > 63:
+                              return None
+                          if not DOMAIN_LABEL_RE.fullmatch(ascii_label):
+                              return None
 
                       if len(ascii_label) > 63:
                           return None
-
-                      if not DOMAIN_LABEL_RE.fullmatch(ascii_label):
-                          return None
-
                       ascii_labels.append(ascii_label)
 
                   result = ".".join(ascii_labels)
-
                   if len(result) > 253:
                       return None
 
-                  # IP 字面量不能当作主机名规则处理
                   try:
                       ipaddress.ip_address(result)
                       return None
@@ -127,51 +134,37 @@ jobs:
                       pass
 
                   return result
-
               except (UnicodeError, ValueError):
                   return None
 
           def parse_dns_type_value(value: str):
-              # 校验并规范化 $dnstype 的值，返回 (规范化结果, 错误信息)
-              # 支持正向列表 A|AAAA 或反向列表 ~A|~AAAA；混合列表有歧义，直接拒绝
+              # Normalize DNS RR types. Per AdGuard DNS syntax, positive entries
+              # dominate mixed positive/negative lists (e.g. ~A|AAAA == AAAA).
               if not value or value != value.strip():
                   return None, "invalid dnstype value"
 
               components = value.split("|")
-
               if any(not item for item in components):
                   return None, "empty dnstype entry"
 
-              normalized = []
-              negation_modes = set()
-
+              parsed = []
               for item in components:
                   negated = item.startswith("~")
                   type_name = item[1:] if negated else item
-
-                  if not type_name:
-                      return None, "empty dnstype name"
-
-                  type_name = type_name.upper()
-
-                  if not re.fullmatch(r"[A-Z0-9]+", type_name):
+                  if not type_name or not re.fullmatch(r"[A-Za-z0-9]+", type_name):
                       return None, f"invalid dnstype name: {type_name}"
-
+                  type_name = type_name.upper()
                   if type_name not in DNS_TYPES:
                       return None, f"unsupported dnstype: {type_name}"
+                  parsed.append((negated, type_name))
 
-                  negation_modes.add(negated)
-                  normalized.append(("~" if negated else "") + type_name)
+              positives = sorted({name for negated, name in parsed if not negated})
+              if positives:
+                  return "|".join(positives), None
 
-              # 同一列表中不允许同时出现正向与反向条目
-              if len(negation_modes) > 1:
-                  return None, "mixed positive and negative dnstype entries"
+              negatives = sorted({name for _, name in parsed})
+              return "|".join("~" + name for name in negatives), None
 
-              if len(set(normalized)) != len(normalized):
-                  return None, "duplicate dnstype entry"
-
-              # RR type ordering is semantically irrelevant; sort for canonicalization.
-              return "|".join(sorted(normalized)), None
 
           def split_outside_quotes(value: str, separator: str):
               # Split outside quoted strings; preserve escapes so client names retain their meaning.
@@ -272,9 +265,256 @@ jobs:
               return value, None
 
 
-          def parse_modifiers(modifier_text: str):
-              # Only accept modifiers with defined DNS semantics. Unknown modifiers are
-              # rejected instead of being stripped, which could broaden block/allow scope.
+          def split_rule_pattern_modifiers(candidate: str):
+              # A '$' inside an AdGuard DNS regex is regex syntax, not a modifier
+              # delimiter. Find the closing slash before splitting modifiers.
+              offset = 2 if candidate.startswith("@@") else 0
+              body = candidate[offset:]
+
+              if body.startswith("/"):
+                  escaped = False
+                  closing = None
+                  for index in range(1, len(body)):
+                      char = body[index]
+                      if char == "\\" and not escaped:
+                          escaped = True
+                          continue
+                      if char == "/" and not escaped and (
+                          index == len(body) - 1 or body[index + 1] == "$"
+                      ):
+                          closing = index
+                          break
+                      escaped = False
+
+                  if closing is not None:
+                      pattern = candidate[:offset + closing + 1]
+                      if closing == len(body) - 1:
+                          return pattern, None, None
+                      modifier_text = body[closing + 2:]
+                      parts, error = split_outside_quotes(modifier_text, "$")
+                      if error:
+                          return None, None, error
+                      if len(parts) != 1:
+                          return None, None, "multiple modifier delimiters"
+                      return pattern, parts[0], None
+
+              parts, error = split_outside_quotes(candidate, "$")
+              if error:
+                  return None, None, error
+              if len(parts) > 2:
+                  return None, None, "multiple modifier delimiters"
+              return parts[0], parts[1] if len(parts) == 2 else None, None
+
+
+          def normalize_dns_pattern(pattern: str):
+              # Preserve AdGuard DNS hostname masks and regex rules. This deliberately
+              # rejects browser URL/resource syntax rather than broadening its meaning.
+              if not pattern or pattern != pattern.strip():
+                  return None, "empty or whitespace-padded hostname pattern"
+              if any(ord(char) < 32 or ord(char) == 127 for char in pattern):
+                  return None, "control character in hostname pattern"
+
+              if pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
+                  expression = pattern[1:-1]
+                  # AdGuard DNS uses RE2-like regex semantics; reject Python-only
+                  # lookarounds/backreferences instead of silently changing meaning.
+                  if re.search(r"\(\?(?:[=!<]|P=|[a-zA-Z])|\\[1-9]", expression):
+                      return None, "regex construct is not portable to AdGuard DNS"
+                  try:
+                      re.compile(expression)
+                  except re.error as error:
+                      return None, f"invalid regex pattern: {error}"
+                  return pattern, None
+
+              if "/" in pattern or "\\" in pattern or "?" in pattern or "#" in pattern:
+                  return None, "unsupported hostname pattern character"
+
+              prefix = ""
+              body = pattern
+              if body.startswith("||"):
+                  prefix, body = "||", body[2:]
+              elif body.startswith("|"):
+                  prefix, body = "|", body[1:]
+
+              suffix = ""
+              if body.endswith("^"):
+                  suffix, body = "^", body[:-1]
+              elif body.endswith("|"):
+                  suffix, body = "|", body[:-1]
+
+              if not body:
+                  return None, "empty hostname mask"
+              if "^" in body or "|" in body:
+                  return None, "separator or anchor is only supported at pattern boundaries"
+              if len(body) > 253 or ".." in body:
+                  return None, "invalid hostname mask length or empty label"
+
+              if "*" not in body and not body.startswith("."):
+                  normalized_domain = canonical_domain(body, allow_underscore=True)
+                  if normalized_domain:
+                      return prefix + normalized_domain + suffix, None
+
+              # Wildcard and subdomain-only patterns must be ASCII to avoid ambiguous
+              # IDNA normalization around wildcard labels.
+              if not body.isascii():
+                  return None, "non-ASCII characters in wildcard hostname mask"
+
+              labels = body.split(".")
+              if body.startswith("."):
+                  labels = body[1:].split(".")
+              if not labels or any(not label for label in labels):
+                  return None, "empty hostname-mask label"
+
+              for label in labels:
+                  if not re.fullmatch(r"[A-Za-z0-9_*_-]+", label):
+                      return None, f"invalid hostname-mask label: {label}"
+
+              return prefix + body.lower() + suffix, None
+
+
+          def validate_dnsrewrite_value(value: str):
+              # Validate the AdGuard DNS $dnsrewrite forms documented by AdGuard:
+              # RCODE keywords, IP/CNAME shorthand, and supported explicit RR records.
+              if not value or value != value.strip():
+                  return None, "invalid dnsrewrite value"
+              if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                  return None, "control character in dnsrewrite value"
+
+              rcodes = {
+                  "NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN", "NOTIMP",
+                  "REFUSED", "YXDOMAIN", "YXRRSET", "NXRRSET", "NOTAUTH",
+                  "NOTZONE", "BADVERS", "BADKEY", "BADTIME", "BADMODE",
+                  "BADNAME", "BADALG", "BADTRUNC", "BADCOOKIE",
+              }
+              if value in rcodes:
+                  return value, None
+
+              try:
+                  return str(ipaddress.ip_address(value)), None
+              except ValueError:
+                  pass
+
+              # Shorthand domain values are CNAME rewrites.
+              if ";" not in value:
+                  domain = canonical_domain(value, allow_underscore=True)
+                  if domain:
+                      return domain, None
+                  return None, "unsupported dnsrewrite shorthand"
+
+              parts = value.split(";", 2)
+              if len(parts) != 3:
+                  return None, "dnsrewrite must use RCODE;RRTYPE;VALUE"
+              rcode, rrtype, record_value = parts
+              if rcode not in rcodes:
+                  return None, "unsupported or non-canonical dnsrewrite response code"
+
+              if not rrtype:
+                  if not record_value:
+                      return f"{rcode};;", None
+                  return None, "dnsrewrite value without an RR type"
+
+              rrtype = rrtype.upper()
+              supported_types = {"A", "AAAA", "CNAME", "PTR", "MX", "TXT", "SRV", "HTTPS", "SVCB"}
+              if rrtype not in supported_types:
+                  return None, f"unsupported dnsrewrite RR type: {rrtype}"
+              if not record_value or record_value != record_value.strip():
+                  return None, "empty or whitespace-padded dnsrewrite record value"
+
+              def record_name(name: str):
+                  if name == ".":
+                      return "."
+                  return canonical_domain(name, allow_underscore=True)
+
+              if rrtype == "A":
+                  try:
+                      normalized_value = str(ipaddress.IPv4Address(record_value))
+                  except ValueError:
+                      return None, "dnsrewrite A record requires an IPv4 address"
+              elif rrtype == "AAAA":
+                  try:
+                      normalized_value = str(ipaddress.IPv6Address(record_value))
+                  except ValueError:
+                      return None, "dnsrewrite AAAA record requires an IPv6 address"
+              elif rrtype in {"CNAME", "PTR"}:
+                  normalized_value = record_name(record_value)
+                  if not normalized_value:
+                      return None, f"dnsrewrite {rrtype} record requires a valid domain"
+              elif rrtype == "MX":
+                  fields = record_value.split()
+                  if len(fields) != 2 or not fields[0].isdigit():
+                      return None, "dnsrewrite MX record must be '<preference> <exchange>'"
+                  preference = int(fields[0])
+                  exchange = record_name(fields[1])
+                  if preference > 65535 or not exchange:
+                      return None, "invalid dnsrewrite MX preference or exchange"
+                  normalized_value = f"{preference} {exchange}"
+              elif rrtype == "SRV":
+                  fields = record_value.split()
+                  if len(fields) != 4 or not all(field.isdigit() for field in fields[:3]):
+                      return None, "dnsrewrite SRV record must contain three integers and a target"
+                  numbers = [int(field) for field in fields[:3]]
+                  target = record_name(fields[3])
+                  if any(number > 65535 for number in numbers) or not target:
+                      return None, "invalid dnsrewrite SRV fields"
+                  normalized_value = " ".join(str(number) for number in numbers) + " " + target
+              elif rrtype in {"HTTPS", "SVCB"}:
+                  fields = record_value.split()
+                  if len(fields) < 2 or not fields[0].isdigit():
+                      return None, f"dnsrewrite {rrtype} record must contain priority and target"
+                  priority = int(fields[0])
+                  target = record_name(fields[1])
+                  if priority > 65535 or not target:
+                      return None, f"invalid dnsrewrite {rrtype} priority or target"
+                  params = fields[2:]
+                  for param in params:
+                      if param == "no-default-alpn":
+                          continue
+                      if not re.fullmatch(r"[A-Za-z0-9-]+=[A-Za-z0-9:./_-]+", param):
+                          return None, f"unsupported dnsrewrite {rrtype} parameter: {param}"
+                  normalized_value = " ".join([str(priority), target] + params)
+              else:  # TXT
+                  normalized_value = record_value
+
+              return f"{rcode};{rrtype};{normalized_value}", None
+
+
+          def parse_respgeo_value(value: str):
+              # respgeo values are either ISO-style country codes or ASNs, not a mix.
+              if not value or value != value.strip():
+                  return None, "invalid respgeo value"
+              entries = value.split("|")
+              if any(not entry for entry in entries):
+                  return None, "empty respgeo entry"
+
+              parsed = []
+              categories = set()
+              negations = set()
+              for entry in entries:
+                  negated = entry.startswith("~")
+                  token = entry[1:] if negated else entry
+                  token = token.upper()
+                  if token in {"--", "AS--"}:
+                      category = "country" if token == "--" else "asn"
+                  elif re.fullmatch(r"AS[0-9]+", token):
+                      category = "asn"
+                  elif re.fullmatch(r"[A-Z]{2}", token):
+                      category = "country"
+                  else:
+                      return None, f"invalid respgeo entry: {entry}"
+                  categories.add(category)
+                  negations.add(negated)
+                  parsed.append(("~" if negated else "") + token)
+
+              if len(categories) != 1:
+                  return None, "respgeo cannot mix country codes and ASNs"
+              if len(negations) != 1:
+                  return None, "mixed positive and negative respgeo entries"
+              return "|".join(sorted(set(parsed))), None
+
+
+          def parse_modifiers(modifier_text: str, allow_dnsrewrite_exception: bool = False):
+              # Keep only modifiers documented by AdGuard DNS. Browser-only and
+              # AdGuard Home-only modifiers are skipped rather than stripped.
               if not modifier_text:
                   return None, "empty modifier list"
 
@@ -308,6 +548,12 @@ jobs:
                       normalized.append(("important", None))
                       continue
 
+                  if key == "dnsrewrite" and not separator:
+                      if allow_dnsrewrite_exception:
+                          normalized.append(("dnsrewrite", None))
+                          continue
+                      return None, "dnsrewrite requires a value except in exception rules"
+
                   if not separator:
                       return None, f"{key} requires a value"
 
@@ -317,6 +563,10 @@ jobs:
                       parsed_value, error = parse_denyallow_value(value)
                   elif key == "client":
                       parsed_value, error = validate_client_value(value)
+                  elif key == "dnsrewrite":
+                      parsed_value, error = validate_dnsrewrite_value(value)
+                  elif key == "respgeo":
+                      parsed_value, error = parse_respgeo_value(value)
                   else:
                       return None, f"unsupported modifier: {key}"
 
@@ -324,95 +574,52 @@ jobs:
                       return None, error
                   normalized.append((key, parsed_value))
 
-              # Modifier order does not affect semantics; sort for deterministic deduplication.
               normalized.sort(key=lambda item: item[0])
               result = []
               for key, value in normalized:
                   result.append(key if value is None else f"{key}={value}")
-
               return ",".join(result), None
 
 
           def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
-              # Parse supported AdGuard DNS rules without widening their hostname scope.
-              # ||domain^ covers the domain and subdomains; |domain^ covers only that host.
-              # Browser-context modifiers are rejected rather than silently removed.
+              # Parse rules expressible in AdGuard DNS: hostname masks, regexes,
+              # domain-only rules and documented DNS modifiers. Unsupported browser
+              # syntax is rejected instead of being widened or silently rewritten.
               if not candidate:
                   return None, "empty rule"
-
               if any(ord(char) < 32 or ord(char) == 127 for char in candidate):
                   return None, "control character in rule"
 
-              # 拆分白名单前缀 @@
               allow_prefix = "@@" if candidate.startswith("@@") else ""
-              body = candidate[len(allow_prefix):]
-
-              if body.startswith("@@"):
+              if allow_prefix and candidate.startswith("@@@"):
                   return None, "misplaced exception marker"
 
-              # Split on unquoted "$" delimiters, because a quoted client name may contain "$".
-              parts, split_error = split_outside_quotes(body, "$")
+              pattern, modifier_text, split_error = split_rule_pattern_modifiers(candidate)
               if split_error:
                   return None, split_error
-              if len(parts) > 2:
-                  return None, "multiple modifier delimiters"
+              if allow_prefix:
+                  if not pattern.startswith("@@"):
+                      return None, "malformed exception rule"
+                  pattern = pattern[2:]
+              elif pattern.startswith("@@"):
+                  return None, "misplaced exception marker"
 
-              pattern = parts[0]
-              modifier_text = parts[1] if len(parts) == 2 else None
+              normalized_pattern, error = normalize_dns_pattern(pattern)
+              if error:
+                  return None, error
 
-              domain_pattern = None
-              exact_anchor = False
-
-              if pattern.startswith("||") and pattern.endswith("^"):
-                  # 标准形式：匹配域名及其全部子域名
-                  domain_pattern = pattern[2:-1]
-
-              elif (
-                  allow_exact_anchor
-                  and pattern.startswith("|")
-                  and not pattern.startswith("||")
-                  and pattern.endswith("^")
-              ):
-                  # 精确锚点形式：仅匹配该主机名本身
-                  domain_pattern = pattern[1:-1]
-                  exact_anchor = True
-
-              else:
-                  return None, "pattern is not a supported canonical DNS hostname rule"
-
-              # 主机名部分不得含任何特殊语法字符
-              if (
-                  not domain_pattern
-                  or "^" in domain_pattern
-                  or "|" in domain_pattern
-                  or "/" in domain_pattern
-                  or "\\" in domain_pattern
-                  or "?" in domain_pattern
-                  or "#" in domain_pattern
-                  or "$" in domain_pattern
-                  or "*" in domain_pattern
-              ):
-                  return None, "unsupported hostname pattern"
-
-              domain = canonical_domain(domain_pattern)
-
-              if not domain:
-                  return None, "invalid hostname or IP literal"
-
-              if exact_anchor:
-                  normalized = f"{allow_prefix}|{domain}^"
-              else:
-                  normalized = f"{allow_prefix}||{domain}^"
-
+              normalized = allow_prefix + normalized_pattern
               if modifier_text is not None:
-                  normalized_modifiers, error = parse_modifiers(modifier_text)
-
+                  normalized_modifiers, error = parse_modifiers(
+                      modifier_text,
+                      allow_dnsrewrite_exception=bool(allow_prefix),
+                  )
                   if error:
                       return None, error
-
                   normalized += "$" + normalized_modifiers
 
               return normalized, None
+
 
           def parse_hosts_as_adguard(line: str):
               # 识别 Hosts 格式行，返回 (是否为Hosts行, 规则列表, 错误信息)
@@ -464,15 +671,12 @@ jobs:
               return True, [f"|{domain}^" for domain in domains], None
 
           def extract_badfilter(candidate: str):
-              # Detect and strip $badfilter while preserving the target rule's other modifiers.
-              # Split delimiters outside quotes so a client name may safely contain commas or "$".
-              # Keep the @@ exception prefix: badfilter must disable the exact same
-              # allow/block rule, not accidentally turn an exception target into a block target.
-              parts, split_error = split_outside_quotes(candidate, "$")
-              if split_error or len(parts) != 2:
+              # Match badfilter to the exact normalized target rule, preserving @@ and
+              # every other modifier. Regex end anchors remain part of the regex pattern.
+              pattern, modifier_text, split_error = split_rule_pattern_modifiers(candidate)
+              if split_error or modifier_text is None:
                   return False, candidate
 
-              pattern, modifier_text = parts
               tokens, split_error = split_outside_quotes(modifier_text, ",")
               if split_error:
                   return False, candidate
@@ -486,7 +690,6 @@ jobs:
               ]
               if remaining:
                   return True, pattern + "$" + ",".join(remaining)
-
               return True, pattern
 
 
@@ -796,6 +999,38 @@ jobs:
                       "@@||example.org^$important",
                       "@@||example.org^$important",
                   ),
+                  (
+                      "||EXAMPLE.org^$dnsrewrite=NOERROR;A;1.2.3.4",
+                      "||example.org^$dnsrewrite=NOERROR;A;1.2.3.4",
+                  ),
+                  (
+                      "||example.org^$dnsrewrite=example.net",
+                      "||example.org^$dnsrewrite=example.net",
+                  ),
+                  (
+                      "||_sip._tcp.example.org^$dnsrewrite=NOERROR;SRV;10 60 8080 example.org",
+                      "||_sip._tcp.example.org^$dnsrewrite=NOERROR;SRV;10 60 8080 example.org",
+                  ),
+                  (
+                      "||*.example.org^$respgeo=US|FR",
+                      "||*.example.org^$respgeo=FR|US",
+                  ),
+                  (
+                      "||example.org^$dnstype=~A|AAAA",
+                      "||example.org^$dnstype=AAAA",
+                  ),
+                  (
+                      "/example$/",
+                      "/example$/",
+                  ),
+                  (
+                      "example.org",
+                      "example.org",
+                  ),
+                  (
+                      "@@||example.org^$dnsrewrite",
+                      "@@||example.org^$dnsrewrite",
+                  ),
               ]
 
               for source_rule, expected in cases:
@@ -807,11 +1042,18 @@ jobs:
                       )
 
               # Browser-context restrictions must not be stripped into broader DNS rules.
-              _, error = parse_adguard_dns_rule("||example.org^$script")
-              if not error:
-                  raise RuntimeError(
-                      "Semantic self-test failed: browser-only $script must be rejected"
-                  )
+              for unsupported_rule in (
+                  "||example.org^$script",
+                  "||example.org^$ctag=device_pc",
+                  "||example.org^$dnsrewrite=NOERROR;CAA;0 issue \"ca.example\"",
+                  "/example(?=\.org)/",
+              ):
+                  _, error = parse_adguard_dns_rule(unsupported_rule)
+                  if not error:
+                      raise RuntimeError(
+                          "Semantic self-test failed: unsupported or non-portable "
+                          f"rule must be rejected: {unsupported_rule!r}"
+                      )
 
               has_badfilter, target = extract_badfilter(
                   "||example.org^$denyallow=sub.example.org,badfilter"
