@@ -99,7 +99,13 @@ jobs:
 
               try:
                   labels = value.split(".")
-                  if any(not label for label in labels):
+                  # This output is for public DNS filtering, not single-label local names.
+                  # .localhost and all its subdomains are special-use names (RFC 6761).
+                  if (
+                      len(labels) < 2
+                      or any(not label for label in labels)
+                      or labels[-1].lower() == "localhost"
+                  ):
                       return None
 
                   ascii_labels = []
@@ -404,243 +410,6 @@ jobs:
               return ",".join(result), None
 
 
-          def validate_hostname_regex(pattern: str):
-              # DNS regexes are evaluated against hostnames, not browser URLs.
-              # Perform generic lexical checks rather than matching a denylist of
-              # known bad patterns. Reject expressions that require URL/Adblock
-              # characters, use unsupported regex constructs, or are numeric-only
-              # address patterns with no hostname-label evidence.
-              if not pattern.startswith("/") or not pattern.endswith("/") or len(pattern) <= 2:
-                  return "malformed hostname regular expression"
-
-              expression = pattern[1:-1]
-              try:
-                  re.compile(expression)
-              except re.error:
-                  return "invalid regular-expression pattern"
-
-              hostname_chars = set(
-                  "abcdefghijklmnopqrstuvwxyz"
-                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                  "0123456789._-"
-              )
-              word_chars = set(
-                  "abcdefghijklmnopqrstuvwxyz"
-                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                  "0123456789_"
-              )
-              digit_chars = set("0123456789")
-              has_alpha_evidence = False
-              has_numeric_evidence = False
-
-              def record_characters(characters):
-                  nonlocal has_alpha_evidence, has_numeric_evidence
-                  if any(char.isalpha() or char == "_" for char in characters):
-                      has_alpha_evidence = True
-                  if any(char.isdigit() for char in characters):
-                      has_numeric_evidence = True
-
-              def parse_character_class(source, opening_index):
-                  # Accept only positive classes/ranges whose complete character
-                  # set is hostname-safe. Complements and broad classes such as
-                  # [\s\S] are too unconstrained for a conservative converter.
-                  index = opening_index + 1
-                  if index >= len(source) or source[index] == "^":
-                      return None, None, "negated or empty hostname character class"
-
-                  tokens = []
-                  while index < len(source):
-                      char = source[index]
-                      if char == "]":
-                          break
-
-                      if char == "\\":
-                          if index + 1 >= len(source):
-                              return None, None, "unterminated character-class escape"
-                          escaped = source[index + 1]
-                          if escaped == "d":
-                              tokens.append(("set", digit_chars))
-                          elif escaped == "w":
-                              tokens.append(("set", word_chars))
-                          elif escaped in (".", "-", "_"):
-                              tokens.append(("char", escaped))
-                          else:
-                              return (
-                                  None,
-                                  None,
-                                  "character class can match non-hostname characters "
-                                  "or uses an unsupported escape",
-                              )
-                          index += 2
-                          continue
-
-                      if char not in hostname_chars:
-                          return (
-                              None,
-                              None,
-                              "character class contains characters outside hostname syntax",
-                          )
-                      tokens.append(("char", char))
-                      index += 1
-
-                  if index >= len(source) or source[index] != "]":
-                      return None, None, "unterminated hostname character class"
-                  if not tokens:
-                      return None, None, "empty hostname character class"
-
-                  possible = set()
-                  token_index = 0
-                  while token_index < len(tokens):
-                      if (
-                          token_index + 2 < len(tokens)
-                          and tokens[token_index][0] == "char"
-                          and tokens[token_index + 1] == ("char", "-")
-                          and tokens[token_index + 2][0] == "char"
-                      ):
-                          lower = ord(tokens[token_index][1])
-                          upper = ord(tokens[token_index + 2][1])
-                          if lower > upper:
-                              return None, None, "reversed character-class range"
-                          ranged = {chr(codepoint) for codepoint in range(lower, upper + 1)}
-                          if not ranged.issubset(hostname_chars):
-                              return (
-                                  None,
-                                  None,
-                                  "character-class range includes non-hostname characters",
-                              )
-                          possible.update(ranged)
-                          token_index += 3
-                          continue
-
-                      kind, value = tokens[token_index]
-                      if kind == "set":
-                          possible.update(value)
-                      else:
-                          if value == "-" and token_index not in (0, len(tokens) - 1):
-                              return (
-                                  None,
-                                  None,
-                                  "ambiguous hyphen in hostname character class",
-                              )
-                          possible.add(value)
-                      token_index += 1
-
-                  return index + 1, possible, None
-
-              index = 0
-              while index < len(expression):
-                  char = expression[index]
-
-                  if char == "\\":
-                      if index + 1 >= len(expression):
-                          return "trailing backslash in hostname regex"
-
-                      escaped = expression[index + 1]
-                      if escaped == "d":
-                          record_characters(digit_chars)
-                      elif escaped == "w":
-                          record_characters(word_chars)
-                      elif escaped in (".", "-", "_"):
-                          record_characters({escaped})
-                      elif escaped in ("A", "z", "b", "B"):
-                          # Zero-width assertions supported by RE2-style regex engines.
-                          pass
-                      else:
-                          # This rejects escaped URL slashes, literal pipes/carets,
-                          # browser-filter punctuation, backreferences and broad /
-                          # engine-specific escapes rather than guessing their meaning.
-                          return (
-                              "unsupported escape or literal outside hostname syntax: "
-                              f"\\{escaped}"
-                          )
-                      index += 2
-                      continue
-
-                  if char == "[":
-                      next_index, possible, error = parse_character_class(
-                          expression,
-                          index,
-                      )
-                      if error:
-                          return error
-                      record_characters(possible)
-                      index = next_index
-                      continue
-
-                  if char == "(":
-                      if expression.startswith("(?:", index):
-                          index += 3
-                          continue
-
-                      if expression.startswith("(?", index):
-                          # Permit only RE2-compatible inline flags. Lookarounds,
-                          # Python-only groups and other extensions are rejected.
-                          flag_group = re.match(
-                              r"\(\?(?:[ims]+(?:-[ims]+)?|-[ims]+)(?::|\))",
-                              expression[index:],
-                          )
-                          if not flag_group:
-                              return "unsupported regex group construct"
-                          index += flag_group.end()
-                          continue
-
-                      index += 1
-                      continue
-
-                  if char == "{":
-                      # Counted repetitions must use regex syntax, not literal braces.
-                      repetition = re.match(
-                          r"\{([0-9]+)(?:,([0-9]*))?\}",
-                          expression[index:],
-                      )
-                      if not repetition:
-                          return "unsupported literal brace in hostname regex"
-                      numbers = [
-                          int(number)
-                          for number in repetition.groups()
-                          if number not in (None, "")
-                      ]
-                      if any(number > 1000 for number in numbers):
-                          return "regex repetition exceeds the target engine limit"
-                      index += repetition.end()
-                      continue
-
-                  if char == ".":
-                      # A regex wildcard is valid here: the target engine supplies
-                      # hostnames as input, so it cannot make the rule match a URL.
-                      index += 1
-                      continue
-
-                  if char in hostname_chars:
-                      record_characters({char})
-                      index += 1
-                      continue
-
-                  if char in "^$*+?}|)":
-                      # Regex operators/anchors are syntax, not matched URL characters.
-                      # Python's compile check above rejects invalid operator placement.
-                      if char == "}":
-                          return "unmatched closing brace in hostname regex"
-                      index += 1
-                      continue
-
-                  # Characters such as / : ! # = , ; @ % and whitespace are not
-                  # valid hostname characters. If written as literals outside a
-                  # class they make a URL/network/browser-rule pattern, not a host mask.
-                  return (
-                      "regex contains a literal character outside hostname syntax: "
-                      f"{char!r}",
-                  )[0]
-
-              if has_numeric_evidence and not has_alpha_evidence:
-                  return (
-                      "numeric-only regex resembles an IP/address pattern, "
-                      "not a hostname rule"
-                  )
-
-              return None
-
-
           def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
               # Parse supported AdGuard DNS rules without widening their hostname scope.
               # ||domain^ covers the domain and subdomains; |domain^ covers only that host.
@@ -703,19 +472,10 @@ jobs:
                   exact_anchor = True
 
               elif pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
-                  # AdGuard DNS regex masks match hostnames only. A successful
-                  # Python compile is not enough: URL/path, IP:port, and regexes
-                  # that target Adblock syntax must be rejected.
-                  regex_error = validate_hostname_regex(pattern)
-                  if regex_error:
-                      return None, regex_error
-                  normalized = allow_prefix + pattern
-                  if modifier_text is not None:
-                      normalized_modifiers, error = parse_modifiers(modifier_text)
-                      if error:
-                          return None, error
-                      normalized += "$" + normalized_modifiers
-                  return normalized, None
+                  # This generator intentionally emits explicit hostname rules only.
+                  # Regex masks are too difficult to vet for scope/intent at conversion
+                  # time, even when they are syntactically valid for AdGuard DNS.
+                  return None, "regular-expression hostname masks are excluded from DNS output"
 
               elif pattern.startswith("||") and pattern.endswith("^") and "*" in pattern[2:-1]:
                   # Preserve wildcard hostname masks supported by AdGuard DNS.
@@ -723,6 +483,8 @@ jobs:
                   if not re.fullmatch(r"[a-z0-9*.-]+", wildcard_domain):
                       return None, "unsupported wildcard hostname pattern"
                   labels = wildcard_domain.split(".")
+                  if len(labels) < 2 or labels[-1] == "localhost":
+                      return None, "wildcard must target a qualified non-localhost hostname"
                   if any(not label or label.startswith("-") or label.endswith("-") for label in labels):
                       return None, "invalid wildcard hostname label"
                   if len(wildcard_domain) > 253 or any(len(label) > 63 for label in labels):
@@ -1163,7 +925,6 @@ jobs:
                       "||example.org^$dnsrewrite=2001:db8::1",
                       "||example.org^$dnsrewrite=2001:db8::1",
                   ),
-                  ("/(^|\\.)example\\.org$/", "/(^|\\.)example\\.org$/"),
                   ("||*.example.org^", "||*.example.org^"),
               ]
 
@@ -1192,31 +953,24 @@ jobs:
               if not has_badfilter or target != "@@||example.org^":
                   raise RuntimeError("Semantic self-test failed: exception badfilter target extraction")
 
-              # Keep regression checks generic: these are synthetic syntax
-              # categories, not a denylist of source rules or specific IP ranges.
-              rejected_regex_shapes = [
-                  r"/a\/b/",
-                  r"/host:[0-9]+/",
-                  r"/\|\|host\^/",
-                  r"/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/",
-              ]
-              for source_rule in rejected_regex_shapes:
-                  actual, error = parse_adguard_dns_rule(source_rule)
+              # Regex masks are deliberately excluded from DNS artifacts regardless
+              # of their individual expression, because scope/intent is not provable here.
+              for regex_rule in (r"/example.*/", r"/[a-z]+\d+/"):
+                  _, error = parse_adguard_dns_rule(regex_rule)
                   if not error:
                       raise RuntimeError(
-                          "Semantic self-test failed: invalid hostname-regex shape "
-                          f"was accepted: {source_rule!r}; normalized={actual!r}"
+                          "Semantic self-test failed: regex rule was accepted: "
+                          f"{regex_rule!r}"
                       )
 
-              # Open-ended counted repetition is valid; an empty upper bound
-              # must not be passed to int().
-              open_ended_regex = r"/[a-z0-9]{32,}\.example/"
-              actual, error = parse_adguard_dns_rule(open_ended_regex)
-              if error or actual != open_ended_regex:
-                  raise RuntimeError(
-                      "Semantic self-test failed for open-ended repetition: "
-                      f"{open_ended_regex!r}; error={error!r}"
-                  )
+              # Public DNS artifacts must not include single-label or localhost names.
+              for local_rule in ("|localhost^", "||service.localhost^", "||*.localhost^", "||*^"):
+                  _, error = parse_adguard_dns_rule(local_rule)
+                  if not error:
+                      raise RuntimeError(
+                          "Semantic self-test failed: local-only hostname was accepted: "
+                          f"{local_rule!r}"
+                      )
 
               print("Semantic self-tests passed.")
 
