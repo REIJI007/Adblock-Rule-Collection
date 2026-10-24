@@ -404,6 +404,243 @@ jobs:
               return ",".join(result), None
 
 
+          def validate_hostname_regex(pattern: str):
+              # DNS regexes are evaluated against hostnames, not browser URLs.
+              # Perform generic lexical checks rather than matching a denylist of
+              # known bad patterns. Reject expressions that require URL/Adblock
+              # characters, use unsupported regex constructs, or are numeric-only
+              # address patterns with no hostname-label evidence.
+              if not pattern.startswith("/") or not pattern.endswith("/") or len(pattern) <= 2:
+                  return "malformed hostname regular expression"
+
+              expression = pattern[1:-1]
+              try:
+                  re.compile(expression)
+              except re.error:
+                  return "invalid regular-expression pattern"
+
+              hostname_chars = set(
+                  "abcdefghijklmnopqrstuvwxyz"
+                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                  "0123456789._-"
+              )
+              word_chars = set(
+                  "abcdefghijklmnopqrstuvwxyz"
+                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                  "0123456789_"
+              )
+              digit_chars = set("0123456789")
+              has_alpha_evidence = False
+              has_numeric_evidence = False
+
+              def record_characters(characters):
+                  nonlocal has_alpha_evidence, has_numeric_evidence
+                  if any(char.isalpha() or char == "_" for char in characters):
+                      has_alpha_evidence = True
+                  if any(char.isdigit() for char in characters):
+                      has_numeric_evidence = True
+
+              def parse_character_class(source, opening_index):
+                  # Accept only positive classes/ranges whose complete character
+                  # set is hostname-safe. Complements and broad classes such as
+                  # [\s\S] are too unconstrained for a conservative converter.
+                  index = opening_index + 1
+                  if index >= len(source) or source[index] == "^":
+                      return None, None, "negated or empty hostname character class"
+
+                  tokens = []
+                  while index < len(source):
+                      char = source[index]
+                      if char == "]":
+                          break
+
+                      if char == "\\":
+                          if index + 1 >= len(source):
+                              return None, None, "unterminated character-class escape"
+                          escaped = source[index + 1]
+                          if escaped == "d":
+                              tokens.append(("set", digit_chars))
+                          elif escaped == "w":
+                              tokens.append(("set", word_chars))
+                          elif escaped in (".", "-", "_"):
+                              tokens.append(("char", escaped))
+                          else:
+                              return (
+                                  None,
+                                  None,
+                                  "character class can match non-hostname characters "
+                                  "or uses an unsupported escape",
+                              )
+                          index += 2
+                          continue
+
+                      if char not in hostname_chars:
+                          return (
+                              None,
+                              None,
+                              "character class contains characters outside hostname syntax",
+                          )
+                      tokens.append(("char", char))
+                      index += 1
+
+                  if index >= len(source) or source[index] != "]":
+                      return None, None, "unterminated hostname character class"
+                  if not tokens:
+                      return None, None, "empty hostname character class"
+
+                  possible = set()
+                  token_index = 0
+                  while token_index < len(tokens):
+                      if (
+                          token_index + 2 < len(tokens)
+                          and tokens[token_index][0] == "char"
+                          and tokens[token_index + 1] == ("char", "-")
+                          and tokens[token_index + 2][0] == "char"
+                      ):
+                          lower = ord(tokens[token_index][1])
+                          upper = ord(tokens[token_index + 2][1])
+                          if lower > upper:
+                              return None, None, "reversed character-class range"
+                          ranged = {chr(codepoint) for codepoint in range(lower, upper + 1)}
+                          if not ranged.issubset(hostname_chars):
+                              return (
+                                  None,
+                                  None,
+                                  "character-class range includes non-hostname characters",
+                              )
+                          possible.update(ranged)
+                          token_index += 3
+                          continue
+
+                      kind, value = tokens[token_index]
+                      if kind == "set":
+                          possible.update(value)
+                      else:
+                          if value == "-" and token_index not in (0, len(tokens) - 1):
+                              return (
+                                  None,
+                                  None,
+                                  "ambiguous hyphen in hostname character class",
+                              )
+                          possible.add(value)
+                      token_index += 1
+
+                  return index + 1, possible, None
+
+              index = 0
+              while index < len(expression):
+                  char = expression[index]
+
+                  if char == "\\":
+                      if index + 1 >= len(expression):
+                          return "trailing backslash in hostname regex"
+
+                      escaped = expression[index + 1]
+                      if escaped == "d":
+                          record_characters(digit_chars)
+                      elif escaped == "w":
+                          record_characters(word_chars)
+                      elif escaped in (".", "-", "_"):
+                          record_characters({escaped})
+                      elif escaped in ("A", "z", "b", "B"):
+                          # Zero-width assertions supported by RE2-style regex engines.
+                          pass
+                      else:
+                          # This rejects escaped URL slashes, literal pipes/carets,
+                          # browser-filter punctuation, backreferences and broad /
+                          # engine-specific escapes rather than guessing their meaning.
+                          return (
+                              "unsupported escape or literal outside hostname syntax: "
+                              f"\\{escaped}"
+                          )
+                      index += 2
+                      continue
+
+                  if char == "[":
+                      next_index, possible, error = parse_character_class(
+                          expression,
+                          index,
+                      )
+                      if error:
+                          return error
+                      record_characters(possible)
+                      index = next_index
+                      continue
+
+                  if char == "(":
+                      if expression.startswith("(?:", index):
+                          index += 3
+                          continue
+
+                      if expression.startswith("(?", index):
+                          # Permit only RE2-compatible inline flags. Lookarounds,
+                          # Python-only groups and other extensions are rejected.
+                          flag_group = re.match(
+                              r"\(\?(?:[ims]+(?:-[ims]+)?|-[ims]+)(?::|\))",
+                              expression[index:],
+                          )
+                          if not flag_group:
+                              return "unsupported regex group construct"
+                          index += flag_group.end()
+                          continue
+
+                      index += 1
+                      continue
+
+                  if char == "{":
+                      # Counted repetitions must use regex syntax, not literal braces.
+                      repetition = re.match(
+                          r"\{([0-9]+)(?:,([0-9]*))?\}",
+                          expression[index:],
+                      )
+                      if not repetition:
+                          return "unsupported literal brace in hostname regex"
+                      numbers = [
+                          int(number)
+                          for number in repetition.groups()
+                          if number is not None
+                      ]
+                      if any(number > 1000 for number in numbers):
+                          return "regex repetition exceeds the target engine limit"
+                      index += repetition.end()
+                      continue
+
+                  if char == ".":
+                      # A regex wildcard is valid here: the target engine supplies
+                      # hostnames as input, so it cannot make the rule match a URL.
+                      index += 1
+                      continue
+
+                  if char in hostname_chars:
+                      record_characters({char})
+                      index += 1
+                      continue
+
+                  if char in "^$*+?}|)":
+                      # Regex operators/anchors are syntax, not matched URL characters.
+                      # Python's compile check above rejects invalid operator placement.
+                      if char == "}":
+                          return "unmatched closing brace in hostname regex"
+                      index += 1
+                      continue
+
+                  # Characters such as / : ! # = , ; @ % and whitespace are not
+                  # valid hostname characters. If written as literals outside a
+                  # class they make a URL/network/browser-rule pattern, not a host mask.
+                  return (
+                      "regex contains a literal character outside hostname syntax: "
+                      f"{char!r}",
+                  )[0]
+
+              if has_numeric_evidence and not has_alpha_evidence:
+                  return (
+                      "numeric-only regex resembles an IP/address pattern, "
+                      "not a hostname rule"
+                  )
+
+              return None
+
+
           def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
               # Parse supported AdGuard DNS rules without widening their hostname scope.
               # ||domain^ covers the domain and subdomains; |domain^ covers only that host.
@@ -466,11 +703,12 @@ jobs:
                   exact_anchor = True
 
               elif pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
-                  # AdGuard DNS supports regex hostname masks. Invalid regexes are skipped.
-                  try:
-                      re.compile(pattern[1:-1])
-                  except re.error:
-                      return None, "invalid regular-expression pattern"
+                  # AdGuard DNS regex masks match hostnames only. A successful
+                  # Python compile is not enough: URL/path, IP:port, and regexes
+                  # that target Adblock syntax must be rejected.
+                  regex_error = validate_hostname_regex(pattern)
+                  if regex_error:
+                      return None, regex_error
                   normalized = allow_prefix + pattern
                   if modifier_text is not None:
                       normalized_modifiers, error = parse_modifiers(modifier_text)
@@ -953,6 +1191,89 @@ jobs:
               has_badfilter, target = extract_badfilter("@@||example.org^$badfilter")
               if not has_badfilter or target != "@@||example.org^":
                   raise RuntimeError("Semantic self-test failed: exception badfilter target extraction")
+
+              # These are valid hostname-oriented regexes and must remain supported.
+              valid_hostname_regexes = [
+                  r"/^(?:\w+\.)*minepi\.com$/",
+                  r"/^(a|c)\.[0-9a-f]{56}\.com$/",
+                  r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/",
+                  r"/[a-z]+\d+\.cnzz\./",
+                  r"/99rejs/",
+                  r"/Adloader/",
+                  r"/community-ad/",
+                  r"/^anon1.gt\d{6}.com$/",
+              ]
+              for source_rule in valid_hostname_regexes:
+                  actual, error = parse_adguard_dns_rule(source_rule)
+                  if error or actual != source_rule:
+                      raise RuntimeError(
+                          "Semantic self-test failed: valid hostname regex was rejected: "
+                          f"{source_rule!r}; error={error!r}"
+                      )
+
+              # These patterns are sourced from URL, path, IP-range, port, or
+              # Adblock-syntax matching. They must not enter a DNS hostname list.
+              rejected_non_hostname_regexes = [
+                  r"/(?::\/\/i1\.hoopchina\.com\.cn\/blogfile\/.+_\d{3}x\d{4})/",
+                  r"/(?:^\|\|?|^)(10\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(127\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(172\.(?:1[6-9]|2[0-9]|3[0-1])\.[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(192\.168\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(https?:\/\/)104\.154\..{100,}/",
+                  r"/(https?:\/\/)104\.197\..{100,}/",
+                  r"/(https?:\/\/)104\.198\..{100,}/",
+                  r"/(https?:\/\/)130\.211\..{100,}/",
+                  r"/(https?:\/\/)142\.91\.159\..{100,}/",
+                  r"/(https?:\/\/)213\.32\.115\..{100,}/",
+                  r"/(https?:\/\/)216\.21\..{100,}/",
+                  r"/(https?:\/\/)217\.182\.11\..{100,}/",
+                  r"/(https?:\/\/)51\.195\.31\..{100,}/",
+                  r"/193.200.64.24:/",
+                  r"/62.76.25.2(7|8)/",
+                  r"/^!#/",
+                  r"/^139\.45\.197\.2(4[0-9]|5[0-4])/",
+                  r"/^139\.45\.197\.2(4[0-9]|5[0-4]):/",
+                  r"/^139\.45\.19[5-7]\.\d{1,3}/",
+                  r"/^142\.91\.159\.(1[5-9]\d|2[0-4]\d|250):(80|443)$/",
+                  r"/^185\.238\.15[2-5]\.\d{1,3}$/",
+                  r"/^185\.238\.15[2-5]\.\d{1,3}\$/",
+                  r"/^188\.42\.84\.\d{1,3}/",
+                  r"/^23\.109\.170\.(18[7-9]|19[0-2])$/",
+                  r"/^23\.109\.73\.\d{3}/",
+                  r"/^31\.184\.20[0-3]\.\d{1,3}$/",
+                  r"/^31\.184\.20[0-3]\.\d{1,3}\$/",
+                  r"/^5\.101\.4[67]\.\d{1,3}$/",
+                  r"/^5\.101\.4[67]\.\d{1,3}\$/",
+                  r"/^5\.188\.17[67]\.\d{1,3}$/",
+                  r"/^5\.188\.17[67]\.\d{1,3}\$/",
+                  r"/^5\.188\.19[45]\.\d{1,3}$/",
+                  r"/^5\.188\.19[45]\.\d{1,3}\$/",
+                  r"/^5\.188\.5[01]\.\d{1,3}$/",
+                  r"/^5\.188\.5[01]\.\d{1,3}\$/",
+                  r"/^5\.189\.21[89]\.\d{1,3}$/",
+                  r"/^5\.189\.21[89]\.\d{1,3}\$/",
+                  r"/^5\.8\.4[4-7]\.\d{1,3}$/",
+                  r"/^5\.8\.4[4-7]\.\d{1,3}\$/",
+                  r"/^88\.208\.22\.[1234]$/",
+                  r"/^88\.208\.22\.[1234]:/",
+                  r"/^94\.242\.247\.(2[0-9]|3[0-2])/",
+                  r"/^94\.242\.247\.(2[0-9]|3[0-2]):/",
+                  r"/^https:\/\/anon1.gt\d{6}.com/",
+                  r"/^https?:\/\/.*\/easylist\/[0-9]{5}/",
+                  r"/^\.fwmrm\.net\^/",
+                  r"/^\|\|mkto-[\s\S]*\.com\^/",
+                  r"/doseofporn.com\/[a-z]{0,5}[1-9]{0,5}[a-z]{0,5}[1-9][sS].*\.js/",
+                  r"/gzc_.*\.mp4\?/",
+                  r"/getjs?nadipdata$third-party,replace=/[\s\S]+openOriginalUrl[\s\S]+/openOriginalUrl()/",
+                  r"/m.realgfporn.com\/[a-z]{1,13}[0-9]{1,13}[a-z]{1,13}\.js/",
+              ]
+              for source_rule in rejected_non_hostname_regexes:
+                  actual, error = parse_adguard_dns_rule(source_rule)
+                  if not error:
+                      raise RuntimeError(
+                          "Semantic self-test failed: non-host regex was accepted: "
+                          f"{source_rule!r}; normalized={actual!r}"
+                      )
 
               print("Semantic self-tests passed.")
 
