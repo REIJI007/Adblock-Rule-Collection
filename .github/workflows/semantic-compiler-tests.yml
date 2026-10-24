@@ -77,6 +77,13 @@ jobs:
           by_reason = collections.Counter(issue.get("reason", "") for issue in report.get("unsupported_rules", []))
           for reason, count in by_reason.most_common(20):
               print(f"Reason: {count:>6}  {reason}")
+          target_exclusions = report.get("target_exclusions", [])
+          by_target_source = collections.Counter(issue.get("source", "") for issue in target_exclusions)
+          by_target_reason = collections.Counter(issue.get("reason", "") for issue in target_exclusions)
+          for source, count in by_target_source.most_common(20):
+              print(f"Target-excluded rules: {count:>6}  {source}")
+          for reason, count in by_target_reason.most_common(20):
+              print(f"Target-exclusion reason: {count:>6}  {reason}")
           PY
           code="$(sed -n 's/^strict_compiler_exit_code=//p' semantic-live-audit-status.txt | tail -n 1)"
           if [ "${code:-unknown}" != "0" ]; then
