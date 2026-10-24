@@ -43,6 +43,12 @@ COMMENT_PREFIXES = ("!",)
 DOMAIN_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\Z", re.IGNORECASE)
 HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
+# Explicit overrides for user-added sources whose format cannot be inferred safely.
+# Example: SOURCE_FORMAT_OVERRIDES["https://example.org/domains.txt"] = "domains"
+# Allowed values: adblock, hosts, domains, dns, cname.
+SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
+SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname"}
+
 # These are known non-portable uBlock Origin operators, not ordinary ABP rules.
 # Do not silently publish them as if AdGuard had identical behavior.
 NON_PORTABLE_NATIVE_PATTERNS = (
@@ -89,6 +95,15 @@ def classify_source(url: str) -> str:
     Unknown source families fail closed. Add a format mapping here before adding
     a new upstream; do not infer format from the downloaded line contents.
     """
+    override = SOURCE_FORMAT_OVERRIDES.get(url)
+    if override is not None:
+        if override not in SUPPORTED_SOURCE_KINDS:
+            raise CompilationError(
+                f"Invalid source-format override {override!r} for {url!r}; "
+                f"expected one of {sorted(SUPPORTED_SOURCE_KINDS)}"
+            )
+        return override
+
     parsed = urllib.parse.urlparse(url)
     lowered = url.lower()
     hostname = (parsed.hostname or "").lower()
@@ -565,6 +580,12 @@ def run_regression_tests() -> None:
         tests.append(("unknown source format rejected", True, True))
     else:
         raise AssertionError("unknown source format must not silently default to Adblock")
+    override_url = "https://example.invalid/domains.txt"
+    SOURCE_FORMAT_OVERRIDES[override_url] = "domains"
+    try:
+        check("explicit override enables a domains-only source", classify_source(override_url), "domains")
+    finally:
+        del SOURCE_FORMAT_OVERRIDES[override_url]
     check("host record preserves exact-host scope", compile_line("hosts", "0.0.0.0 Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves exact-host scope", compile_line("domains", "Ads.Example.com")[0],
