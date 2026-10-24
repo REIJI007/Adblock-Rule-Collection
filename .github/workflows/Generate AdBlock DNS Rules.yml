@@ -1050,6 +1050,7 @@ jobs:
                   r"/[a-z]+\d+\.cnzz\./",
                   r"/99rejs/",
                   r"/Adloader/",
+                  r"/community-ad/",
                   r"/^anon1.gt\d{6}.com$/",
               ]
               for source_rule in valid_hostname_regexes:
@@ -1113,6 +1114,7 @@ jobs:
                   r"/^\|\|mkto-[\s\S]*\.com\^/",
                   r"/doseofporn.com\/[a-z]{0,5}[1-9]{0,5}[a-z]{0,5}[1-9][sS].*\.js/",
                   r"/gzc_.*\.mp4\?/",
+                  r"/getjs?nadipdata$third-party,replace=/[\s\S]+openOriginalUrl[\s\S]+/openOriginalUrl()/",
                   r"/m.realgfporn.com\/[a-z]{1,13}[0-9]{1,13}[a-z]{1,13}\.js/",
               ]
               for source_rule in rejected_non_hostname_regexes:
