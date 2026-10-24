@@ -514,7 +514,16 @@ def compile_dns_rule(line: str) -> str:
         not pattern.startswith(("||", "|"))
         and not any(ch in pattern for ch in "*^/")
     ):
-        hostname = canonical_host_or_ipv4(pattern, allow_single_label=False)
+        try:
+            ipaddress.ip_address(pattern)
+        except ValueError:
+            pass
+        else:
+            raise CompilationError(
+                "bare IP in AdGuard DNS syntax matches CNAME targets resolving to that IP; "
+                "an AdGuard browser filter cannot preserve DNS-resolution semantics"
+            )
+        hostname = canonical_hostname(pattern, allow_single_label=False)
         if hostname:
             translated = exact_hostname_regex_rule(hostname, exception=exception)
             return translated + ("$" + ",".join(modifiers) if modifiers else "")
@@ -526,9 +535,16 @@ def compile_dns_rule(line: str) -> str:
         pattern,
     )
     if exact_pipe:
-        hostname = canonical_host_or_ipv4(
-            exact_pipe.group("host"), allow_single_label=False
-        )
+        raw_hostname = exact_pipe.group("host")
+        try:
+            ipaddress.ip_address(raw_hostname)
+        except ValueError:
+            pass
+        else:
+            raise CompilationError(
+                "IP-based DNS rules may match CNAME resolution results, not browser URL hosts"
+            )
+        hostname = canonical_hostname(raw_hostname, allow_single_label=False)
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
         translated = exact_hostname_regex_rule(hostname, exception=exception)
@@ -577,7 +593,12 @@ def compile_dns_rule(line: str) -> str:
                 raise CompilationError(f"invalid DNS wildcard hostname mask: {pattern}")
             translated = ("@@" if exception else "") + "||" + hostname_mask + "^"
         else:
-            hostname = canonical_host_or_ipv4(raw_mask, allow_single_label=False)
+            if re.fullmatch(r"(?:[0-9]{1,3}\.){1,3}[0-9]{0,3}\.?|(?:[0-9]{1,3}\.){3}[0-9]{1,3}", raw_mask):
+                raise CompilationError(
+                    "IP-like DNS masks can refer to CNAME/IP semantics and cannot be "
+                    "safely translated into browser URL-host rules"
+                )
+            hostname = canonical_hostname(raw_mask, allow_single_label=False)
             if hostname:
                 translated = ("@@" if exception else "") + "||" + hostname + "^"
             elif re.fullmatch(r"[A-Za-z0-9_.-]+", raw_mask):
@@ -1221,10 +1242,18 @@ def run_regression_tests() -> None:
         tests.append(("network modifier rejected for browser target", True, True))
     else:
         raise AssertionError("the app-only $network modifier must not be published to a browser filter")
-    check("DNS IPv4 host rules are preserved", compile_line("dns", "||37.1.213.100^")[0],
-          ["||37.1.213.100^"])
-    check("exact-host IPv4 regex compiles", compile_line("dns", "37.1.213.100")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?37\.1\.213\.100(?::[0-9]+)?(?:[\/?#]|$)/"])
+    try:
+        compile_line("dns", "||37.1.213.100^")
+    except CompilationError:
+        tests.append(("IP-like DNS hostname matcher rejected as ambiguous", True, True))
+    else:
+        raise AssertionError("IP-like DNS rules must not be converted to URL-host blockers")
+    try:
+        compile_line("dns", "37.1.213.100")
+    except CompilationError:
+        tests.append(("bare DNS IP/CNAME rule rejected", True, True))
+    else:
+        raise AssertionError("bare DNS IP semantics must not be rewritten as URL-host semantics")
     try:
         compile_line("adblock", "||example.com^$dnstype=A")
     except CompilationError:
