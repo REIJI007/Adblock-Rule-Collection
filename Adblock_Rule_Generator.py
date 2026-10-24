@@ -1258,7 +1258,7 @@ def run_regression_tests() -> None:
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     exclusion_matchers = parse_hostlist_exclusion_patterns(
-        "! comment\\n||excluded.example^\\n*track*\\n/^https?:\\/\\/ads\\.example\\//\\n"
+        "! comment\n||excluded.example^\n*track*\n/^https?:\/\/ads\.example\//\n"
     )
     check("plain exclusion uses case-sensitive substring semantics",
           exclusion_matchers[0].matches("||excluded.example^"), True)
