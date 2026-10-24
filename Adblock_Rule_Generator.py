@@ -382,14 +382,13 @@ def normalize_native_domain_rule(line: str) -> str:
         # Interpret these source tokens as decimal octets and emit the canonical
         # dotted-decimal form, so equivalent addresses deduplicate consistently.
         ip_literal = ".".join(str(octet) for octet in octets)
-        else:
-            return (
-                (bare_ipv4.group("exception") or "")
-                + "||"
-                + ip_literal
-                + "^"
-                + (bare_ipv4.group("tail") or "")
-            )
+        return (
+            (bare_ipv4.group("exception") or "")
+            + "||"
+            + ip_literal
+            + "^"
+            + (bare_ipv4.group("tail") or "")
+        )
     match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
         return line
