@@ -1446,6 +1446,24 @@ def run_regression_tests() -> None:
     check("disguised CNAME ad-domain lists keep ordinary browser-filter semantics",
           classify_source("https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"),
           "adblock")
+    include_parent_url = (
+        "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/"
+        "master/BaseFilter/sections/adservers.txt"
+    )
+    include_fragment_url = "https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"
+    include_parent = Source(include_parent_url, "adblock")
+    include_fragment = Source(include_fragment_url, classify_source(include_fragment_url))
+    include_text = f"!#include {include_fragment_url}\n"
+    include_cache = {
+        include_parent_url: (include_parent, include_text),
+        include_fragment_url: (include_fragment, "||tracker.example^\n"),
+    }
+    expanded_include = expand_filter_preprocessor(
+        include_parent, include_text, "chromium-mv3", include_cache
+    )
+    check("official disguised CNAME rules stay in browser filtering after include expansion",
+          [(line.source.kind, line.text.strip()) for line in expanded_include],
+          [("adblock", "||tracker.example^")])
     check("CNAME justdomains feeds use the domain-list adapter",
           classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt"),
           "domains")
