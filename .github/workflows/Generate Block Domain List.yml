@@ -34,51 +34,147 @@ jobs:
               r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$'
           )
 
-          def is_blocked_by_badfilter(domain, badfilters):
-              # 命中条件：
-              # 1) domain 本身就是 badfilter 域名
-              # 2) domain 是 badfilter 域名的子域
-              return any(
-                  domain == bf or domain.endswith("." + bf)
-                  for bf in badfilters
+          def is_valid_domain(domain):
+              return (
+                  not re.fullmatch(r'\d+\.\d+\.\d+\.\d+', domain)
+                  and dns_domain_regex.fullmatch(domain) is not None
               )
+
+          def extract_domains(lines):
+              blocks = set()
+              exceptions = set()
+              badfilters = set()
+
+              for raw_line in lines:
+                  line = raw_line.strip()
+
+                  if not line or line.startswith(('!', '#')):
+                      continue
+
+                  line = line.lower()
+
+                  # A $badfilter rule cancels only its corresponding rule.
+                  # Accept it here only when removing $badfilter leaves a pure
+                  # domain rule; other modifiers change the rule's identity.
+                  bad_match = re.fullmatch(
+                      r'(?P<exception>@@)?\|\|(?P<domain>[a-z0-9.-]+)\^\$badfilter',
+                      line
+                  )
+                  if bad_match:
+                      domain = bad_match.group('domain')
+                      if is_valid_domain(domain):
+                          badfilters.add((bool(bad_match.group('exception')), domain))
+                      continue
+
+                  # Only unconditional domain exceptions can safely be applied
+                  # to a DNS-wide list. Exceptions with modifiers (for example,
+                  # $script) are resource-specific and are intentionally ignored.
+                  exception_match = re.fullmatch(
+                      r'@@\|\|([a-z0-9.-]+)\^',
+                      line
+                  )
+                  if exception_match:
+                      domain = exception_match.group(1)
+                      if is_valid_domain(domain):
+                          exceptions.add(domain)
+                      continue
+
+                  # Only pure domain-block rules are included in this list.
+                  block_match = re.fullmatch(
+                      r'\|\|([a-z0-9.-]+)\^',
+                      line
+                  )
+                  if block_match:
+                      domain = block_match.group(1)
+                      if is_valid_domain(domain):
+                          blocks.add(domain)
+
+              # $badfilter removes only the exact matching domain rule.
+              # In particular, it must not erase independently-listed subdomains.
+              active_blocks = {
+                  domain for domain in blocks
+                  if (False, domain) not in badfilters
+              }
+
+              # Likewise, a badfilter can disable an exception rule. Apply only
+              # exceptions that remain active, then exclude their matching subtree.
+              active_exceptions = {
+                  domain for domain in exceptions
+                  if (True, domain) not in badfilters
+              }
+
+              return sorted(
+                  domain for domain in active_blocks
+                  if not any(
+                      domain == exception or domain.endswith("." + exception)
+                      for exception in active_exceptions
+                  )
+              )
+
+          def run_regression_tests():
+              cases = [
+                  (
+                      "badfilter only cancels the exact block rule",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||other.example.net^",
+                          "||example.com^$badfilter",
+                      ],
+                      ["child.example.com", "other.example.net"],
+                  ),
+                  (
+                      "unconditional exception excludes its subtree",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||keep.example.net^",
+                          "@@||example.com^",
+                      ],
+                      ["keep.example.net"],
+                  ),
+                  (
+                      "badfilter disables the matching exception",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "@@||example.com^",
+                          "@@||example.com^$badfilter",
+                      ],
+                      ["child.example.com", "example.com"],
+                  ),
+                  (
+                      "badfilter with another modifier does not cancel a pure rule",
+                      [
+                          "||example.com^",
+                          "||child.example.com^",
+                          "||example.com^$important,badfilter",
+                      ],
+                      ["child.example.com", "example.com"],
+                  ),
+                  (
+                      "resource-specific exception is not applied globally",
+                      [
+                          "||example.com^",
+                          "@@||example.com^$script",
+                      ],
+                      ["example.com"],
+                  ),
+              ]
+
+              for name, rules, expected in cases:
+                  actual = extract_domains(rules)
+                  if actual != expected:
+                      raise AssertionError(
+                          f"Regression test failed: {name}; "
+                          f"expected {expected}, got {actual}"
+                      )
+
+              print(f"Passed {len(cases)} domain-list regression tests.")
 
           def process_file(input_file, output_file, title):
               with open(input_file, 'r', encoding='utf-8') as f:
-                  blocks = set()
-                  badfilters = set()
-
-                  for line in f:
-                      line = line.strip()
-
-                      if not line or line.startswith(('!', '#')):
-                          continue
-
-                      line = line.lower()
-
-                      # 识别 ||domain^$badfilter 或 ||domain^$badfilter,...
-                      bad_match = re.match(
-                          r'^\|\|([a-z0-9.-]+)\^.*\$badfilter(?:$|,)',
-                          line
-                      )
-                      if bad_match:
-                          domain = bad_match.group(1)
-                          if dns_domain_regex.match(domain):
-                              badfilters.add(domain)
-                          continue
-
-                      # 仅识别纯拦截规则 ||domain^
-                      match = re.match(r'^\|\|([a-z0-9.-]+)\^$', line)
-                      if match:
-                          domain = match.group(1)
-                          if not re.match(r'^\d+\.\d+\.\d+\.\d+$', domain) and dns_domain_regex.match(domain):
-                              blocks.add(domain)
-
-              # 核心逻辑：排除所有被 badfilter 命中的域名及其子域
-              domains = sorted(
-                  d for d in blocks
-                  if not is_blocked_by_badfilter(d, badfilters)
-              )
+                  domains = extract_domains(f)
 
               tz = pytz.timezone('Asia/Shanghai')
               timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
@@ -94,11 +190,12 @@ jobs:
           """
 
               with open(output_file, 'w', encoding='utf-8') as f:
-                  f.write(header + '\n')
-                  f.write('\n'.join(domains) + '\n')
+                  f.write(header + '\\n')
+                  f.write('\\n'.join(domains) + '\\n')
 
-              print(f"Processed {input_file}. Total domains: {len(domains)} (after removing {len(badfilters)} badfilter domains)")
+              print(f"Processed {input_file}. Total domains: {len(domains)}")
 
+          run_regression_tests()
           process_file('ADBLOCK_RULE_COLLECTION.txt', 'ADBLOCK_RULE_COLLECTION_DOMAIN.txt', 'Adblock-Rule-Collection-Domain')
           process_file('ADBLOCK_RULE_COLLECTION_Lite.txt', 'ADBLOCK_RULE_COLLECTION_DOMAIN_Lite.txt', 'Adblock-Rule-Collection-Domain-Lite')
           EOF
