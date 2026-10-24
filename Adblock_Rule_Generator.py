@@ -40,6 +40,16 @@ VALID_HASH_RULE_PREFIXES = (
     "##", "#@#", "#$#", "#$@#", "#?#", "#@?#", "#%#", "#@%#",
 )
 COMMENT_PREFIXES = ("!",)
+# These hostnames are system loopback aliases, not advertising/tracker hosts.
+# A hosts blocklist often carries these default mappings for compatibility.
+SYSTEM_HOST_ALIASES = {
+    "localhost",
+    "localhost.localdomain",
+    "localhost4",
+    "localhost6",
+    "ip6-localhost",
+    "ip6-loopback",
+}
 DOMAIN_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\Z", re.IGNORECASE)
 HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
@@ -78,6 +88,7 @@ class SourceSummary:
     duplicate_rules: int = 0
     ignored_comments: int = 0
     unsupported_lines: int = 0
+    ignored_system_mappings: int = 0
     error: str | None = None
 
 @dataclass
@@ -399,10 +410,10 @@ def compile_dns_rule(line: str) -> str:
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
 
-def compile_hosts_line(line: str) -> list[str]:
+def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str], str]:
     body = line.split("#", 1)[0].strip()
     if not body:
-        return []
+        return [], "comment"
     parts = body.split()
     try:
         address = ipaddress.ip_address(parts[0])
@@ -410,18 +421,31 @@ def compile_hosts_line(line: str) -> list[str]:
         raise CompilationError("not a valid hosts mapping")
     if len(parts) < 2:
         raise CompilationError("hosts mapping has no hostname")
+
+    # Ordinary hosts address mappings are DNS resolution overrides, not blocks.
+    # Do not rewrite arbitrary A/AAAA mappings as browser request blocks.
     if not (address.is_unspecified or address.is_loopback):
         raise CompilationError(
             f"hosts address {address} is a name-to-IP mapping, not a block; "
             "it cannot be represented by a browser blocking rule"
         )
+
     output: list[str] = []
+    ignored_system_alias = False
     for original_host in parts[1:]:
         hostname = canonical_hostname(original_host)
         if not hostname:
             raise CompilationError(f"invalid hosts alias: {original_host}")
+        if hostname in SYSTEM_HOST_ALIASES:
+            ignored_system_alias = True
+            continue
         output.append(exact_hostname_regex_rule(hostname))
-    return output
+
+    if ignored_system_alias and not output:
+        return [], "system-host-mapping"
+    if ignored_system_alias:
+        return output, category + "-with-system-alias"
+    return output, category
 
 def compile_domain_line(line: str) -> str:
     # Domain-only files may contain inline comments after whitespace.
@@ -445,7 +469,7 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         return [normalize_native_domain_rule(line)], "native"
 
     if kind == "hosts":
-        return compile_hosts_line(line), "hosts"
+        return compile_hosts_line(line)
 
     if kind == "domains":
         return [compile_domain_line(line)], "domains"
@@ -470,7 +494,7 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         except ValueError:
             looks_like_hosts = False
         if looks_like_hosts:
-            return compile_hosts_line(line), "hosts-in-dns"
+            return compile_hosts_line(line, category="hosts-in-dns")
         return [compile_dns_rule(line)], "dns"
 
     raise CompilationError(f"unknown source format: {kind}")
@@ -537,6 +561,8 @@ def compile_fetched_sources(fetched: list[tuple[Source, str]]) -> CompileState:
                 continue
             if category == "comment":
                 summary.ignored_comments += 1
+            if category == "system-host-mapping" or category.endswith("-with-system-alias"):
+                summary.ignored_system_mappings += 1
             for output_rule in translated:
                 if output_rule in state.records:
                     summary.duplicate_rules += 1
@@ -556,6 +582,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "unique_rules_emitted": summary.emitted_rules,
             "duplicates": summary.duplicate_rules,
             "comments_or_headers": summary.ignored_comments,
+            "ignored_system_mappings": summary.ignored_system_mappings,
             "unsupported_lines": summary.unsupported_lines,
             "error": summary.error,
         })
@@ -632,6 +659,10 @@ def run_regression_tests() -> None:
         check("explicit override enables a domains-only source", classify_source(override_url), "domains")
     finally:
         del SOURCE_FORMAT_OVERRIDES[override_url]
+    check("baseline localhost mapping is not emitted as an ad block", compile_line("hosts", "127.0.0.1 localhost")[0], [])
+    check("mixed hosts mapping skips localhost but retains the block alias",
+          compile_line("hosts", "127.0.0.1 localhost ads.example.com")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", "0.0.0.0 Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves exact-host scope", compile_line("domains", "Ads.Example.com")[0],
