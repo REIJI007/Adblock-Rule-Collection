@@ -573,6 +573,11 @@ def run_regression_tests() -> None:
         tests.append(("DNS-only modifier rejected in native list", True, True))
     else:
         raise AssertionError("DNS-only modifiers must not be silently published as browser rules")
+    configured_sources = build_sources(urls)
+    check("all configured upstreams have an explicit format family", len(configured_sources), len(urls))
+    check("manifest covers the four required input families",
+          sorted({source.kind for source in configured_sources}),
+          ["adblock", "dns", "domains", "hosts"])
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
