@@ -611,9 +611,6 @@ def main() -> int:
     print(f"Report: {report_path}")
     return 0
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
 urls = [
 	"https://adaway.org/hosts.txt",
 	"https://filters.adavoid.org/ultimate-ad-filter.txt",
@@ -916,5 +913,7 @@ urls = [
 	"https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt"
 ]
 
-# The source manifest below is curated. Add a source-specific override in
-# classify_source() whenever a new upstream uses a non-native format.
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+
