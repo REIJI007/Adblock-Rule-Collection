@@ -24,3 +24,63 @@ jobs:
         run: python -m py_compile Adblock_Rule_Generator.py
       - name: Run semantic regression checks
         run: python Adblock_Rule_Generator.py --self-test
+
+  live-source-audit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run strict audit against live upstream sources
+        id: audit
+        shell: bash
+        run: |
+          set +e
+          python Adblock_Rule_Generator.py --output /tmp/semantic-compiled-filter.txt --report semantic-live-audit.json
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          echo "strict_compiler_exit_code=$code" > semantic-live-audit-status.txt
+          echo "Strict compilation exit code: $code"
+          # A strict rejection is an audit result, not an infrastructure failure.
+          # Keep the job alive so the report can be uploaded for review.
+          exit 0
+      - name: Summarize strict audit
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -f semantic-live-audit.json ]; then
+            echo "The compiler did not produce a JSON report."
+            exit 0
+          fi
+          python - <<'PY'
+          import collections
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("semantic-live-audit.json").read_text(encoding="utf-8"))
+          print("Target:", report.get("target"))
+          print("Sources:", report.get("source_count"))
+          print("Unique compiled rules:", report.get("unique_rule_count"))
+          print("Source fetch failures:", len(report.get("source_failures", [])))
+          print("Unsupported rules or source-level incompatibilities:", report.get("unsupported_count"))
+          by_source = collections.Counter(issue.get("source", "") for issue in report.get("unsupported_rules", []))
+          for source, count in by_source.most_common(20):
+              print(f"Unsupported entries: {count:>6}  {source}")
+          by_reason = collections.Counter(issue.get("reason", "") for issue in report.get("unsupported_rules", []))
+          for reason, count in by_reason.most_common(20):
+              print(f"Reason: {count:>6}  {reason}")
+          PY
+      - name: Upload live audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-live-source-audit
+          path: |
+            semantic-live-audit.json
+            semantic-live-audit-status.txt
+          if-no-files-found: warn
