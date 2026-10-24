@@ -386,7 +386,50 @@ def compile_dns_rule(line: str) -> str:
     if body.startswith("@@"):
         raise CompilationError("misplaced DNS exception marker")
 
-    # Regex rules need to be parsed before splitting modifiers because '
+    # Regex delimiters must be processed before '$' modifiers because '$' may
+    # also be the regex end-anchor.
+    if body.startswith("/"):
+        closing = find_regex_rule_end(body)
+        if closing is None:
+            raise CompilationError("malformed slash-delimited DNS regex")
+        regex_body = body[1:closing]
+        tail = body[closing + 1:]
+        regex_modifiers: list[str] = []
+        if tail:
+            if not tail.startswith("$"):
+                raise CompilationError("unexpected text after DNS regex")
+            regex_modifiers = split_modifiers(tail[1:])
+
+        normalized_regex_modifiers: list[str] = []
+        for token in regex_modifiers:
+            key, separator, value = token.partition("=")
+            key = key.strip().lower()
+            if key in {"important", "badfilter"} and not separator:
+                normalized_regex_modifiers.append(key)
+            else:
+                raise CompilationError(
+                    f"DNS-only or unsupported modifier on regex rule: {token}"
+                )
+
+        # A regex explicitly matching a URL scheme already has URL scope, so
+        # preserving its original pattern retains the target matcher semantics.
+        if re.search(r"https?\s*:", regex_body, re.IGNORECASE):
+            translated = ("@@" if exception else "") + "/" + regex_body + "/"
+        else:
+            translated = compile_dns_hostname_regex(regex_body, exception=exception)
+            if translated is None:
+                raise CompilationError(
+                    "DNS hostname regex cannot be proven equivalent as a browser URL regex"
+                )
+
+        if normalized_regex_modifiers:
+            translated += "$" + ",".join(normalized_regex_modifiers)
+        return translated
+
+    parts = body.split("$", 1)
+    pattern = parts[0]
+    modifier_text = parts[1] if len(parts) == 2 else None
+
     modifiers: list[str] = []
     if modifier_text is not None:
         modifiers = split_modifiers(modifier_text)
@@ -400,63 +443,83 @@ def compile_dns_rule(line: str) -> str:
                 normalized_modifiers.append(key_lower)
             elif key_lower == "denyallow" and separator:
                 entries = value.split("|")
-                normalized_entries = [canonical_hostname(entry, allow_single_label=False) for entry in entries]
+                normalized_entries = [
+                    canonical_hostname(entry, allow_single_label=False)
+                    for entry in entries
+                ]
                 if any(entry is None for entry in normalized_entries):
                     raise CompilationError("invalid domain in denyallow modifier")
-                normalized_modifiers.append("denyallow=" + "|".join(entry for entry in normalized_entries if entry))
+                normalized_modifiers.append(
+                    "denyallow=" + "|".join(
+                        entry for entry in normalized_entries if entry
+                    )
+                )
             else:
                 raise CompilationError(
                     f"DNS-only or unverified modifier cannot be represented safely in a browser filter: {token}"
                 )
         modifiers = normalized_modifiers
 
-    # Bare domains in DNS lists block exactly that hostname, not the subtree.
-    if not pattern.startswith(("||", "|")) and not any(ch in pattern for ch in "*^/"):
+    # A bare domain/IP in a domains-only DNS list is an exact-host rule, not a
+    # subtree rule. The URL-regex wrapper preserves that narrower scope.
+    if (
+        not pattern.startswith(("||", "|"))
+        and not any(ch in pattern for ch in "*^/")
+    ):
         hostname = canonical_host_or_ipv4(pattern, allow_single_label=False)
         if hostname:
             translated = exact_hostname_regex_rule(hostname, exception=exception)
             return translated + ("$" + ",".join(modifiers) if modifiers else "")
         raise CompilationError(f"unsupported DNS domain or address rule: {pattern}")
 
-    # A trailing DNS end-anchor '|' means exact hostname, while the same
-    # character anchors the entire URL in browser syntax. Convert it to a URL
-    # authority regex to retain hostname-only scope.
-    exact_pipe = re.fullmatch(r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|", pattern)
+    # A trailing hostname-end anchor is not the same as a URL-end anchor.
+    exact_pipe = re.fullmatch(
+        r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|",
+        pattern,
+    )
     if exact_pipe:
-        hostname = canonical_host_or_ipv4(exact_pipe.group("host"), allow_single_label=False)
+        hostname = canonical_host_or_ipv4(
+            exact_pipe.group("host"), allow_single_label=False
+        )
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
         translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # A leading-dot DNS mask selects subdomains but not the apex. Express it as
-    # a domain-anchored wildcard rather than an unanchored URL substring.
+    # A leading-dot hostname mask selects subdomains but not the apex. Convert
+    # it to a domain-anchored wildcard instead of an unanchored URL substring.
     leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^", pattern)
     if leading_dot:
-        hostname = canonical_hostname(leading_dot.group(1), allow_single_label=False)
+        hostname = canonical_hostname(
+            leading_dot.group(1), allow_single_label=False
+        )
         if not hostname:
             raise CompilationError(f"invalid leading-dot DNS hostname mask: {pattern}")
-        translated = (("@@" if exception else "") + "||*." + hostname + "^")
+        translated = (
+            ("@@" if exception else "") + "||*." + hostname + "^"
+        )
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # Host-start masks without a separator/end anchor are already expressed in
-    # the target's domain-anchor syntax. Preserve their wider prefix semantics.
+    # Host-start masks without a separator/end anchor already use the same
+    # leading-host operator in AdGuard browser filters. Preserve their prefix
+    # semantics, including partial final labels.
     if re.fullmatch(r"\|\|[A-Za-z0-9*.-]+", pattern):
-        translated = (("@@" if exception else "") + pattern.lower())
+        translated = ("@@" if exception else "") + pattern.lower()
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # A single leading pipe has exact-host semantics in DNS filters; convert it
-    # into an exact-host URL regex instead of changing it to a subtree rule.
+    # A single leading pipe with '^' means exact hostname in DNS scope. It must
+    # not become an entire-URL-start anchor in browser scope.
     exact_match = re.fullmatch(r"\|([^|^*/$]+)\^", pattern)
     if exact_match:
-        hostname = canonical_host_or_ipv4(exact_match.group(1), allow_single_label=False)
+        hostname = canonical_host_or_ipv4(
+            exact_match.group(1), allow_single_label=False
+        )
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
         translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # Standard domain-subtree rules and simple wildcard hostname masks share
-    # the same core matching semantics in AdGuard browser filters.
+    # Standard hostname-subtree rules and simple hostname wildcards.
     subtree_match = re.fullmatch(r"\|\|([^|^/$]+)\^", pattern)
     if subtree_match:
         raw_mask = subtree_match.group(1)
@@ -464,17 +527,17 @@ def compile_dns_rule(line: str) -> str:
             hostname_mask = canonical_wildcard_hostname_mask(raw_mask)
             if not hostname_mask:
                 raise CompilationError(f"invalid DNS wildcard hostname mask: {pattern}")
-            translated = (("@@" if exception else "") + "||" + hostname_mask + "^")
+            translated = ("@@" if exception else "") + "||" + hostname_mask + "^"
         else:
             hostname = canonical_host_or_ipv4(raw_mask, allow_single_label=False)
-            if not hostname:
-                # Keep native-looking DNS hostname masks that are accepted by
-                # the upstream's Adblock-compatible grammar, rather than
-                # claiming they are malformed solely because IDNA hostnames
-                # forbid some characters.
-                translated = (("@@" if exception else "") + "||" + raw_mask + "^")
-                return translated + ("$" + ",".join(modifiers) if modifiers else "")
-            translated = (("@@" if exception else "") + "||" + hostname + "^")
+            if hostname:
+                translated = ("@@" if exception else "") + "||" + hostname + "^"
+            elif re.fullmatch(r"[A-Za-z0-9_.-]+", raw_mask):
+                # Preserve source-valid hostname labels that are not accepted by
+                # the strict IDNA hostname normalizer, without broadening them.
+                translated = ("@@" if exception else "") + "||" + raw_mask.lower() + "^"
+            else:
+                raise CompilationError(f"invalid DNS hostname mask: {pattern}")
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
