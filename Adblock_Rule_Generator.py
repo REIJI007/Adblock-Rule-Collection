@@ -91,6 +91,9 @@ TARGET_PROFILES = {
     "generic": {"adguard": True},
 }
 MAX_INCLUDE_DEPTH = 12
+ADGUARD_SDNS_CONFIGURATION_URL = (
+    "https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/configuration.json"
+)
 
 # These are known non-portable uBlock Origin operators, not ordinary ABP rules.
 # Do not silently publish them as if AdGuard had identical behavior.
@@ -122,6 +125,8 @@ class SourceSummary:
     ignored_comments: int = 0
     unsupported_lines: int = 0
     ignored_system_mappings: int = 0
+    excluded_by_metadata: int = 0
+    metadata_patterns: int = 0
     error: str | None = None
 
 @dataclass
@@ -950,6 +955,121 @@ def expand_filter_preprocessor(
     if frames:
         raise CompilationError(f"{source.url}: unterminated !#if block")
     return output
+
+@dataclass(frozen=True)
+class ExclusionMatcher:
+    kind: str
+    value: str | re.Pattern[str]
+
+    def matches(self, line: str) -> bool:
+        if self.kind == "substring":
+            return str(self.value) in line
+        if self.kind in {"wildcard", "regex"}:
+            assert isinstance(self.value, re.Pattern)
+            return self.value.search(line) is not None
+        raise AssertionError(f"unknown exclusion matcher kind: {self.kind}")
+
+def parse_hostlist_exclusion_patterns(text: str) -> list[ExclusionMatcher]:
+    """Mirror AdGuard HostlistCompiler exclusion wildcard semantics.
+
+    - Plain text: case-sensitive substring match against the original rule.
+    - * wildcard: case-insensitive whole-line wildcard match.
+    - /regex/: case-insensitive, multiline regex search.
+    """
+    result: list[ExclusionMatcher] = []
+    seen: set[str] = set()
+    for raw in text.splitlines():
+        pattern = raw.strip()
+        if not pattern or is_comment_or_header(pattern) or pattern in seen:
+            continue
+        seen.add(pattern)
+        if pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
+            try:
+                result.append(
+                    ExclusionMatcher("regex", re.compile(pattern[1:-1], re.IGNORECASE | re.MULTILINE))
+                )
+            except re.error as error:
+                raise CompilationError(
+                    f"invalid exclusion regex {pattern!r}: {error}"
+                ) from error
+        elif "*" in pattern:
+            parts = re.split(r"\*+", pattern)
+            wildcard_regex = r"^" + r"[\s\S]*".join(re.escape(part) for part in parts) + r"$"
+            result.append(
+                ExclusionMatcher("wildcard", re.compile(wildcard_regex, re.IGNORECASE))
+            )
+        else:
+            result.append(ExclusionMatcher("substring", pattern))
+    return result
+
+def load_adguard_dns_exclusion_map(
+    fetched: list[tuple[Source, str]],
+) -> tuple[dict[str, list[ExclusionMatcher]], dict[str, int], str | None]:
+    """Load AdGuardSDNSFilter's source-to-exclusion relationships.
+
+    The exclusion file is not a blocklist. Its patterns are only applied to the
+    exact input sources that configuration.json declares to use them.
+    """
+    exclusion_sources = {
+        source.url: text
+        for source, text in fetched
+        if source.kind == "exclusions"
+    }
+    if not exclusion_sources:
+        return {}, {}, None
+
+    try:
+        _, config_text = fetch_source(
+            Source(ADGUARD_SDNS_CONFIGURATION_URL, "source-metadata")
+        )
+        configuration = json.loads(config_text)
+    except Exception as error:
+        raise CompilationError(
+            f"unable to load AdGuardSDNSFilter source metadata: {error}"
+        ) from error
+
+    manifest_urls = {source.url for source, _ in fetched}
+    source_to_exclusion_urls: dict[str, list[str]] = {}
+    for entry in configuration.get("sources", []):
+        source_url = entry.get("source")
+        refs = entry.get("exclusions_sources") or []
+        if not source_url or source_url not in manifest_urls or not refs:
+            continue
+        resolved = [
+            urllib.parse.urljoin(ADGUARD_SDNS_CONFIGURATION_URL, ref)
+            for ref in refs
+        ]
+        source_to_exclusion_urls[source_url] = resolved
+
+    exclusion_patterns_by_url: dict[str, list[ExclusionMatcher]] = {}
+    pattern_counts_by_metadata_url: dict[str, int] = {}
+    available_texts = dict(exclusion_sources)
+
+    for refs in source_to_exclusion_urls.values():
+        for exclusion_url in refs:
+            if exclusion_url in exclusion_patterns_by_url:
+                continue
+            if exclusion_url not in available_texts:
+                try:
+                    _, exclusion_text = fetch_source(Source(exclusion_url, "exclusions"))
+                    available_texts[exclusion_url] = exclusion_text
+                except Exception as error:
+                    raise CompilationError(
+                        f"unable to load required exclusion source {exclusion_url}: {error}"
+                    ) from error
+            patterns = parse_hostlist_exclusion_patterns(available_texts[exclusion_url])
+            exclusion_patterns_by_url[exclusion_url] = patterns
+            pattern_counts_by_metadata_url[exclusion_url] = len(patterns)
+
+    patterns_by_source: dict[str, list[ExclusionMatcher]] = {}
+    for source_url, refs in source_to_exclusion_urls.items():
+        patterns_by_source[source_url] = [
+            pattern
+            for exclusion_url in refs
+            for pattern in exclusion_patterns_by_url.get(exclusion_url, [])
+        ]
+
+    return patterns_by_source, pattern_counts_by_metadata_url, ADGUARD_SDNS_CONFIGURATION_URL
 
 def compile_fetched_sources(
     fetched: list[tuple[Source, str]],
