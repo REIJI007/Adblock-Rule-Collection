@@ -76,14 +76,10 @@ class SourceSummary:
     error: str | None = None
 
 @dataclass
-class RuleRecord:
-    text: str
-    source_urls: set[str] = field(default_factory=set)
-    source_lines: list[dict[str, object]] = field(default_factory=list)
-
-@dataclass
 class CompileState:
-    records: dict[str, RuleRecord] = field(default_factory=dict)
+    # A set avoids retaining millions of redundant source-line objects for rules
+    # already deduplicated into the final output.
+    records: set[str] = field(default_factory=set)
     issues: list[dict[str, object]] = field(default_factory=list)
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
@@ -418,23 +414,9 @@ def compile_fetched_sources(fetched: list[tuple[Source, str]]) -> CompileState:
                 summary.ignored_comments += 1
             for output_rule in translated:
                 if output_rule in state.records:
-                    state.records[output_rule].source_urls.add(source.url)
-                    state.records[output_rule].source_lines.append({
-                        "source": source.url,
-                        "line": line_number,
-                        "original": line[:300],
-                    })
                     summary.duplicate_rules += 1
                 else:
-                    state.records[output_rule] = RuleRecord(
-                        text=output_rule,
-                        source_urls={source.url},
-                        source_lines=[{
-                            "source": source.url,
-                            "line": line_number,
-                            "original": line[:300],
-                        }],
-                    )
+                    state.records.add(output_rule)
                     summary.emitted_rules += 1
     return state
 
