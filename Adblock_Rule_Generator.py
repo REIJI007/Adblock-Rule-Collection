@@ -84,27 +84,62 @@ class CompileState:
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
 def classify_source(url: str) -> str:
-    """Explicit source-family adapter for the configured upstream manifest.
+    """Explicit source-family adapter for the curated upstream manifest.
 
-    New upstreams should be classified here before being added. The default is
-    native Adblock syntax because the remaining URLs in the curated manifest are
-    browser filter lists; it is not a content-sniffing fallback.
+    Unknown source families fail closed. Add a format mapping here before adding
+    a new upstream; do not infer format from the downloaded line contents.
     """
+    parsed = urllib.parse.urlparse(url)
     lowered = url.lower()
-    if "adaway.org/hosts.txt" in lowered or (
-        "hosts" in urllib.parse.urlparse(lowered).path.rsplit("/", 1)[-1]
-        and "filter" not in urllib.parse.urlparse(lowered).path.rsplit("/", 1)[-1]
-    ):
+    hostname = (parsed.hostname or "").lower()
+    path = parsed.path.lower()
+    basename = path.rsplit("/", 1)[-1]
+
+    if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
+
     if (
         "adguardteam/adguardsdnsfilter/" in lowered
         or "filter_15_dnsfilter/" in lowered
-        or lowered.endswith("-agh.txt")
+        or (hostname == "malware-filter.gitlab.io" and basename.endswith("-agh.txt"))
     ):
         return "dns"
+
     if "adguardteam/cname-trackers/" in lowered:
         return "domains"
-    return "adblock"
+
+    # Known raw GitHub repositories that publish browser Adblock-compatible rules.
+    raw_repo = ""
+    if hostname == "raw.githubusercontent.com":
+        segments = [segment for segment in path.split("/") if segment]
+        if len(segments) >= 2:
+            raw_repo = "/".join(segments[:2]).lower()
+    native_repositories = {
+        "easylist/easylist",
+        "adguardteam/adguardfilters",
+        "adguardteam/filtersregistry",
+        "ublockorigin/uassets",
+        "easylist/antiadblockfilters",
+        "easylist/easylistchina",
+    }
+    if raw_repo in native_repositories:
+        return "adblock"
+
+    # Other known native browser-filter hosts in this curated manifest.
+    if hostname in {
+        "filters.adavoid.org",
+        "easylist.to",
+        "secure.fanboy.co.nz",
+        "adguardteam.github.io",
+    }:
+        return "adblock"
+    if hostname == "malware-filter.gitlab.io":
+        return "adblock"
+
+    raise CompilationError(
+        f"No source-format mapping for {url!r}; classify this source explicitly "
+        "before adding it to the upstream manifest."
+    )
 
 def build_sources(urls: Iterable[str]) -> list[Source]:
     sources = [Source(url=url, kind=classify_source(url)) for url in urls]
@@ -486,6 +521,15 @@ def run_regression_tests() -> None:
         tests.append((name, actual, expected))
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
+    check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
+    check("AdGuard DNS filter is classified as DNS", classify_source("https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"), "dns")
+    check("CNAME tracker list is classified as domains-only", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "domains")
+    try:
+        classify_source("https://example.invalid/new-list.txt")
+    except CompilationError:
+        tests.append(("unknown source format rejected", True, True))
+    else:
+        raise AssertionError("unknown source format must not silently default to Adblock")
     check("host record preserves exact-host scope", compile_line("hosts", "0.0.0.0 Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves exact-host scope", compile_line("domains", "Ads.Example.com")[0],
@@ -544,7 +588,11 @@ def main() -> int:
         run_regression_tests()
         return 0
 
-    sources = build_sources(urls)
+    try:
+        sources = build_sources(urls)
+    except CompilationError as error:
+        print(f"ABORTED: invalid upstream manifest: {error}", file=sys.stderr)
+        return 2
     state = CompileState()
     fetched: list[tuple[Source, str]] = []
     source_failures: list[dict[str, str]] = []
