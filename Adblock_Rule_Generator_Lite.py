@@ -1680,7 +1680,7 @@ def run_regression_tests() -> None:
     check("Lite manifest URLs are unique", len({source.url for source in configured_sources}), len(urls))
     check("Lite manifest source families are explicitly classified",
           sorted({source.kind for source in configured_sources}),
-          ["adblock", "dns"])
+          ["adblock", "cname", "dns", "exclusions"])
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
