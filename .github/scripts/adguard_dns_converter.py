@@ -188,10 +188,8 @@ def parse_denyallow_value(value: str):
             return None, f"invalid denyallow domain: {raw_domain}"
         domains.append(domain)
 
-    if len(set(domains)) != len(domains):
-        return None, "duplicate denyallow domain"
-
-    return "|".join(sorted(domains)), None
+    # Duplicate exclusions are redundant but do not alter rule semantics.
+    return "|".join(sorted(set(domains))), None
 
 
 def validate_client_value(value: str):
@@ -343,7 +341,12 @@ def normalize_dns_pattern(pattern: str):
         return None, "empty hostname-mask label"
 
     for label in labels:
-        if not re.fullmatch(r"[A-Za-z0-9_*_-]+", label):
+        if (
+            len(label) > 63
+            or not re.fullmatch(r"[A-Za-z0-9_*_-]+", label)
+            or label.startswith("-")
+            or label.endswith("-")
+        ):
             return None, f"invalid hostname-mask label: {label}"
 
     return prefix + body.lower() + suffix, None
