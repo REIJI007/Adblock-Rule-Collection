@@ -10,11 +10,15 @@ from adguard_dns_converter import (  # noqa: E402
     classify_and_convert,
     parse_adguard_dns_rule,
     parse_hosts_as_adguard,
+    run_semantic_self_tests,
     validate_dnsrewrite_value,
 )
 
 
 class AdGuardDnsConversionTests(unittest.TestCase):
+    def test_converter_semantic_self_tests(self):
+        run_semantic_self_tests()
+
     def assert_rule(self, source, expected):
         actual, error = parse_adguard_dns_rule(source)
         self.assertIsNone(error, msg=f"{source!r} rejected: {error}")
