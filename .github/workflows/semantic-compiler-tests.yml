@@ -1,0 +1,26 @@
+name: Semantic compiler regression tests
+
+on:
+  pull_request:
+    paths:
+      - "Adblock_Rule_Generator.py"
+      - ".github/workflows/semantic-compiler-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-compiler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile Python source
+        run: python -m py_compile Adblock_Rule_Generator.py
+      - name: Run semantic regression checks
+        run: python Adblock_Rule_Generator.py --self-test
