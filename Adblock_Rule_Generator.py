@@ -77,17 +77,21 @@ KNOWN_CONDITION_FLAGS = {
     "adguard_ext_opera_mv3", "adguard_ext_android_cb", "ext_ublock",
     "ext_ubol", "ext_abp", "ext_safari", "env_mobile", "env_safari", "env_chromium",
     "env_firefox", "env_edge", "env_mv3", "cap_html_filtering", "cap_ipaddress",
+    "cap_user_stylesheet",
 }
 TARGET_PROFILES = {
     # chromium means the AdGuard Chromium MV2 profile; use chromium-mv3 for MV3.
     "chromium": {
         "adguard": True, "adguard_ext_chromium": True, "env_chromium": True,
+        "cap_user_stylesheet": True,
     },
     "chromium-mv3": {
         "adguard": True, "adguard_ext_chromium_mv3": True, "env_chromium": True,
+        "cap_user_stylesheet": True,
     },
     "firefox": {
         "adguard": True, "adguard_ext_firefox": True, "env_firefox": True,
+        "cap_user_stylesheet": True,
     },
     "safari": {
         "adguard": True, "adguard_ext_safari": True, "env_safari": True,
@@ -145,6 +149,7 @@ class SourceSummary:
     excluded_by_metadata: int = 0
     input_lines_skipped_by_target: int = 0
     target_skip_reason: str | None = None
+    target_excluded_rules: int = 0
     metadata_patterns: int = 0
     error: str | None = None
 
@@ -154,6 +159,7 @@ class CompileState:
     # already deduplicated into the final output.
     records: set[str] = field(default_factory=set)
     issues: list[dict[str, object]] = field(default_factory=list)
+    target_exclusions: list[dict[str, object]] = field(default_factory=list)
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
 def classify_source(url: str) -> str:
@@ -195,6 +201,12 @@ def classify_source(url: str) -> str:
         or (hostname == "malware-filter.gitlab.io" and basename.endswith("-agh.txt"))
     ):
         return "dns"
+
+    if (
+        hostname == "adguardteam.github.io"
+        and path.startswith("/cname-trackers/data/")
+    ):
+        return "cname"
 
     if "adguardteam/cname-trackers/" in lowered:
         if "/data/combined_original_trackers.txt" in path:
@@ -870,6 +882,21 @@ def same_origin(left: str, right: str) -> bool:
         and a.port == b.port
     )
 
+def allow_preprocessor_include(parent_url: str, include_url: str) -> bool:
+    """Allow same-origin includes plus a narrow official AdGuard CNAME include path."""
+    if same_origin(parent_url, include_url):
+        return True
+    parent = urllib.parse.urlparse(parent_url)
+    included = urllib.parse.urlparse(include_url)
+    return (
+        parent.scheme.lower() == "https"
+        and (parent.hostname or "").lower() == "raw.githubusercontent.com"
+        and parent.path.lower().startswith("/adguardteam/adguardfilters/")
+        and included.scheme.lower() == "https"
+        and (included.hostname or "").lower() == "adguardteam.github.io"
+        and included.path.lower().startswith("/cname-trackers/data/")
+    )
+
 def expand_filter_preprocessor(
     source: Source,
     text: str,
@@ -955,9 +982,9 @@ def expand_filter_preprocessor(
             parsed_include = urllib.parse.urlparse(include_url)
             if parsed_include.scheme not in {"https", "http"} or not parsed_include.hostname:
                 raise CompilationError(f"{source.url}:{line_number}: invalid !#include target {include_path!r}")
-            if not same_origin(source.url, include_url):
+            if not allow_preprocessor_include(source.url, include_url):
                 raise CompilationError(
-                    f"{source.url}:{line_number}: cross-origin !#include is not allowed: {include_url}"
+                    f"{source.url}:{line_number}: cross-origin !#include is not allowlisted: {include_url}"
                 )
             if include_url not in cache:
                 try:
@@ -1223,6 +1250,27 @@ def compile_fetched_sources(
             if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
                 summary.excluded_by_metadata += 1
                 continue
+        # Some well-understood source rules have no equivalent in the selected
+        # AdGuard browser target. Do not silently rewrite them or fail an entire
+        # million-rule build because of a known engine mismatch: exclude each
+        # such rule explicitly, including its source and reason, in the audit.
+        # Unknown in-scope conversion failures below remain strict errors.
+        target_exclusion_reason = (
+            detect_nonportable_native_rule(line)
+            if source.kind == "adblock"
+            else None
+        )
+        if target_exclusion_reason:
+            summary.target_excluded_rules += 1
+            state.target_exclusions.append({
+                "source": source.url,
+                "format": source.kind,
+                "line": expanded.line_number,
+                "rule": line[:500],
+                "reason": target_exclusion_reason,
+            })
+            continue
+
         try:
             translated, category = compile_line(source.kind, line)
         except CompilationError as error:
@@ -1258,6 +1306,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "excluded_by_upstream_metadata": summary.excluded_by_metadata,
             "input_lines_skipped_by_target": summary.input_lines_skipped_by_target,
             "target_skip_reason": summary.target_skip_reason,
+            "target_excluded_rules": summary.target_excluded_rules,
             "metadata_patterns": summary.metadata_patterns,
             "unsupported_lines": summary.unsupported_lines,
             "error": summary.error,
@@ -1278,14 +1327,17 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             summary.input_lines_skipped_by_target
             for summary in state.summaries.values()
         ),
+        "target_excluded_rule_count": len(state.target_exclusions),
+        "target_exclusions": state.target_exclusions,
         "unsupported_count": len(state.issues),
         "unsupported_rules": state.issues,
         "semantic_guarantee": (
             "Native browser-compatible rules are preserved as Adblock-compatible syntax; "
             "hosts and domains-only entries become exact-host HTTP(S) URL regex rules; "
-            "DNS and CNAME source families are explicitly excluded from the browser target "
-            "and listed in the report. In-scope rules that cannot be translated safely "
-            "still fail strict compilation. This is not a proof for arbitrary regex or "
+            "DNS and CNAME source families are explicitly excluded from the browser target. "
+            "Known non-portable rules are excluded individually with source-line diagnostics; "
+            "unknown in-scope conversion failures still fail strict compilation. All exclusions "
+            "are visible in the report. This is not a proof for arbitrary regex or "
             "engine-specific rules."
         ),
     }
@@ -1352,6 +1404,20 @@ def run_regression_tests() -> None:
     check("Safari-only flag is false for Chromium MV3", evaluate_filter_condition("ext_safari", target_condition_flags("chromium-mv3")), False)
     check("Chromium environment condition is true",
           evaluate_filter_condition("env_chromium && !env_mobile", target_condition_flags("chromium-mv3")), True)
+    check("Chromium MV3 exposes the user stylesheet capability",
+          evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("chromium-mv3")), True)
+    check("Safari does not inherit the Chromium stylesheet capability",
+          evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("safari")), False)
+    check("AdGuard CNAME include from an official filter source is allowlisted",
+          allow_preprocessor_include(
+              "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
+              "https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt",
+          ), True)
+    check("arbitrary cross-origin preprocessor include is rejected",
+          allow_preprocessor_include(
+              "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
+              "https://evil.example/list.txt",
+          ), False)
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
@@ -1385,6 +1451,17 @@ def run_regression_tests() -> None:
     check("DNS-only source rules are counted in the audit",
           dns_state.summaries[dns_source.url].input_lines_skipped_by_target, 2)
     check("target-excluded DNS rules do not fail browser compilation", len(dns_state.issues), 0)
+
+    native_source = Source("https://example.invalid/native-rules.txt", "adblock")
+    native_state = compile_fetched_sources(
+        [(native_source, "||37.1.213.100^$network\nexample.com##.ad:remove-class(foo)\n")],
+        "chromium-mv3",
+    )
+    check("known nonportable native rules do not get rewritten", len(native_state.records), 0)
+    check("known nonportable native rules are audited as target exclusions",
+          len(native_state.target_exclusions), 2)
+    check("known nonportable native rules do not masquerade as unknown compiler errors",
+          len(native_state.issues), 0)
 
     cname_source = Source("https://example.invalid/cname-list.txt", "cname")
     cname_state = compile_fetched_sources(
@@ -1613,13 +1690,17 @@ def main() -> int:
         "! RuleCount: " + str(len(rules)),
         "! CompileReport: " + report_path.name,
     ]
-    if source_failures or state.issues:
-        header.append("! WARNING: This is an explicitly requested partial/lossy compilation; see the JSON report.")
+    if source_failures or state.issues or state.target_exclusions:
+        header.append("! WARNING: Some source rules were excluded for target incompatibility or compilation errors; see the JSON report.")
     document = "\n".join(header) + "\n\n" + "\n".join(rules) + "\n"
     atomic_write_text(output_path, document)
 
     print(f"Published {len(rules)} unique rules to {output_path}")
-    print(f"Sources: {len(fetched)}/{len(sources)}; unsupported lines: {len(state.issues)}; source failures: {len(source_failures)}")
+    print(
+        f"Sources: {len(fetched)}/{len(sources)}; "
+        f"target-excluded rules: {len(state.target_exclusions)}; "
+        f"unsupported lines: {len(state.issues)}; source failures: {len(source_failures)}"
+    )
     print(f"Report: {report_path}")
     return 0
 
