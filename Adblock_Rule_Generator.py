@@ -257,6 +257,28 @@ def detect_nonportable_native_rule(line: str) -> str | None:
             return explanation
     return None
 
+def canonical_wildcard_hostname_mask(value: str) -> str | None:
+    """Validate and lowercase a DNS hostname mask with simple '*' wildcards."""
+    if not value or value != value.strip() or len(value) > 253:
+        return None
+    if not re.fullmatch(r"[A-Za-z0-9*.-]+", value):
+        return None
+    labels = value.lower().split(".")
+    if len(labels) < 2 or any(not label or len(label) > 63 for label in labels):
+        return None
+    for label in labels:
+        if "*" not in label:
+            if not DOMAIN_LABEL_RE.fullmatch(label):
+                return None
+        else:
+            # Literal characters adjacent to a wildcard must not force an
+            # impossible leading/trailing hyphen in every matching DNS label.
+            if not re.fullmatch(r"[a-z0-9*-]+", label):
+                return None
+            if label.startswith("-") or label.endswith("-"):
+                return None
+    return value.lower()
+
 def split_modifiers(modifier_text: str) -> list[str]:
     """Split modifiers on commas outside quoted values."""
     result: list[str] = []
@@ -342,13 +364,21 @@ def compile_dns_rule(line: str) -> str:
         translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # A standard domain-subtree rule has the same core meaning in browser rules.
-    subtree_match = re.fullmatch(r"\|\|([^|^*/$]+)\^", pattern)
+    # Standard domain-subtree rules and simple wildcard hostname masks share
+    # the same core matching semantics in AdGuard browser filters.
+    subtree_match = re.fullmatch(r"\|\|([^|^/$]+)\^", pattern)
     if subtree_match:
-        hostname = canonical_hostname(subtree_match.group(1), allow_single_label=False)
-        if not hostname:
-            raise CompilationError(f"invalid DNS hostname: {pattern}")
-        translated = (("@@" if exception else "") + "||" + hostname + "^")
+        raw_mask = subtree_match.group(1)
+        if "*" in raw_mask:
+            hostname_mask = canonical_wildcard_hostname_mask(raw_mask)
+            if not hostname_mask:
+                raise CompilationError(f"invalid DNS wildcard hostname mask: {pattern}")
+            translated = (("@@" if exception else "") + "||" + hostname_mask + "^")
+        else:
+            hostname = canonical_hostname(raw_mask, allow_single_label=False)
+            if not hostname:
+                raise CompilationError(f"invalid DNS hostname: {pattern}")
+            translated = (("@@" if exception else "") + "||" + hostname + "^")
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
@@ -592,6 +622,8 @@ def run_regression_tests() -> None:
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("DNS subtree rule preserves subtree", compile_line("dns", "||Ads.Example.com^")[0],
           ["||ads.example.com^"])
+    check("DNS wildcard hostname mask is preserved", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
+          ["||mobileanalytics.*.amazonaws.com^"])
     check("DNS exception preserves exception", compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||ads.example.com^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
