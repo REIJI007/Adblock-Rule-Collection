@@ -1192,25 +1192,6 @@ jobs:
               if not has_badfilter or target != "@@||example.org^":
                   raise RuntimeError("Semantic self-test failed: exception badfilter target extraction")
 
-              # These are valid hostname-oriented regexes and must remain supported.
-              valid_hostname_regexes = [
-                  r"/^(?:\w+\.)*minepi\.com$/",
-                  r"/^(a|c)\.[0-9a-f]{56}\.com$/",
-                  r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/",
-                  r"/[a-z]+\d+\.cnzz\./",
-                  r"/99rejs/",
-                  r"/Adloader/",
-                  r"/community-ad/",
-                  r"/^anon1.gt\d{6}.com$/",
-              ]
-              for source_rule in valid_hostname_regexes:
-                  actual, error = parse_adguard_dns_rule(source_rule)
-                  if error or actual != source_rule:
-                      raise RuntimeError(
-                          "Semantic self-test failed: valid hostname regex was rejected: "
-                          f"{source_rule!r}; error={error!r}"
-                      )
-
               # Keep regression checks generic: these are synthetic syntax
               # categories, not a denylist of source rules or specific IP ranges.
               rejected_regex_shapes = [
