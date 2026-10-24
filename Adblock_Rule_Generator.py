@@ -603,6 +603,8 @@ def main() -> int:
         "! Title: Adblock-Rule-Collection",
         "! Description: Semantically compiled upstream rules for AdGuard browser filtering",
         "! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
+        "! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0",
+        "! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0",
         "! Generated: " + timestamp,
         "! RuleCount: " + str(len(rules)),
         "! CompileReport: " + report_path.name,
