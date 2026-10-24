@@ -184,6 +184,11 @@ def classify_source(url: str) -> str:
     path = parsed.path.lower()
     basename = path.rsplit("/", 1)[-1]
 
+    # The *justdomains convention denotes a domain-only feed. Unlike native
+    # Adblock rules, each bare entry needs the domain-list adapter.
+    if basename.endswith("_justdomains.txt"):
+        return "domains"
+
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
 
@@ -212,6 +217,8 @@ def classify_source(url: str) -> str:
             or "/data/combined_original_trackers" in path
         ):
             return "cname"
+        if path.endswith("_justdomains.txt"):
+            return "domains"
         if (
             any(part in path for part in (
                 "/data/ads/",
@@ -227,8 +234,9 @@ def classify_source(url: str) -> str:
         if "/data/combined_original_trackers.txt" in path:
             # This specific list is for CNAME-chain-aware scanners.
             return "cname"
-        # The combined_disguised_* lists are explicitly published for
-        # traditional content blockers and use native Adblock-style rules.
+        if path.endswith("_justdomains.txt"):
+            return "domains"
+        # The combined_disguised_* files with Adblock syntax remain native rules.
         return "adblock"
 
     # Known raw GitHub repositories that publish browser Adblock-compatible rules.
@@ -1433,6 +1441,9 @@ def run_regression_tests() -> None:
     check("disguised CNAME ad-domain lists keep ordinary browser-filter semantics",
           classify_source("https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"),
           "adblock")
+    check("CNAME justdomains feeds use the domain-list adapter",
+          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt"),
+          "domains")
     check("CNAME microsite lists retain DNS-aware semantics",
           classify_source("https://adguardteam.github.io/cname-trackers/data/microsites/example.txt"),
           "cname")
