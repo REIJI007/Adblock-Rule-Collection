@@ -1044,11 +1044,12 @@ def run_regression_tests() -> None:
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
+    conditional_text = "!#if (adguard_ext_chromium)\n||chromium.example^\n!#else\n||other.example^\n!#endif\n"
     conditional_lines = expand_filter_preprocessor(
         conditional_source,
-        "!#if (adguard_ext_chromium)\\n||chromium.example^\\n!#else\\n||other.example^\\n!#endif\\n",
+        conditional_text,
         "chromium",
-        {conditional_source.url: (conditional_source, "!#if (adguard_ext_chromium)\\n||chromium.example^\\n!#else\\n||other.example^\\n!#endif\\n")},
+        {conditional_source.url: (conditional_source, conditional_text)},
     )
     check("preprocessor selects only active target rules",
           [line.text.strip() for line in conditional_lines],
