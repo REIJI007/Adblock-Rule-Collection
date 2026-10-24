@@ -487,12 +487,14 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         if not line:
             return [], "comment"
         # DNS lists can contain either Adblock-style host rules or hosts entries.
-        first = line.split(None, 1)[0] if line else ""
-        try:
-            ipaddress.ip_address(first)
-            looks_like_hosts = True
-        except ValueError:
-            looks_like_hosts = False
+        fields = line.split()
+        looks_like_hosts = False
+        if len(fields) >= 2:
+            try:
+                ipaddress.ip_address(fields[0])
+                looks_like_hosts = True
+            except ValueError:
+                pass
         if looks_like_hosts:
             return compile_hosts_line(line, category="hosts-in-dns")
         return [compile_dns_rule(line)], "dns"
