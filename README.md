@@ -54,8 +54,7 @@ Release **每 20 分钟自动发布一次**。
 3. [Adguard](https://github.com/AdguardTeam/AdGuardFilters)
 4. [Easylist](https://github.com/easylist/easylist)
 5. [uBlockOrigin](https://github.com/uBlockOrigin/uAssets)
-6. [URLhaus](https://urlhaus.abuse.ch/)
-7. [malware-filter](https://gitlab.com/malware-filter)
+6. [malware-filter](https://gitlab.com/malware-filter)
 
 <br>
 <br>
