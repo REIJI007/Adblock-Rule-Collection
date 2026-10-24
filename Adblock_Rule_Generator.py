@@ -225,6 +225,9 @@ def classify_source(url: str) -> str:
             or "/data/combined_disguised_" in path
         ):
             return "adblock"
+        raise CompilationError(
+            f"Unknown AdGuard CNAME tracker source family: {url!r}"
+        )
 
     if "adguardteam/cname-trackers/" in lowered:
         # Original trackers and microsites require DNS/CNAME-aware inspection,
@@ -1020,8 +1023,11 @@ def expand_filter_preprocessor(
                 try:
                     include_kind = classify_source(include_url)
                 except CompilationError:
-                    # Includes are fragments of their parent filter; absent an
-                    # explicit source override, they inherit the parent's syntax.
+                    # Same-origin includes may be syntax fragments of their parent
+                    # filter. Cross-origin includes must have an explicit, recognized
+                    # format; never guess a remote source's semantics.
+                    if not same_origin(source.url, include_url):
+                        raise
                     include_kind = source.kind
                 included_source = Source(include_url, include_kind)
                 _, included_text = fetch_source(included_source)
@@ -1481,6 +1487,20 @@ def run_regression_tests() -> None:
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
               "https://evil.example/list.txt",
           ), False)
+    unknown_cname_include = "https://adguardteam.github.io/cname-trackers/data/unknown/example.txt"
+    unknown_include_cache = {
+        include_parent_url: (include_parent, f"!#include {unknown_cname_include}\\n"),
+        unknown_cname_include: (Source(unknown_cname_include, "adblock"), "||should-not-be-guessed.example^\\n"),
+    }
+    try:
+        expand_filter_preprocessor(
+            include_parent, f"!#include {unknown_cname_include}\\n",
+            "chromium-mv3", unknown_include_cache
+        )
+    except CompilationError:
+        tests.append(("unknown cross-origin CNAME fragment fails closed", True, True))
+    else:
+        raise AssertionError("unknown cross-origin source format must not inherit its parent's syntax")
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
