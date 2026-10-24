@@ -879,7 +879,7 @@ def expand_filter_preprocessor(
                 )
             continue
 
-                include_match = re.fullmatch(r"!#include\s+(.+)", line)
+        include_match = re.fullmatch(r"!#include\s+(.+)", line)
         if include_match:
             if not active:
                 continue
