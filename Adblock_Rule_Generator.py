@@ -1488,19 +1488,12 @@ def run_regression_tests() -> None:
               "https://evil.example/list.txt",
           ), False)
     unknown_cname_include = "https://adguardteam.github.io/cname-trackers/data/unknown/example.txt"
-    unknown_include_cache = {
-        include_parent_url: (include_parent, f"!#include {unknown_cname_include}\\n"),
-        unknown_cname_include: (Source(unknown_cname_include, "adblock"), "||should-not-be-guessed.example^\\n"),
-    }
     try:
-        expand_filter_preprocessor(
-            include_parent, f"!#include {unknown_cname_include}\\n",
-            "chromium-mv3", unknown_include_cache
-        )
+        classify_source(unknown_cname_include)
     except CompilationError:
-        tests.append(("unknown cross-origin CNAME fragment fails closed", True, True))
+        tests.append(("unknown official CNAME source format fails closed", True, True))
     else:
-        raise AssertionError("unknown cross-origin source format must not inherit its parent's syntax")
+        raise AssertionError("unknown CNAME source format must not default to Adblock syntax")
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
