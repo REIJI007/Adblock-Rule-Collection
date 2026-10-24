@@ -1564,8 +1564,8 @@ def run_regression_tests() -> None:
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", "0.0.0.0 Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("domain-only preserves exact-host scope", compile_line("domains", "Ads.Example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
+          ["||ads.example.com^"])
     check("DNS subtree rule preserves subtree", compile_line("dns", "||Ads.Example.com^")[0],
           ["||ads.example.com^"])
     check("DNS wildcard hostname mask is preserved", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
