@@ -1213,8 +1213,14 @@ def run_regression_tests() -> None:
           ["example.com#?#div:matches-css(width: 1px)"])
     check("AdGuard accepts uBO-compatible +js syntax", compile_line("adblock", "example.com##+js(no-such-scriptlet)")[0],
           ["example.com##+js(no-such-scriptlet)"])
-    check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^$network")[0],
-          ["||37.1.213.100^$network"])
+    check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^")[0],
+          ["||37.1.213.100^"])
+    try:
+        compile_line("adblock", "||37.1.213.100^$network")
+    except CompilationError:
+        tests.append(("network modifier rejected for browser target", True, True))
+    else:
+        raise AssertionError("the app-only $network modifier must not be published to a browser filter")
     check("DNS IPv4 host rules are preserved", compile_line("dns", "||37.1.213.100^")[0],
           ["||37.1.213.100^"])
     check("exact-host IPv4 regex compiles", compile_line("dns", "37.1.213.100")[0],
