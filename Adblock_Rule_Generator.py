@@ -1074,8 +1074,13 @@ def load_adguard_dns_exclusion_map(
 def compile_fetched_sources(
     fetched: list[tuple[Source, str]],
     target: str,
+    source_exclusions: dict[str, list[ExclusionMatcher]] | None = None,
+    metadata_pattern_counts: dict[str, int] | None = None,
+    metadata_config_url: str | None = None,
 ) -> CompileState:
     state = CompileState()
+    source_exclusions = source_exclusions or {}
+    metadata_pattern_counts = metadata_pattern_counts or {}
     cache: dict[str, tuple[Source, str]] = {
         source.url: (source, text) for source, text in fetched
     }
@@ -1114,11 +1119,23 @@ def compile_fetched_sources(
                 input_lines=len(text.splitlines()),
             )
 
+    # Exclusion files are metadata. Their patterns are applied only to the
+    # upstream source URLs explicitly linked to them in AdGuard's configuration.
+    for source, _ in fetched:
+        if source.kind == "exclusions":
+            summary = state.summaries[source.url]
+            summary.status = "consumed-as-metadata"
+            summary.metadata_patterns = metadata_pattern_counts.get(source.url, 0)
+    if metadata_config_url:
+        state.summaries[metadata_config_url] = SourceSummary(
+            url=metadata_config_url,
+            kind="source-metadata",
+            status="loaded",
+            metadata_patterns=len(source_exclusions),
+        )
+
     # CNAME original-tracker lists require a CNAME-aware request scanner.
-    # Exclusions files are compiler metadata, not active rules. Both must be
-    # represented as source-level issues instead of being turned into block rules.
     cname_active: dict[str, int] = {}
-    exclusion_active: dict[str, int] = {}
     for expanded in expanded_lines:
         source = expanded.source
         if source.kind == "cname":
@@ -1126,12 +1143,16 @@ def compile_fetched_sources(
                 cname_active[source.url] = cname_active.get(source.url, 0) + 1
             continue
         if source.kind == "exclusions":
-            if not is_comment_or_header(expanded.text.strip()):
-                exclusion_active[source.url] = exclusion_active.get(source.url, 0) + 1
             continue
 
         summary = state.summaries[source.url]
-        line = expanded.text.strip()
+        raw_rule = expanded.text.rstrip("\r\n")
+        line = raw_rule.strip()
+        if not is_comment_or_header(line):
+            matched_exclusions = source_exclusions.get(source.url, [])
+            if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
+                summary.excluded_by_metadata += 1
+                continue
         try:
             translated, category = compile_line(source.kind, line)
         except CompilationError as error:
@@ -1165,23 +1186,6 @@ def compile_fetched_sources(
             "affected_rule_count": active_count,
         })
 
-    for source_url, active_count in exclusion_active.items():
-        summary = state.summaries[source_url]
-        summary.unsupported_lines += active_count
-        state.issues.append({
-            "source": source_url,
-            "format": "exclusions",
-            "line": None,
-            "rule": "<source-level exclusion selectors>",
-            "reason": (
-                "this file is used by AdGuardSDNSFilter's hostlist compiler to exclude "
-                "matching rules from designated source inputs. Applying it globally or "
-                "emitting it as blocking rules changes semantics; the source-to-exclusion "
-                "relationship must be configured before this metadata can be consumed"
-            ),
-            "affected_rule_count": active_count,
-        })
-
     return state
 
 def build_report(state: CompileState, *, source_failures: list[dict[str, str]], output_path: str, target: str) -> dict[str, object]:
@@ -1196,6 +1200,8 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "duplicates": summary.duplicate_rules,
             "comments_or_headers": summary.ignored_comments,
             "ignored_system_mappings": summary.ignored_system_mappings,
+            "excluded_by_upstream_metadata": summary.excluded_by_metadata,
+            "metadata_patterns": summary.metadata_patterns,
             "unsupported_lines": summary.unsupported_lines,
             "error": summary.error,
         })
