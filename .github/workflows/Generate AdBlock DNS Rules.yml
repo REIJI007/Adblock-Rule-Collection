@@ -1214,7 +1214,7 @@ jobs:
               # Keep regression checks generic: these are synthetic syntax
               # categories, not a denylist of source rules or specific IP ranges.
               rejected_regex_shapes = [
-                  r"/https?:\/\/\//",
+                  r"/a\/b/",
                   r"/host:[0-9]+/",
                   r"/\|\|host\^/",
                   r"/[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/",
