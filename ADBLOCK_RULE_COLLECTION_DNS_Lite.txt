@@ -3,70 +3,17 @@
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0
 !LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0
-!Generated: 2026-10-25 02:22:18 +08
-!RuleCount: 676009
+!Generated: 2026-10-25 02:49:01 +08
+!RuleCount: 675984
 
-/(?::\/\/i1\.hoopchina\.com\.cn\/blogfile\/.+_\d{3}x\d{4})/
-/(?:^\|\|?|^)(10\.?[\d\.*]+)\|{0,1}$/
-/(?:^\|\|?|^)(127\.?[\d\.*]+)\|{0,1}$/
-/(?:^\|\|?|^)(172\.(?:1[6-9]|2[0-9]|3[0-1])\.[\d\.*]+)\|{0,1}$/
-/(?:^\|\|?|^)(192\.168\.?[\d\.*]+)\|{0,1}$/
-/(https?:\/\/)104\.154\..{100,}/
-/(https?:\/\/)104\.197\..{100,}/
-/(https?:\/\/)104\.198\..{100,}/
-/(https?:\/\/)130\.211\..{100,}/
-/(https?:\/\/)142\.91\.159\..{100,}/
-/(https?:\/\/)213\.32\.115\..{100,}/
-/(https?:\/\/)216\.21\..{100,}/
-/(https?:\/\/)217\.182\.11\..{100,}/
-/(https?:\/\/)51\.195\.31\..{100,}/
-/193.200.64.24:/
-/62.76.25.2(7|8)/
 /99rejs/
 /Adloader/
 /[a-z]+\d+\.cnzz\./
-/^!#/
 /^(?:\w+\.)*minepi\.com$/
 /^(a|c)\.[0-9a-f]{56}\.com$/
 /^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/
-/^139\.45\.197\.2(4[0-9]|5[0-4])/
-/^139\.45\.197\.2(4[0-9]|5[0-4]):/
-/^139\.45\.19[5-7]\.\d{1,3}/
-/^142\.91\.159\.(1[5-9]\d|2[0-4]\d|250):(80|443)$/
-/^185\.238\.15[2-5]\.\d{1,3}$/
-/^185\.238\.15[2-5]\.\d{1,3}\$/
-/^188\.42\.84\.\d{1,3}/
-/^23\.109\.170\.(18[7-9]|19[0-2])$/
-/^23\.109\.73\.\d{3}/
-/^31\.184\.20[0-3]\.\d{1,3}$/
-/^31\.184\.20[0-3]\.\d{1,3}\$/
-/^5\.101\.4[67]\.\d{1,3}$/
-/^5\.101\.4[67]\.\d{1,3}\$/
-/^5\.188\.17[67]\.\d{1,3}$/
-/^5\.188\.17[67]\.\d{1,3}\$/
-/^5\.188\.19[45]\.\d{1,3}$/
-/^5\.188\.19[45]\.\d{1,3}\$/
-/^5\.188\.5[01]\.\d{1,3}$/
-/^5\.188\.5[01]\.\d{1,3}\$/
-/^5\.189\.21[89]\.\d{1,3}$/
-/^5\.189\.21[89]\.\d{1,3}\$/
-/^5\.8\.4[4-7]\.\d{1,3}$/
-/^5\.8\.4[4-7]\.\d{1,3}\$/
-/^88\.208\.22\.[1234]$/
-/^88\.208\.22\.[1234]:/
-/^94\.242\.247\.(2[0-9]|3[0-2])/
-/^94\.242\.247\.(2[0-9]|3[0-2]):/
-/^\.fwmrm\.net\^/
-/^\|\|mkto-[\s\S]*\.com\^/
 /^anon1.gt\d{6}.com$/
-/^https:\/\/anon1.gt\d{6}.com/
 /community-ad/
-/doseofporn.com\/[a-z]{0,5}[1-9]{0,5}[a-z]{0,5}[1-9][s\S]*.js/
-/getjs?nadipdata$third-party,replace=/[\s\S]+openOriginalUrl[\s\S]+/openOriginalUrl()/
-/gzc_.*\.mp4\?/
-/m.realgfporn.com\/[a-z]{1,13}[0-9]{1,13}[a-z]{1,13}.js/
-@@/:\/\/.*[.]wp[.]pl\/[a-z0-9_]+[.][a-z]+[/:&?]?/
-@@/\.(gif|jpe?g|png|webp)#(\/?.+)?(\/(ad)s?\/|\/ad-)/
 @@|livemsg^
 @@||17173im.allyes.com^
 @@||aboluowang.com^
@@ -30724,6 +30671,7 @@
 ||abroadstageescortbabylon.net.daraz.com^
 ||abroadsuicidaleliminated.com^
 ||abromaexcoct.cyou^
+||abromalorarii.com^
 ||abront.xyz^
 ||abruptalertness.com^
 ||abruptlydummy.com^
@@ -33393,6 +33341,7 @@
 ||adevopsidocs-winter.net.daraz.com^
 ||adevopsns2licationsdocker.net.daraz.com^
 ||adevppl.com^
+||adewpxnzsnvib.site^
 ||adex.kintetsu-re.co.jp^
 ||adex.media^
 ||adex.naruko333.jp^
@@ -40201,6 +40150,7 @@
 ||alephsheenlysarkine.cyou^
 ||alephsoutflewnicotia.cyou^
 ||alepolewhir.qpon^
+||aleppobragslutayo.cyou^
 ||aleppohorns.shop^
 ||alereinc.actonservice.com^
 ||aleroninc.actonservice.com^
@@ -41565,6 +41515,7 @@
 ||amlumineona.com^
 ||amlyyqjwayvmj.top^
 ||amlzndgkbicak.store^
+||ammankalians.qpon^
 ||ammhmvurnghxn.space^
 ||amminesliquory.cyou^
 ||ammja.victoriabeckham.com^
@@ -50270,6 +50221,7 @@
 ||aquank.com^
 ||aquaplatform.com^
 ||aquaticowl.com^
+||aqubzryzaqdxe.space^
 ||aqueduct-collector-prod.alar.my^
 ||aquentlytujim.com^
 ||aquhwhcbfkwok.site^
@@ -50959,6 +50911,7 @@
 ||asec.motorsgate.sa^
 ||asecv.xyz^
 ||aseexam.quantresear.ch^
+||asemquips.cfd^
 ||asensoithecb.com^
 ||asentech-dev.actonservice.com^
 ||asepourioter.com^
@@ -51830,6 +51783,7 @@
 ||athur.nlacollection.com^
 ||athwartwhoafat.com^
 ||athyimemediat.org^
+||athyridlidgate.cyou^
 ||ati-a1.946d001b783803c1.xhst.bbci.co.uk^
 ||ati.allwyn.cz^
 ||ati.allwynfts.cz^
@@ -55417,6 +55371,7 @@
 ||bandithacks.com^
 ||banditunearly.cfd^
 ||bandjostles.cfd^
+||bandletscobs.qpon^
 ||bandoraclink.com^
 ||bandswell.com^
 ||banefulpunkas.com^
@@ -398203,6 +398158,7 @@
 ||gnla02080qp.com^
 ||gnla02081qp.com^
 ||gnla02091qp.com^
+||gnlmaqgvmwbkk.space^
 ||gnlobj.precolandia.com.br^
 ||gnmmbnnbqcwtb.site^
 ||gnmwgrnyprdhs.website^
@@ -414634,6 +414590,7 @@
 ||gslink9.tt.omtrdc.net^
 ||gslive.edm.globalsources.com^
 ||gslo2-luwifipubpool-1-89.wifi.tt.omtrdc.net^
+||gslozndcnlvvi.site^
 ||gslrf.goodnightmate.com^
 ||gsmadmissions.ucdavis.edu^
 ||gsmarkets-test2.marquee.tt.omtrdc.net^
@@ -446645,6 +446602,7 @@
 ||itxbyjztilkas.site^
 ||itxinrou.com^
 ||itxkepoxyqgfx.site^
+||itxvswrxzslgt.online^
 ||itxzlhijfcenxejclcaj.top^
 ||ityotnmivnbud.online^
 ||itystouring.cyou^
@@ -458036,6 +457994,7 @@
 ||kmfcqeqhsqdld.online^
 ||kmfdf.trywellbe.ro^
 ||kmfdkx.buycarparts.co.uk^
+||kmfqivcurfuku.site^
 ||kmfzm.oxygenetix.com^
 ||kmgfjc.cn^
 ||kmggrjifkuvej.space^
@@ -460486,6 +460445,7 @@
 ||kxtmstjs.org^
 ||kxtorgvkcbzkt.space^
 ||kxtqgp.mistermenuiserie.com^
+||kxtsxpdqpksaw.online^
 ||kxtszslwanvgl.site^
 ||kxuingylmnoxo.space^
 ||kxxyhjamtwozu.space^
@@ -506198,6 +506158,7 @@
 ||minutessmiles.com^
 ||minwear.com.cn^
 ||minyaartcrafts.cn^
+||minyansbarble.cfd^
 ||minzhouxinxi.cn^
 ||mioymlvrhmlsk.online^
 ||mip.api.mcafeewebadvisor.com^
@@ -521683,6 +521644,7 @@
 ||odourcowspeculation.com^
 ||odourtaste.com^
 ||odoxejocyekiu.space^
+||odpktokz.com^
 ||odporuc.shopiam4u.sk^
 ||odqhk.adelanteshoes.com^
 ||odrbykkefvfxi.space^
@@ -532300,6 +532262,7 @@
 ||pbcs.realtor.com^
 ||pbdasszdkbtic.online^
 ||pbdiasnrimgbo.online^
+||pbdxhfmuarvgv.space^
 ||pbecrm.aquanet.ru^
 ||pbejavtner.net.daraz.com^
 ||pbeldhnbk.com^
@@ -534345,6 +534308,7 @@
 ||piakrakow-sanok.tt.omtrdc.net^
 ||pianicfummelcorkite.cfd^
 ||pianistdusted.com^
+||piannetrabat.cyou^
 ||piano-backend-y4bx9dij598hxjt9.tt-stage3.omtrdc.net^
 ||piano-tiles-2.br.go-static.info^
 ||piano.io^
@@ -550089,6 +550053,7 @@
 ||rodney.monstatouring.com.au^
 ||rodo.agora.pl^
 ||rodolphcorrect.shop^
+||rodratton.qpon^
 ||rodrgyfrgbyim.online^
 ||roeduchess.com^
 ||roedwy.imidapeptide.com^
@@ -554689,6 +554654,7 @@
 ||sabnyheyiv62mkl-c.adkoffre.fr^
 ||sabtecsxmjmnj.website^
 ||sabulumerinnicenols.cfd^
+||sabulumtarocco.com^
 ||sabxt.teeoff.com^
 ||sac.dermatitecontrolada.com.br^
 ||sacaeportifyhacking.qpon^
@@ -600934,6 +600900,7 @@
 ||taa.spain.wolterskluwer.com^
 ||taa1.uk.wolterskluwer.com^
 ||taarurinarytitian.qpon^
+||tabaxirethnize.cyou^
 ||tabcarts.com^
 ||tabcp.tryshavest.com^
 ||taberedscaups.qpon^
@@ -605568,6 +605535,7 @@
 ||thymeal.cyou^
 ||thymolslaggenbowla.cfd^
 ||thymuswhimper.cfd^
+||thyriswh.cyou^
 ||thzowqlddhevp.space^
 ||thzqzvwmpxrdm.website^
 ||thzzlvjypvxex.site^
@@ -618201,6 +618169,7 @@
 ||treatorneiper.shop^
 ||treats-api.consent1.tt.omtrdc.net^
 ||treats-guarantee.tt.omtrdc.net^
+||treatssenegajiggit.cyou^
 ||treatwellationsdevdiscovid19-cloud.sa-api.sa-api.athena.tt.omtrdc.net^
 ||treatwellationsdevdiscovid19-mail.sa-api.brasil-api.brasil.athena.tt.omtrdc.net^
 ||treatwellationsdevdiscovid19-mail.sa-api.sa-api.brasil.athena.tt.omtrdc.net^
@@ -625137,6 +625106,7 @@
 ||umssvcwqpokjt.online^
 ||umst.mobile.de^
 ||umtbgsdzztsay.online^
+||umtnpbqxhwuqr.online^
 ||umtorte.qpon^
 ||umtoru.cocoheali.com^
 ||umtpopxcsedc.cdnvideo3.com^
@@ -632870,6 +632840,7 @@
 ||vbjnd.postable.com^
 ||vbjngr.464981.com^
 ||vbjuqguxmgrhk.site^
+||vbjxaorqqwubz.space^
 ||vbklz.gatineau.com^
 ||vbkqs.juiceplus.com^
 ||vbkryy.pasonacareer.jp^
@@ -640416,6 +640387,7 @@
 ||vvvshlnaxlbyp.website^
 ||vvvvw-icloud.com^
 ||vvwlk.littleunicorn.com^
+||vvwoecwtugszl.online^
 ||vvwrajbckvfng.website^
 ||vvww-icloud.com^
 ||vvxzbmwfztkdl.online^
@@ -646353,6 +646325,7 @@
 ||whw-emailvisionter.signed.net.daraz.com^
 ||whwdxzadairoq.website^
 ||whwdzgykybnfg.com^
+||whwfabebnnjfoi.com^
 ||whwfcm.cn^
 ||whwiab.pamono.it^
 ||whwjtiiafilpu.space^
@@ -668769,6 +668742,7 @@
 ||ymhcvaazupdsp.online^
 ||ymhxbjocfccte.com^
 ||ymhxgl.belluna-gourmet.com^
+||ymhzywtdnrsta.site^
 ||ymicwnvwtbfvb.online^
 ||ymihc9.ponqykyn2f8zn1t78jhte8f.cyou^
 ||ymixhrbjlqyxt.space^
@@ -671989,6 +671963,7 @@
 ||zhoytqwswnmtp.site^
 ||zhoz.com^
 ||zhpfl.cn^
+||zhppxjstwhjko.online^
 ||zhpymgpcxhzye.space^
 ||zhqcir.netage.ne.jp^
 ||zhqrceorwfmqd.site^
