@@ -46,13 +46,14 @@ HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 # These are known non-portable uBlock Origin operators, not ordinary ABP rules.
 # Do not silently publish them as if AdGuard had identical behavior.
 NON_PORTABLE_NATIVE_PATTERNS = (
+    # AdGuard has its own scriptlet syntax (#%#//scriptlet(...)); uBO's +js()
+    # must not be passed through as though the two syntaxes were interchangeable.
     (re.compile(r"\+js\s*\(", re.IGNORECASE), "uBlock scriptlet syntax (+js) needs an explicit AdGuard scriptlet mapping"),
-    (re.compile(r":has-text\s*\(", re.IGNORECASE), "uBlock procedural operator :has-text() is not accepted as a portable AdGuard rule"),
-    (re.compile(r":matches-css(?:-before|-after)?\s*\(", re.IGNORECASE), "uBlock procedural CSS operator needs an explicit AdGuard mapping"),
-    (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() is not accepted as a portable AdGuard rule"),
-    (re.compile(r":upward\s*\(", re.IGNORECASE), "uBlock procedural operator :upward() is not accepted as a portable AdGuard rule"),
-    (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator needs an explicit AdGuard mapping"),
+    # These procedural operators are not part of AdGuard's documented Extended CSS.
+    (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() has no verified AdGuard equivalent"),
+    (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator has no verified AdGuard equivalent"),
 )
+DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag)(?:=|,|$)", re.IGNORECASE)
 
 class CompilationError(RuntimeError):
     pass
@@ -99,7 +100,11 @@ def classify_source(url: str) -> str:
         and "filter" not in urllib.parse.urlparse(lowered).path.rsplit("/", 1)[-1]
     ):
         return "hosts"
-    if "adguardteam/adguardsdnsfilter/" in lowered:
+    if (
+        "adguardteam/adguardsdnsfilter/" in lowered
+        or "filter_15_dnsfilter/" in lowered
+        or lowered.endswith("-agh.txt")
+    ):
         return "dns"
     if "adguardteam/cname-trackers/" in lowered:
         return "domains"
@@ -196,6 +201,8 @@ def normalize_native_domain_rule(line: str) -> str:
     )
 
 def detect_nonportable_native_rule(line: str) -> str | None:
+    if DNS_ONLY_MODIFIER_RE.search(line):
+        return "DNS-only modifier cannot be represented safely in an AdGuard browser filter"
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
@@ -517,12 +524,22 @@ def run_regression_tests() -> None:
         tests.append(("DNS-only dnstype rejected", True, True))
     else:
         raise AssertionError("DNS-only dnstype must not be silently discarded")
+    check("AdGuard Extended CSS :has-text is preserved", compile_line("adblock", "example.com#?#div:has-text(ad)")[0],
+          ["example.com#?#div:has-text(ad)"])
+    check("AdGuard Extended CSS :matches-css is preserved", compile_line("adblock", "example.com#?#div:matches-css(width: 1px)")[0],
+          ["example.com#?#div:matches-css(width: 1px)"])
     try:
         compile_line("adblock", "example.com##+js(no-such-scriptlet)")
     except CompilationError:
         tests.append(("uBlock-only scriptlet rejected", True, True))
     else:
         raise AssertionError("uBlock-specific scriptlet must not be silently published")
+    try:
+        compile_line("adblock", "||example.com^$dnstype=A")
+    except CompilationError:
+        tests.append(("DNS-only modifier rejected in native list", True, True))
+    else:
+        raise AssertionError("DNS-only modifiers must not be silently published as browser rules")
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
