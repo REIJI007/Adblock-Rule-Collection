@@ -106,7 +106,10 @@ def classify_source(url: str) -> str:
         return "dns"
 
     if "adguardteam/cname-trackers/" in lowered:
-        return "domains"
+        # These lists are explicitly intended for CNAME-chain-aware scanners,
+        # not ordinary browser URL blocking. Treating them as domain rules would
+        # broaden their intended meaning.
+        return "cname"
 
     # Known raw GitHub repositories that publish browser Adblock-compatible rules.
     raw_repo = ""
@@ -386,6 +389,12 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
     if kind == "domains":
         return [compile_domain_line(line)], "domains"
 
+    if kind == "cname":
+        raise CompilationError(
+            "this source requires CNAME-chain inspection; a static AdGuard browser "
+            "filter cannot preserve that source-level behavior"
+        )
+
     if kind == "dns":
         # DNS/domain-list formats permit inline comments after whitespace. A
         # hostname cannot legally contain '#', so removing this suffix is safe.
@@ -438,6 +447,26 @@ def compile_fetched_sources(fetched: list[tuple[Source, str]]) -> CompileState:
         state.summaries[source.url] = summary
         lines = text.splitlines()
         summary.input_lines = len(lines)
+        if source.kind == "cname":
+            active_lines = [
+                (number, raw.strip())
+                for number, raw in enumerate(lines, 1)
+                if not is_comment_or_header(raw.strip())
+            ]
+            summary.unsupported_lines = len(active_lines)
+            if active_lines:
+                state.issues.append({
+                    "source": source.url,
+                    "format": source.kind,
+                    "line": None,
+                    "rule": "<source-level CNAME scanning requirement>",
+                    "reason": (
+                        "this upstream is intended for CNAME-chain-aware scanning; "
+                        "mapping its rules to ordinary URL rules would change their scope"
+                    ),
+                    "affected_rule_count": len(active_lines),
+                })
+            continue
         for line_number, raw_line in enumerate(lines, 1):
             line = raw_line.strip()
             try:
@@ -523,7 +552,13 @@ def run_regression_tests() -> None:
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
     check("AdGuard DNS filter is classified as DNS", classify_source("https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"), "dns")
-    check("CNAME tracker list is classified as domains-only", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "domains")
+    check("CNAME tracker list is isolated as source-level semantics", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
+    try:
+        compile_line("cname", "||tracker.example.com^")
+    except CompilationError:
+        tests.append(("CNAME-scan-only rules rejected for browser output", True, True))
+    else:
+        raise AssertionError("CNAME-scanner semantics must not be changed to ordinary URL blocking")
     try:
         classify_source("https://example.invalid/new-list.txt")
     except CompilationError:
@@ -577,7 +612,7 @@ def run_regression_tests() -> None:
     check("all configured upstreams have an explicit format family", len(configured_sources), len(urls))
     check("manifest covers the four required input families",
           sorted({source.kind for source in configured_sources}),
-          ["adblock", "dns", "domains", "hosts"])
+          ["adblock", "cname", "dns", "hosts"])
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
@@ -617,7 +652,7 @@ def main() -> int:
     # Deterministic processing order, independent of network completion order.
     fetched.sort(key=lambda item: sources.index(item[0]))
     state = compile_fetched_sources(fetched)
-    state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue["line"])))
+    state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
     report = build_report(state, source_failures=source_failures, output_path=args.output)
     report_path = Path(args.report)
     output_path = Path(args.output)
