@@ -1432,7 +1432,7 @@ def run_regression_tests() -> None:
         del SOURCE_FORMAT_OVERRIDES[subtree_override_url]
     check("domain-only format defaults to exact-host scope",
           compile_line("domains", "Example.COM")[0],
-          [r"/^https?:\\/\\/(?:[^\\/?#@]+@)?example\\.com(?::[0-9]+)?(?:[\\/?#]|$)/"])
+          [exact_hostname_regex_rule("example.com")])
     check("subdomain-aware domain format preserves subtree scope",
           compile_line("domains-subtree", "Example.COM")[0],
           ["||example.com^"])
