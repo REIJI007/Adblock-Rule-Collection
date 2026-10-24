@@ -365,6 +365,27 @@ def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
 
 def normalize_native_domain_rule(line: str) -> str:
     """Normalize only simple domain-anchored rules; keep all other syntax intact."""
+    # Normalize standalone IPv4 host tokens in native browser lists.
+    # DNS source entries are handled by the DNS adapter and remain excluded from
+    # the browser target because they can represent DNS/CNAME-resolution semantics.
+    bare_ipv4 = re.fullmatch(
+        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
+        line,
+    )
+    if bare_ipv4:
+        try:
+            ip_literal = str(ipaddress.IPv4Address(bare_ipv4.group("ip")))
+        except ipaddress.AddressValueError as error:
+            raise CompilationError(
+                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
+            ) from error
+        return (
+            (bare_ipv4.group("exception") or "")
+            + "||"
+            + ip_literal
+            + "^"
+            + (bare_ipv4.group("tail") or "")
+        )
     match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
         return line
@@ -752,7 +773,7 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         if reason:
             raise CompilationError(reason)
         # Native browser filter rules already use the target rule language.
-        # Only normalize the domain token in simple domain-anchored rules.
+        # Normalize simple domain-anchored rules and standalone IPv4 host tokens.
         return [normalize_native_domain_rule(line)], "native"
 
     if kind == "hosts":
@@ -1651,6 +1672,21 @@ def run_regression_tests() -> None:
           ["example.com##+js(no-such-scriptlet)"])
     check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^")[0],
           ["||37.1.213.100^"])
+    check("bare IPv4 browser rule is normalized to a host-anchored rule",
+          compile_line("adblock", "37.1.213.100")[0],
+          ["||37.1.213.100^"])
+    check("bare IPv4 browser exception is normalized and remains an exception",
+          compile_line("adblock", "@@37.1.213.100")[0],
+          ["@@||37.1.213.100^"])
+    check("bare IPv4 host normalization preserves important modifier",
+          compile_line("adblock", "37.1.213.100$important")[0],
+          ["||37.1.213.100^$important"])
+    try:
+        compile_line("adblock", "999.1.213.100")
+    except CompilationError:
+        tests.append(("invalid dotted-quad IP is rejected", True, True))
+    else:
+        raise AssertionError("invalid IPv4 literals must not be published as raw rules")
     try:
         compile_line("adblock", "||37.1.213.100^$network")
     except CompilationError:
