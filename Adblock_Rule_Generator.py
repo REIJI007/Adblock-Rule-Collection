@@ -59,9 +59,13 @@ HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
 # Explicit overrides for user-added sources whose format cannot be inferred safely.
 # Example: SOURCE_FORMAT_OVERRIDES["https://example.org/domains.txt"] = "domains"
-# Allowed values: adblock, hosts, domains, dns, cname.
+# Use "domains-subtree" only when the source contract says each entry also blocks
+# all subdomains. A bare-domain file alone does not define that policy.
+# Allowed values: adblock, hosts, domains, domains-subtree, dns, cname.
 SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
-SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname", "exclusions"}
+SUPPORTED_SOURCE_KINDS = {
+    "adblock", "hosts", "domains", "domains-subtree", "dns", "cname", "exclusions"
+}
 
 # AdGuard preprocessor conditions are platform-dependent. The output is one
 # target-specific browser filter, not a multi-platform FiltersRegistry build.
@@ -669,12 +673,23 @@ def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str]
     return output, category
 
 def compile_domain_line(line: str) -> str:
-    # Domain-only files may contain inline comments after whitespace.
+    # Domain-only files may contain inline comments after whitespace. Because
+    # bare-domain formats have no universal subdomain-scope standard, this kind
+    # means an exact hostname. Use domains-subtree only when the source contract
+    # explicitly says that an entry includes all descendants.
     candidate = line.split("#", 1)[0].strip()
     hostname = canonical_hostname(candidate, allow_single_label=False)
     if not hostname:
         raise CompilationError(f"not a valid domains-only entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
+
+def compile_domain_subtree_line(line: str) -> str:
+    """Compile a bare domain whose source contract includes all subdomains."""
+    candidate = line.split("#", 1)[0].strip()
+    hostname = canonical_hostname(candidate, allow_single_label=False)
+    if not hostname:
+        raise CompilationError(f"not a valid domain-subtree entry: {candidate!r}")
+    return "||" + hostname + "^"
 
 def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
     line = raw_line.strip()
@@ -699,6 +714,9 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
 
     if kind == "domains":
         return [compile_domain_line(line)], "domains"
+
+    if kind == "domains-subtree":
+        return [compile_domain_subtree_line(line)], "domains-subtree"
 
     if kind == "cname":
         raise CompilationError(
@@ -1405,6 +1423,19 @@ def run_regression_tests() -> None:
         check("explicit override enables a domains-only source", classify_source(override_url), "domains")
     finally:
         del SOURCE_FORMAT_OVERRIDES[override_url]
+    subtree_override_url = "https://example.invalid/domains-subtree.txt"
+    SOURCE_FORMAT_OVERRIDES[subtree_override_url] = "domains-subtree"
+    try:
+        check("explicit override enables a subdomain-aware domains source",
+              classify_source(subtree_override_url), "domains-subtree")
+    finally:
+        del SOURCE_FORMAT_OVERRIDES[subtree_override_url]
+    check("domain-only format defaults to exact-host scope",
+          compile_line("domains", "Example.COM")[0],
+          [r"/^https?:\\/\\/(?:[^\\/?#@]+@)?example\\.com(?::[0-9]+)?(?:[\\/?#]|$)/"])
+    check("subdomain-aware domain format preserves subtree scope",
+          compile_line("domains-subtree", "Example.COM")[0],
+          ["||example.com^"])
     check("baseline localhost mapping is not emitted as an ad block", compile_line("hosts", "127.0.0.1 localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
           compile_line("hosts", "127.0.0.1 localhost ads.example.com")[0],
