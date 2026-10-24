@@ -665,12 +665,14 @@ def run_regression_tests() -> None:
           ["example.com#?#div:has-text(ad)"])
     check("AdGuard Extended CSS :matches-css is preserved", compile_line("adblock", "example.com#?#div:matches-css(width: 1px)")[0],
           ["example.com#?#div:matches-css(width: 1px)"])
-    try:
-        compile_line("adblock", "example.com##+js(no-such-scriptlet)")
-    except CompilationError:
-        tests.append(("uBlock-only scriptlet rejected", True, True))
-    else:
-        raise AssertionError("uBlock-specific scriptlet must not be silently published")
+    check("AdGuard accepts uBO-compatible +js syntax", compile_line("adblock", "example.com##+js(no-such-scriptlet)")[0],
+          ["example.com##+js(no-such-scriptlet)"])
+    check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^$network")[0],
+          ["||37.1.213.100^$network"])
+    check("DNS IPv4 host rules are preserved", compile_line("dns", "||37.1.213.100^")[0],
+          ["||37.1.213.100^"])
+    check("exact-host IPv4 regex compiles", compile_line("dns", "37.1.213.100")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?37\.1\.213\.100(?::[0-9]+)?(?:[\/?#]|$)/"])
     try:
         compile_line("adblock", "||example.com^$dnstype=A")
     except CompilationError:
