@@ -68,6 +68,7 @@ jobs:
           print("Unique compiled rules:", report.get("unique_rule_count"))
           print("Sources skipped because their semantics do not match the browser target:", report.get("sources_skipped_by_target"))
           print("Input lines skipped by target:", report.get("input_lines_skipped_by_target"))
+          print("Rules excluded as known target-incompatible:", report.get("target_excluded_rule_count"))
           print("Source fetch failures:", len(report.get("source_failures", [])))
           print("Unsupported in-scope rules:", report.get("unsupported_count"))
           by_source = collections.Counter(issue.get("source", "") for issue in report.get("unsupported_rules", []))
