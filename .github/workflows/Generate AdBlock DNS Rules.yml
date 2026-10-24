@@ -73,6 +73,7 @@ jobs:
               "client",
               "denyallow",
               "dnstype",
+              "dnsrewrite",
               "important",
           }
 
@@ -201,8 +202,18 @@ jobs:
                       quote = char
                       current.append(char)
                   elif char == separator:
-                      parts.append("".join(current).strip())
-                      current = []
+                      # A dollar sign inside a slash-delimited regex is part of the
+                      # pattern, not the modifier delimiter.
+                      if (
+                          separator == "$"
+                          and current
+                          and current[0] == "/"
+                          and "".join(current).rfind("/") == 0
+                      ):
+                          current.append(char)
+                      else:
+                          parts.append("".join(current).strip())
+                          current = []
                   else:
                       current.append(char)
 
@@ -272,6 +283,64 @@ jobs:
               return value, None
 
 
+          def validate_dnsrewrite_value(value: str):
+              # Preserve supported AdGuard DNS response-rewrite forms verbatim.
+              # Unknown/malformed payloads are skipped rather than silently changed.
+              if not value or value != value.strip():
+                  return None, "invalid dnsrewrite value"
+              if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                  return None, "control character in dnsrewrite value"
+
+              try:
+                  address = ipaddress.ip_address(value)
+                  return str(address), None
+              except ValueError:
+                  pass
+
+              if value in {"NOERROR", "NXDOMAIN", "REFUSED", "SERVFAIL", "FORMERR"}:
+                  return value, None
+
+              fields = value.split(";")
+              if len(fields) != 3:
+                  domain = canonical_domain(value.rstrip("."))
+                  if domain:
+                      return domain, None
+                  return None, "unsupported dnsrewrite shorthand"
+
+              rcode, rrtype, payload = fields
+              allowed_rcodes = {
+                  "NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN",
+                  "NOTIMP", "REFUSED", "YXDOMAIN", "YXRRSET",
+                  "NXRRSET", "NOTAUTH", "NOTZONE",
+              }
+              if rcode not in allowed_rcodes:
+                  return None, f"unsupported dnsrewrite response code: {rcode}"
+              if rcode != "NOERROR":
+                  if rrtype or payload:
+                      return None, "non-NOERROR dnsrewrite must have empty RR type and value"
+                  return value, None
+              if not rrtype and not payload:
+                  return value, None
+              if rrtype not in DNS_TYPES:
+                  return None, f"unsupported dnsrewrite RR type: {rrtype}"
+              if rrtype in {"A", "AAAA"}:
+                  try:
+                      address = ipaddress.ip_address(payload)
+                  except ValueError:
+                      return None, f"invalid dnsrewrite IP address: {payload}"
+                  if (rrtype == "A" and address.version != 4) or (rrtype == "AAAA" and address.version != 6):
+                      return None, f"dnsrewrite address family does not match {rrtype}"
+                  payload = str(address)
+              elif rrtype in {"CNAME", "NS", "PTR"}:
+                  domain = canonical_domain(payload.rstrip("."))
+                  if not domain:
+                      return None, f"invalid dnsrewrite domain: {payload}"
+                  payload = domain
+              elif not payload and rrtype not in {"TXT", "MX", "SRV", "HTTPS", "SVCB", "PTR"}:
+                  return None, f"empty dnsrewrite payload for {rrtype}"
+              return f"{rcode};{rrtype};{payload}", None
+
+
           def parse_modifiers(modifier_text: str):
               # Only accept modifiers with defined DNS semantics. Unknown modifiers are
               # rejected instead of being stripped, which could broaden block/allow scope.
@@ -317,6 +386,8 @@ jobs:
                       parsed_value, error = parse_denyallow_value(value)
                   elif key == "client":
                       parsed_value, error = validate_client_value(value)
+                  elif key == "dnsrewrite":
+                      parsed_value, error = validate_dnsrewrite_value(value)
                   else:
                       return None, f"unsupported modifier: {key}"
 
@@ -363,7 +434,24 @@ jobs:
               domain_pattern = None
               exact_anchor = False
 
-              if pattern.startswith("||") and pattern.endswith("^"):
+              # A bare hostname blocks only that hostname; normalize to its exact-host
+              # equivalent so it retains the original matching scope.
+              if not pattern.startswith(("/", "|")) and "*" not in pattern:
+                  bare_domain = canonical_domain(pattern)
+                  if bare_domain:
+                      normalized = f"{allow_prefix}|{bare_domain}^"
+                      if modifier_text is not None:
+                          normalized_modifiers, error = parse_modifiers(modifier_text)
+                          if error:
+                              return None, error
+                          normalized += "$" + normalized_modifiers
+                      return normalized, None
+
+              if (
+                  pattern.startswith("||")
+                  and pattern.endswith("^")
+                  and "*" not in pattern[2:-1]
+              ):
                   # 标准形式：匹配域名及其全部子域名
                   domain_pattern = pattern[2:-1]
 
@@ -377,8 +465,40 @@ jobs:
                   domain_pattern = pattern[1:-1]
                   exact_anchor = True
 
+              elif pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
+                  # AdGuard DNS supports regex hostname masks. Invalid regexes are skipped.
+                  try:
+                      re.compile(pattern[1:-1])
+                  except re.error:
+                      return None, "invalid regular-expression pattern"
+                  normalized = allow_prefix + pattern
+                  if modifier_text is not None:
+                      normalized_modifiers, error = parse_modifiers(modifier_text)
+                      if error:
+                          return None, error
+                      normalized += "$" + normalized_modifiers
+                  return normalized, None
+
+              elif pattern.startswith("||") and pattern.endswith("^") and "*" in pattern[2:-1]:
+                  # Preserve wildcard hostname masks supported by AdGuard DNS.
+                  wildcard_domain = pattern[2:-1].lower()
+                  if not re.fullmatch(r"[a-z0-9*.-]+", wildcard_domain):
+                      return None, "unsupported wildcard hostname pattern"
+                  labels = wildcard_domain.split(".")
+                  if any(not label or label.startswith("-") or label.endswith("-") for label in labels):
+                      return None, "invalid wildcard hostname label"
+                  if len(wildcard_domain) > 253 or any(len(label) > 63 for label in labels):
+                      return None, "wildcard hostname exceeds DNS length limits"
+                  normalized = allow_prefix + "||" + wildcard_domain + "^"
+                  if modifier_text is not None:
+                      normalized_modifiers, error = parse_modifiers(modifier_text)
+                      if error:
+                          return None, error
+                      normalized += "$" + normalized_modifiers
+                  return normalized, None
+
               else:
-                  return None, "pattern is not a supported canonical DNS hostname rule"
+                  return None, "pattern is not a supported AdGuard DNS hostname rule"
 
               # 主机名部分不得含任何特殊语法字符
               if (
@@ -796,6 +916,17 @@ jobs:
                       "@@||example.org^$important",
                       "@@||example.org^$important",
                   ),
+                  ("example.org", "|example.org^"),
+                  (
+                      "||example.org^$dnsrewrite=NOERROR;A;192.0.2.1",
+                      "||example.org^$dnsrewrite=NOERROR;A;192.0.2.1",
+                  ),
+                  (
+                      "||example.org^$dnsrewrite=2001:db8::1",
+                      "||example.org^$dnsrewrite=2001:db8::1",
+                  ),
+                  ("/(^|\\.)example\\.org$/", "/(^|\\.)example\\.org$/"),
+                  ("||*.example.org^", "||*.example.org^"),
               ]
 
               for source_rule, expected in cases:
