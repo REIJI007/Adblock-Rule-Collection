@@ -1233,9 +1233,9 @@ def run_regression_tests() -> None:
         raise AssertionError("DNS-only modifiers must not be silently published as browser rules")
     configured_sources = build_sources(urls)
     check("all configured upstreams have an explicit format family", len(configured_sources), len(urls))
-    check("manifest covers the four required input families",
+    check("manifest covers the required input and metadata families",
           sorted({source.kind for source in configured_sources}),
-          ["adblock", "cname", "dns", "hosts"])
+          ["adblock", "cname", "dns", "exclusions", "hosts"])
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
