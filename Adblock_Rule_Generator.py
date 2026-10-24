@@ -40,6 +40,10 @@ VALID_HASH_RULE_PREFIXES = (
     "##", "#@#", "#$#", "#$@#", "#?#", "#@?#", "#%#", "#@%#",
 )
 COMMENT_PREFIXES = ("!",)
+FILTER_DIRECTIVE_RE = re.compile(
+    r"^!#(?:if|else|endif|include|safari_cb_affinity|pragma)\b",
+    re.IGNORECASE,
+)
 # These hostnames are system loopback aliases, not advertising/tracker hosts.
 # A hosts blocklist often carries these default mappings for compatibility.
 SYSTEM_HOST_ALIASES = {
@@ -457,6 +461,11 @@ def compile_domain_line(line: str) -> str:
 
 def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
     line = raw_line.strip()
+    if FILTER_DIRECTIVE_RE.match(line):
+        raise CompilationError(
+            "filter preprocessor directive must be evaluated or expanded before compilation; "
+            "it cannot be silently discarded"
+        )
     if is_comment_or_header(line):
         return [], "comment"
 
@@ -682,6 +691,12 @@ def run_regression_tests() -> None:
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
           ["example.com##.ad"])
     check("comments are not emitted", compile_line("adblock", "! comment")[0], [])
+    try:
+        compile_line("adblock", "!#if ext_ublock")
+    except CompilationError:
+        tests.append(("filter preprocessor directives are not silently dropped", True, True))
+    else:
+        raise AssertionError("filter preprocessor directives must be evaluated or reported")
     try:
         compile_line("hosts", "192.0.2.10 ads.example.com")
     except CompilationError:
