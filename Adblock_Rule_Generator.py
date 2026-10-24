@@ -215,6 +215,7 @@ def classify_source(url: str) -> str:
         if (
             "/data/microsites/" in path
             or "/data/combined_original_trackers" in path
+            or "/data/combined_disguised_microsites" in path
         ):
             return "cname"
         if path.endswith("_justdomains.txt"):
@@ -231,8 +232,12 @@ def classify_source(url: str) -> str:
             return "adblock"
 
     if "adguardteam/cname-trackers/" in lowered:
-        if "/data/combined_original_trackers.txt" in path:
-            # This specific list is for CNAME-chain-aware scanners.
+        # Original trackers and microsites require DNS/CNAME-aware inspection,
+        # including their justdomains variants.
+        if (
+            "/data/combined_original_trackers" in path
+            or "/data/combined_disguised_microsites" in path
+        ):
             return "cname"
         if path.endswith("_justdomains.txt"):
             return "domains"
@@ -1444,6 +1449,12 @@ def run_regression_tests() -> None:
     check("CNAME justdomains feeds use the domain-list adapter",
           classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt"),
           "domains")
+    check("original CNAME tracker justdomains remains DNS-aware",
+          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers_justdomains.txt"),
+          "cname")
+    check("disguised microsite list requires DNS-aware inspection",
+          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites.txt"),
+          "cname")
     check("CNAME microsite lists retain DNS-aware semantics",
           classify_source("https://adguardteam.github.io/cname-trackers/data/microsites/example.txt"),
           "cname")
