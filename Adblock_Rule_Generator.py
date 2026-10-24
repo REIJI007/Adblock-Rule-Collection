@@ -369,7 +369,7 @@ def normalize_native_domain_rule(line: str) -> str:
     # standard AdGuard host-anchored form. DNS-format bare IPs are handled by
     # the DNS adapter instead and are never sent through this function.
     bare_ipv4 = re.fullmatch(
-        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\\.){3}[0-9]{1,3})(?P<tail>\\$.*)?",
+        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
         line,
     )
     if bare_ipv4:
