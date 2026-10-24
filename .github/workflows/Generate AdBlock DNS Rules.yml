@@ -964,7 +964,7 @@ jobs:
                       )
 
               # Public DNS artifacts must not include single-label or localhost names.
-              for local_rule in ("|localhost^", "||service.localhost^"):
+              for local_rule in ("|localhost^", "||service.localhost^", "||*.localhost^", "||*^"):
                   _, error = parse_adguard_dns_rule(local_rule)
                   if not error:
                       raise RuntimeError(
