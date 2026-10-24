@@ -29,6 +29,7 @@ jobs:
           import datetime
           import pytz
           import re
+          import textwrap
 
           dns_domain_regex = re.compile(
               r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$'
@@ -68,7 +69,7 @@ jobs:
 
                   # Only unconditional domain exceptions can safely be applied
                   # to a DNS-wide list. Exceptions with modifiers (for example,
-                  # $script) are resource-specific and are intentionally ignored.
+                  # # $script) are resource-specific and are intentionally ignored.
                   exception_match = re.fullmatch(
                       r'@@\|\|([a-z0-9.-]+)\^',
                       line
@@ -186,15 +187,15 @@ jobs:
               tz = pytz.timezone('Asia/Shanghai')
               timestamp = datetime.datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S')
 
-              header = f"""
-          #Title: {title}
-          #Description: 一个汇总了多个广告过滤器过滤规则的拦截域名列表，每20分钟更新一次，确保即时同步上游减少误杀
-          #Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
-          #LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
-          #LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-          #生成时间: {timestamp}
-          #有效域名数目: {len(domains)}
-          """
+              # 使用 textwrap.dedent 去除多行字符串的缩进和前导空白
+              header = textwrap.dedent(f"""\
+              #Title: {title}
+              #Description: 一个汇总了多个广告过滤器过滤规则的拦截域名列表，每20分钟更新一次，确保即时同步上游减少误杀
+              #Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
+              #LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
+              #LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
+              #生成时间: {timestamp}
+              #有效域名数目: {len(domains)}""")
 
               with open(output_file, 'w', encoding='utf-8') as f:
                   f.write(header + '\n')
