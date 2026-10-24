@@ -33,6 +33,7 @@ jobs:
           import ipaddress
           import re
           from pathlib import Path
+          from datetime import datetime, timezone, timedelta
 
           SOURCES = [
               ("ADBLOCK_RULE_COLLECTION.txt",
@@ -142,6 +143,9 @@ jobs:
 
               return sorted(blocked)
 
+          # 获取东八区（UTC+8）当前时间
+          beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
+
           for source_name, output_name in SOURCES:
               source = Path(source_name)
               if not source.is_file():
@@ -151,10 +155,13 @@ jobs:
               output = Path(output_name)
 
               header = [
-                  "# Generated automatically by GitHub Actions.",
-                  "# IPv6 Hosts format: :: domain",
-                  "# Only plain ||domain^ rules are supported.",
-                  "# Exception rules are applied before output.",
+                  "#Title: Adblock-Rule-Collection-Host-IPV6",
+                  "#Description: 一个汇总了多个广告过滤器过滤规则的Host文件，每20分钟更新一次，确保即时同步上游减少误杀",
+                  "#Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
+                  "#LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0",
+                  "#LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0",
+                  f"#Generated: {beijing_time}",
+                  f"#RuleCount: {len(domains)}",
                   "",
               ]
 
