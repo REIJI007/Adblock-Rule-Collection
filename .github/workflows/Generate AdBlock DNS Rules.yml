@@ -345,15 +345,15 @@ jobs:
               if body.startswith("@@"):
                   return None, "misplaced exception marker"
 
-              if body.count("$") > 1:
+              # Split on unquoted "$" delimiters, because a quoted client name may contain "$".
+              parts, split_error = split_outside_quotes(body, "$")
+              if split_error:
+                  return None, split_error
+              if len(parts) > 2:
                   return None, "multiple modifier delimiters"
 
-              # 拆分 模式 与 修饰符
-              if "$" in body:
-                  pattern, _, modifier_text = body.partition("$")
-              else:
-                  pattern = body
-                  modifier_text = None
+              pattern = parts[0]
+              modifier_text = parts[1] if len(parts) == 2 else None
 
               domain_pattern = None
               exact_anchor = False
@@ -460,11 +460,13 @@ jobs:
 
           def extract_badfilter(candidate: str):
               # Detect and strip $badfilter while preserving the target rule's other modifiers.
-              # Split commas outside quotes so a client name containing a comma is not corrupted.
-              if candidate.count("$") != 1:
+              # Split delimiters outside quotes so a client name may safely contain commas or "$".
+              body = candidate[2:] if candidate.startswith("@@") else candidate
+              parts, split_error = split_outside_quotes(body, "$")
+              if split_error or len(parts) != 2:
                   return False, candidate
 
-              pattern, _, modifier_text = candidate.partition("$")
+              pattern, modifier_text = parts
               tokens, split_error = split_outside_quotes(modifier_text, ",")
               if split_error:
                   return False, candidate
@@ -781,8 +783,12 @@ jobs:
                       "||example.org^$dnstype=A|AAAA,important",
                   ),
                   (
-                      "||example.org^$client='Home, TV'",
-                      "||example.org^$client='Home, TV'",
+                      "||example.org^$client='Home, $ TV'",
+                      "||example.org^$client='Home, $ TV'",
+                  ),
+                  (
+                      "@@||example.org^$important",
+                      "@@||example.org^$important",
                   ),
               ]
 
