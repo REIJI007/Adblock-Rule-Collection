@@ -373,12 +373,15 @@ def normalize_native_domain_rule(line: str) -> str:
         line,
     )
     if bare_ipv4:
-        try:
-            ip_literal = str(ipaddress.IPv4Address(bare_ipv4.group("ip")))
-        except ipaddress.AddressValueError as error:
+        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
+        if any(octet > 255 for octet in octets):
             raise CompilationError(
                 f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
-            ) from error
+            )
+        # Some upstream blocklists pad IPv4 octets with leading zeroes.
+        # Interpret these source tokens as decimal octets and emit the canonical
+        # dotted-decimal form, so equivalent addresses deduplicate consistently.
+        ip_literal = ".".join(str(octet) for octet in octets)
         return (
             (bare_ipv4.group("exception") or "")
             + "||"
@@ -1681,6 +1684,12 @@ def run_regression_tests() -> None:
     check("bare IPv4 host normalization preserves important modifier",
           compile_line("adblock", "37.1.213.100$important")[0],
           ["||37.1.213.100^$important"])
+    check("leading-zero IPv4 octets normalize to canonical decimal form",
+          compile_line("adblock", "120.229.26.013")[0],
+          ["||120.229.26.13^"])
+    check("multi-zero IPv4 octet normalizes to canonical decimal form",
+          compile_line("adblock", "81.183.41.001")[0],
+          ["||81.183.41.1^"])
     try:
         compile_line("adblock", "999.1.213.100")
     except CompilationError:
