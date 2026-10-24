@@ -71,8 +71,8 @@ KNOWN_CONDITION_FLAGS = {
     "adguard_ext_chromium", "adguard_ext_chromium_mv3", "adguard_ext_firefox",
     "adguard_ext_edge", "adguard_ext_edge_mv3", "adguard_ext_opera",
     "adguard_ext_opera_mv3", "adguard_ext_android_cb", "ext_ublock",
-    "ext_ubol", "ext_abp", "env_mobile", "env_safari", "env_chromium",
-    "env_firefox", "env_edge", "env_mv3", "cap_html_filtering",
+    "ext_ubol", "ext_abp", "ext_safari", "env_mobile", "env_safari", "env_chromium",
+    "env_firefox", "env_edge", "env_mv3", "cap_html_filtering", "cap_ipaddress",
 }
 TARGET_PROFILES = {
     # chromium means the AdGuard Chromium MV2 profile; use chromium-mv3 for MV3.
@@ -794,6 +794,12 @@ def evaluate_filter_condition(expression: str, flags: dict[str, bool]) -> bool:
             return result
         if token in {"&&", "||", ")"}:
             raise CompilationError(f"unexpected operator {token!r} in filter condition")
+        if token.lower() == "true":
+            index += 1
+            return True
+        if token.lower() == "false":
+            index += 1
+            return False
         if token not in flags:
             raise CompilationError(f"unknown AdGuard preprocessor flag: {token}")
         index += 1
@@ -1280,6 +1286,9 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("adguard_ext_chromium_mv3 && !adguard_ext_chromium", target_condition_flags("chromium-mv3")), True)
     check("uBlock-only conditions are false for AdGuard output",
           evaluate_filter_condition("ext_ublock || ext_ubol || ext_abp", target_condition_flags("chromium-mv3")), False)
+    check("literal false preprocessor condition is evaluated", evaluate_filter_condition("false", target_condition_flags("chromium-mv3")), False)
+    check("unsupported capability flag is false for AdGuard output", evaluate_filter_condition("cap_ipaddress", target_condition_flags("chromium-mv3")), False)
+    check("Safari-only flag is false for Chromium MV3", evaluate_filter_condition("ext_safari", target_condition_flags("chromium-mv3")), False)
     check("Chromium environment condition is true",
           evaluate_filter_condition("env_chromium && !env_mobile", target_condition_flags("chromium-mv3")), True)
     check("Chromium preprocessor excludes Safari-only rules",
