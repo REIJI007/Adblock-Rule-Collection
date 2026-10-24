@@ -184,11 +184,6 @@ def classify_source(url: str) -> str:
     path = parsed.path.lower()
     basename = path.rsplit("/", 1)[-1]
 
-    # The *justdomains convention denotes a domain-only feed. Unlike native
-    # Adblock rules, each bare entry needs the domain-list adapter.
-    if basename.endswith("_justdomains.txt"):
-        return "domains"
-
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
 
@@ -243,6 +238,11 @@ def classify_source(url: str) -> str:
             return "domains"
         # The combined_disguised_* files with Adblock syntax remain native rules.
         return "adblock"
+
+    # Outside the CNAME project special cases, the *justdomains naming convention
+    # denotes a domain-only feed rather than native Adblock syntax.
+    if basename.endswith("_justdomains.txt"):
+        return "domains"
 
     # Known raw GitHub repositories that publish browser Adblock-compatible rules.
     raw_repo = ""
