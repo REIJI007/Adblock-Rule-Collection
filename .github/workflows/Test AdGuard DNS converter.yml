@@ -1,0 +1,38 @@
+name: Test AdGuard DNS converter
+
+on:
+  pull_request:
+    paths:
+      - ".github/scripts/adguard_dns_converter.py"
+      - "tests/**"
+      - ".github/workflows/Test AdGuard DNS converter.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/scripts/adguard_dns_converter.py"
+      - "tests/**"
+      - ".github/workflows/Test AdGuard DNS converter.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Compile Python files
+        run: python -m py_compile .github/scripts/adguard_dns_converter.py tests/test_adguard_dns_converter.py
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
