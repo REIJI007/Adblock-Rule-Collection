@@ -190,8 +190,8 @@ jobs:
           """
 
               with open(output_file, 'w', encoding='utf-8') as f:
-                  f.write(header + '\\n')
-                  f.write('\\n'.join(domains) + '\\n')
+                  f.write(header + '\n')
+                  f.write('\n'.join(domains) + '\n')
 
               print(f"Processed {input_file}. Total domains: {len(domains)}")
 
