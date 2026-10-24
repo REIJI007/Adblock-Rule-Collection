@@ -356,6 +356,11 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         return [compile_domain_line(line)], "domains"
 
     if kind == "dns":
+        # DNS/domain-list formats permit inline comments after whitespace. A
+        # hostname cannot legally contain '#', so removing this suffix is safe.
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            return [], "comment"
         # DNS lists can contain either Adblock-style host rules or hosts entries.
         first = line.split(None, 1)[0] if line else ""
         try:
@@ -507,6 +512,8 @@ def run_regression_tests() -> None:
           ["||ads.example.com^"])
     check("DNS exception preserves exception", compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||ads.example.com^"])
+    check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
