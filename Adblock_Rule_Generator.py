@@ -1257,6 +1257,17 @@ def run_regression_tests() -> None:
         tests.append((name, actual, expected))
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
+    exclusion_matchers = parse_hostlist_exclusion_patterns(
+        "! comment\\n||excluded.example^\\n*track*\\n/^https?:\\/\\/ads\\.example\\//\\n"
+    )
+    check("plain exclusion uses case-sensitive substring semantics",
+          exclusion_matchers[0].matches("||excluded.example^"), True)
+    check("wildcard exclusion matches a whole rule case-insensitively",
+          exclusion_matchers[1].matches("||TRACK.example^"), True)
+    check("regex exclusion is searched case-insensitively",
+          exclusion_matchers[2].matches("||ads.example^"), True)
+    check("exclusion patterns do not match unrelated rules",
+          any(pattern.matches("||safe.example^") for pattern in exclusion_matchers), False)
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
@@ -1430,7 +1441,31 @@ def main() -> int:
 
     # Deterministic processing order, independent of network completion order.
     fetched.sort(key=lambda item: sources.index(item[0]))
-    state = compile_fetched_sources(fetched, args.target)
+
+    source_exclusions: dict[str, list[ExclusionMatcher]] = {}
+    metadata_pattern_counts: dict[str, int] = {}
+    metadata_config_url: str | None = None
+    try:
+        (
+            source_exclusions,
+            metadata_pattern_counts,
+            metadata_config_url,
+        ) = load_adguard_dns_exclusion_map(fetched)
+    except CompilationError as error:
+        source_failures.append({
+            "url": ADGUARD_SDNS_CONFIGURATION_URL,
+            "format": "source-metadata",
+            "error": str(error),
+        })
+        print(f"[METADATA FAILED] {ADGUARD_SDNS_CONFIGURATION_URL}: {error}", file=sys.stderr)
+
+    state = compile_fetched_sources(
+        fetched,
+        args.target,
+        source_exclusions=source_exclusions,
+        metadata_pattern_counts=metadata_pattern_counts,
+        metadata_config_url=metadata_config_url,
+    )
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
     report = build_report(state, source_failures=source_failures, output_path=args.output, target=args.target)
     report_path = Path(args.report)
