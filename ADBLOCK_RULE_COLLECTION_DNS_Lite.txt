@@ -3,18 +3,9 @@
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0
 !LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0
-!Generated: 2026-10-25 02:49:01 +08
-!RuleCount: 675984
+!Generated: 2026-10-25 03:06:03 +08
+!RuleCount: 675971
 
-/99rejs/
-/Adloader/
-/[a-z]+\d+\.cnzz\./
-/^(?:\w+\.)*minepi\.com$/
-/^(a|c)\.[0-9a-f]{56}\.com$/
-/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/
-/^anon1.gt\d{6}.com$/
-/community-ad/
-@@|livemsg^
 @@||17173im.allyes.com^
 @@||aboluowang.com^
 @@||ad-gone.com^
@@ -197,9 +188,6 @@
 @@||zhengjian.org^
 @@||zhengwunet.org^
 @@||zhuichaguoji.org^
-|banner468x60^
-|mrelatefeedad^
-|follow-it-form-subscribe^
 |a.klaviyo.com^
 ||*-datareceiver.aki-game.net^
 ||*-default-cn.rum.aliyuncs.com^
@@ -366828,7 +366816,6 @@
 ||epnzpngg4glry616j55wn13cxo7cq.cfd^
 ||epo03.learn.tt.omtrdc.net^
 ||epo28a.tt.tt.omtrdc.net^
-||epochtimes^
 ||epoie.tt.tt.omtrdc.net^
 ||epoisejobs.epoise.com^
 ||epoisepreptest.epoise.com^

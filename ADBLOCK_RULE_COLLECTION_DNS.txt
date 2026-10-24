@@ -3,18 +3,9 @@
 !Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 !LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0
 !LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0
-!Generated: 2026-10-25 02:48:18 +08
-!RuleCount: 711666
+!Generated: 2026-10-25 03:05:21 +08
+!RuleCount: 711654
 
-/99rejs/
-/Adloader/
-/[a-z]+\d+\.cnzz\./
-/^(?:\w+\.)*minepi\.com$/
-/^(a|c)\.[0-9a-f]{56}\.com$/
-/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/
-/^anon1.gt\d{6}.com$/
-/community-ad/
-|localhost^
 |0ce3c-1fd43.api.pushwoosh.com^
 |100016075.collect.igodigital.com^
 |10870841.collect.igodigital.com^
@@ -6555,7 +6546,6 @@
 |zplayer.trk.zapps.vn^
 |zucks.net^
 |zzhc.vnet.cn^
-@@|livemsg^
 @@||17173im.allyes.com^
 @@||aboluowang.com^
 @@||ad-gone.com^
@@ -6739,9 +6729,6 @@
 @@||zhengjian.org^
 @@||zhengwunet.org^
 @@||zhuichaguoji.org^
-|banner468x60^
-|mrelatefeedad^
-|follow-it-form-subscribe^
 |verify-att.app^
 ||*-datareceiver.aki-game.net^
 ||*-default-cn.rum.aliyuncs.com^
@@ -104252,6 +104239,7 @@
 ||cnebis.i-no-science.com^
 ||cnect.heggerty.org^
 ||cnectinfo.cnectgpo.com^
+||cnejpkmvsjvft.com^
 ||cnesnnavxumlh.online^
 ||cnetcontentsolutions.com^
 ||cnethvmomtnsh.site^
@@ -383753,7 +383741,6 @@
 ||epnzpngg4glry616j55wn13cxo7cq.cfd^
 ||epo03.learn.tt.omtrdc.net^
 ||epo28a.tt.tt.omtrdc.net^
-||epochtimes^
 ||epodatelna.webflow.io^
 ||epoie.tt.tt.omtrdc.net^
 ||epoisejobs.epoise.com^
@@ -534950,6 +534937,7 @@
 ||mvvpk.particleformen.com^
 ||mvvtyyqmpm.com^
 ||mvwz12g.ck28b4tzqbbgw1.cfd^
+||mvwzqtwvkhgei.site^
 ||mvxrsxfzhccyb.space^
 ||mvxyznqkzzeiq.space^
 ||mvybmqfdkezml.site^
@@ -574081,6 +574069,7 @@
 ||rcvverry111pagee.start.page^
 ||rcweb-domain.firebaseapp.com^
 ||rcwgoidugaljp.site^
+||rcwjxhashhfyg.online^
 ||rcwn0i.webwave.dev^
 ||rcxbznsriheku.website^
 ||rcxltnjszmheg.space^
@@ -711671,4 +711660,3 @@
 ||zzzoraclecloudsupportp01e10-app-hs.eloquademos.com^
 ||zzzoraclecloudsupportp02e10-app-hs.eloquademos.com^
 ||zzzoraclecloudsupportp07e10-img-enh-cdn.eloquademos.com^
-|xn--qda^
