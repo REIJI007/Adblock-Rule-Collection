@@ -36,6 +36,7 @@ class AdGuardDnsConversionTests(unittest.TestCase):
             ("|Example.COM^", "|example.com^"),
             ("@@|Example.COM^", "@@|example.com^"),
             ("||*.Example.org^", "||*.example.org^"),
+            ("||foo-*.example.org^", "||foo-*.example.org^"),
             ("example.org", "example.org"),
             # A bare IP has a documented DNS-filter meaning; an anchored IP does not.
             ("192.0.2.1", "192.0.2.1"),
@@ -81,6 +82,10 @@ class AdGuardDnsConversionTests(unittest.TestCase):
             "||example.org^$dnstype=AAAA",
         )
         self.assert_rule(
+            "||example.org^$denyallow=example.net|example.net",
+            "||example.org^$denyallow=example.net",
+        )
+        self.assert_rule(
             "||example.org^$important,dnstype=AAAA|A",
             "||example.org^$dnstype=A|AAAA,important",
         )
@@ -99,6 +104,8 @@ class AdGuardDnsConversionTests(unittest.TestCase):
             '||example.org^$dnsrewrite=NOERROR;CAA;0 issue "ca.example"',
             r"/example(?=\.org)/",
             "||192.0.2.1^",
+            "||-invalid.example.org^",
+            "||invalid-.example.org^",
         ):
             with self.subTest(source=source):
                 self.assert_rejected(source)
