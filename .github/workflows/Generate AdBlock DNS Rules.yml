@@ -404,6 +404,93 @@ jobs:
               return ",".join(result), None
 
 
+          def validate_hostname_regex(pattern: str):
+              # AdGuard DNS regexes are evaluated against the queried hostname,
+              # never against a browser URL, request path, or IP:port string.
+              if not pattern.startswith("/") or not pattern.endswith("/") or len(pattern) <= 2:
+                  return "malformed hostname regular expression"
+
+              expression = pattern[1:-1]
+
+              try:
+                  re.compile(expression)
+              except re.error:
+                  return "invalid regular-expression pattern"
+
+              # A slash escaped for another filter-list format is evidence that
+              # this is a URL/path rule rather than a hostname rule.
+              if r"\/" in expression:
+                  return "URL/path separator in regex; DNS rules match hostnames only"
+
+              # These characters cannot occur in a DNS hostname. Their presence
+              # usually means the source regex targets URLs or Adblock syntax.
+              if any(char in expression for char in ("!", "#", "_")):
+                  return "regex contains characters outside DNS hostname syntax"
+
+              # Only permit escapes useful for hostname regexes. Escaped pipes,
+              # carets, question marks, dollars, and other punctuation often mean
+              # the source is matching an Adblock rule or a URL rather than a host.
+              for match in re.finditer(r"\\(.)", expression):
+                  escaped = match.group(1)
+                  if escaped in "dDsSwWbBAZzG":
+                      continue
+                  if escaped in ".-":
+                      continue
+                  return "unsupported escaped literal for a DNS hostname regex"
+
+              # Colons are not hostname characters. Remove regex group syntax
+              # (e.g. (?:...), (?=...), (?<=...)) before checking for literal
+              # colons, so syntax delimiters are not mistaken for matched text.
+              without_group_syntax = re.sub(
+                  r"\(\?(?:[:=!]|<[=!])",
+                  "",
+                  expression,
+              )
+              without_group_syntax = re.sub(
+                  r"\(\?[aiLmsux-]+:",
+                  "",
+                  without_group_syntax,
+              )
+              if ":" in without_group_syntax:
+                  return "colon in regex; IP:port and URL patterns are not DNS hostname rules"
+
+              # Reject expressions that contain no alphabetic hostname evidence.
+              # This filters IP-address/range regexes (e.g. ^139\.45\.197\.\d+)
+              # while allowing domain regexes that express letters using classes
+              # such as [a-z] or [0-9a-f].
+              has_alpha_character_class = False
+              character_classes = re.findall(
+                  r"\[(?:\\.|[^\\\]])*\]",
+                  expression,
+              )
+              for character_class in character_classes:
+                  class_body = character_class[1:-1]
+                  class_body = re.sub(r"\\[dDsSwWbBAZzG]", "", class_body)
+                  class_body = re.sub(r"\\.", "", class_body)
+                  if re.search(r"[A-Za-z]", class_body):
+                      has_alpha_character_class = True
+                      break
+
+              probe = re.sub(
+                  r"\[(?:\\.|[^\\\]])*\]",
+                  "",
+                  expression,
+              )
+              probe = re.sub(r"\\[dDsSwWbBAZzG]", "", probe)
+              probe = re.sub(r"\\.", "", probe)
+              probe = re.sub(r"\(\?[aiLmsux-]+:?", "", probe)
+              probe = re.sub(r"[\^\$\.\*\+\?\{\}\(\)\|]", "", probe)
+              has_literal_alpha = re.search(r"[A-Za-z]", probe) is not None
+
+              if not has_alpha_character_class and not has_literal_alpha:
+                  return (
+                      "regex has no alphabetic hostname evidence; "
+                      "likely an IP/address or non-host rule"
+                  )
+
+              return None
+
+
           def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
               # Parse supported AdGuard DNS rules without widening their hostname scope.
               # ||domain^ covers the domain and subdomains; |domain^ covers only that host.
@@ -466,11 +553,12 @@ jobs:
                   exact_anchor = True
 
               elif pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
-                  # AdGuard DNS supports regex hostname masks. Invalid regexes are skipped.
-                  try:
-                      re.compile(pattern[1:-1])
-                  except re.error:
-                      return None, "invalid regular-expression pattern"
+                  # AdGuard DNS regex masks match hostnames only. A successful
+                  # Python compile is not enough: URL/path, IP:port, and regexes
+                  # that target Adblock syntax must be rejected.
+                  regex_error = validate_hostname_regex(pattern)
+                  if regex_error:
+                      return None, regex_error
                   normalized = allow_prefix + pattern
                   if modifier_text is not None:
                       normalized_modifiers, error = parse_modifiers(modifier_text)
@@ -953,6 +1041,87 @@ jobs:
               has_badfilter, target = extract_badfilter("@@||example.org^$badfilter")
               if not has_badfilter or target != "@@||example.org^":
                   raise RuntimeError("Semantic self-test failed: exception badfilter target extraction")
+
+              # These are valid hostname-oriented regexes and must remain supported.
+              valid_hostname_regexes = [
+                  r"/^(?:\w+\.)*minepi\.com$/",
+                  r"/^(a|c)\.[0-9a-f]{56}\.com$/",
+                  r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/",
+                  r"/[a-z]+\d+\.cnzz\./",
+                  r"/99rejs/",
+                  r"/Adloader/",
+                  r"/^anon1.gt\d{6}.com$/",
+              ]
+              for source_rule in valid_hostname_regexes:
+                  actual, error = parse_adguard_dns_rule(source_rule)
+                  if error or actual != source_rule:
+                      raise RuntimeError(
+                          "Semantic self-test failed: valid hostname regex was rejected: "
+                          f"{source_rule!r}; error={error!r}"
+                      )
+
+              # These patterns are sourced from URL, path, IP-range, port, or
+              # Adblock-syntax matching. They must not enter a DNS hostname list.
+              rejected_non_hostname_regexes = [
+                  r"/(?::\/\/i1\.hoopchina\.com\.cn\/blogfile\/.+_\d{3}x\d{4})/",
+                  r"/(?:^\|\|?|^)(10\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(127\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(172\.(?:1[6-9]|2[0-9]|3[0-1])\.[\d\.*]+)\|{0,1}$/",
+                  r"/(?:^\|\|?|^)(192\.168\.?[\d\.*]+)\|{0,1}$/",
+                  r"/(https?:\/\/)104\.154\..{100,}/",
+                  r"/(https?:\/\/)104\.197\..{100,}/",
+                  r"/(https?:\/\/)104\.198\..{100,}/",
+                  r"/(https?:\/\/)130\.211\..{100,}/",
+                  r"/(https?:\/\/)142\.91\.159\..{100,}/",
+                  r"/(https?:\/\/)213\.32\.115\..{100,}/",
+                  r"/(https?:\/\/)216\.21\..{100,}/",
+                  r"/(https?:\/\/)217\.182\.11\..{100,}/",
+                  r"/(https?:\/\/)51\.195\.31\..{100,}/",
+                  r"/193.200.64.24:/",
+                  r"/62.76.25.2(7|8)/",
+                  r"/^!#/",
+                  r"/^139\.45\.197\.2(4[0-9]|5[0-4])/",
+                  r"/^139\.45\.197\.2(4[0-9]|5[0-4]):/",
+                  r"/^139\.45\.19[5-7]\.\d{1,3}/",
+                  r"/^142\.91\.159\.(1[5-9]\d|2[0-4]\d|250):(80|443)$/",
+                  r"/^185\.238\.15[2-5]\.\d{1,3}$/",
+                  r"/^185\.238\.15[2-5]\.\d{1,3}\$/",
+                  r"/^188\.42\.84\.\d{1,3}/",
+                  r"/^23\.109\.170\.(18[7-9]|19[0-2])$/",
+                  r"/^23\.109\.73\.\d{3}/",
+                  r"/^31\.184\.20[0-3]\.\d{1,3}$/",
+                  r"/^31\.184\.20[0-3]\.\d{1,3}\$/",
+                  r"/^5\.101\.4[67]\.\d{1,3}$/",
+                  r"/^5\.101\.4[67]\.\d{1,3}\$/",
+                  r"/^5\.188\.17[67]\.\d{1,3}$/",
+                  r"/^5\.188\.17[67]\.\d{1,3}\$/",
+                  r"/^5\.188\.19[45]\.\d{1,3}$/",
+                  r"/^5\.188\.19[45]\.\d{1,3}\$/",
+                  r"/^5\.188\.5[01]\.\d{1,3}$/",
+                  r"/^5\.188\.5[01]\.\d{1,3}\$/",
+                  r"/^5\.189\.21[89]\.\d{1,3}$/",
+                  r"/^5\.189\.21[89]\.\d{1,3}\$/",
+                  r"/^5\.8\.4[4-7]\.\d{1,3}$/",
+                  r"/^5\.8\.4[4-7]\.\d{1,3}\$/",
+                  r"/^88\.208\.22\.[1234]$/",
+                  r"/^88\.208\.22\.[1234]:/",
+                  r"/^94\.242\.247\.(2[0-9]|3[0-2])/",
+                  r"/^94\.242\.247\.(2[0-9]|3[0-2]):/",
+                  r"/^https:\/\/anon1.gt\d{6}.com/",
+                  r"/^https?:\/\/.*\/easylist\/[0-9]{5}/",
+                  r"/^\.fwmrm\.net\^/",
+                  r"/^\|\|mkto-[\s\S]*\.com\^/",
+                  r"/doseofporn.com\/[a-z]{0,5}[1-9]{0,5}[a-z]{0,5}[1-9][sS].*\.js/",
+                  r"/gzc_.*\.mp4\?/",
+                  r"/m.realgfporn.com\/[a-z]{1,13}[0-9]{1,13}[a-z]{1,13}\.js/",
+              ]
+              for source_rule in rejected_non_hostname_regexes:
+                  actual, error = parse_adguard_dns_rule(source_rule)
+                  if not error:
+                      raise RuntimeError(
+                          "Semantic self-test failed: non-host regex was accepted: "
+                          f"{source_rule!r}; normalized={actual!r}"
+                      )
 
               print("Semantic self-tests passed.")
 
