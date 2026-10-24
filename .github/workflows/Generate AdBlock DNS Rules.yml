@@ -67,9 +67,13 @@ jobs:
           """.split())
 
           # 本转换器仅接受的修饰符子集（其余依赖运行环境或存在兼容性问题，一律拒绝）
+          # AdGuard DNS-native modifiers. Browser-context modifiers are rejected,
+          # never stripped, because removing them can widen a rule's meaning.
           ALLOWED_MODIFIERS = {
-              "important",
+              "client",
+              "denyallow",
               "dnstype",
+              "important",
           }
 
           class FatalConversionError(RuntimeError):
@@ -166,89 +170,168 @@ jobs:
               if len(set(normalized)) != len(normalized):
                   return None, "duplicate dnstype entry"
 
-              return "|".join(normalized), None
+              # RR type ordering is semantically irrelevant; sort for canonicalization.
+              return "|".join(sorted(normalized)), None
+
+          def split_outside_quotes(value: str, separator: str):
+              # Split outside quoted strings; preserve escapes so client names retain their meaning.
+              parts = []
+              current = []
+              quote = None
+              escaped = False
+
+              for char in value:
+                  if escaped:
+                      current.append(char)
+                      escaped = False
+                      continue
+
+                  if quote is not None and char == "\\":
+                      current.append(char)
+                      escaped = True
+                      continue
+
+                  if quote is not None:
+                      current.append(char)
+                      if char == quote:
+                          quote = None
+                      continue
+
+                  if char in ("'", '"'):
+                      quote = char
+                      current.append(char)
+                  elif char == separator:
+                      parts.append("".join(current).strip())
+                      current = []
+                  else:
+                      current.append(char)
+
+              if quote is not None or escaped:
+                  return None, "unterminated quoted or escaped value"
+
+              parts.append("".join(current).strip())
+              return parts, None
+
+
+          def parse_denyallow_value(value: str):
+              # denyallow's domain order does not affect semantics; normalize and sort it.
+              if not value or value != value.strip():
+                  return None, "invalid denyallow value"
+
+              raw_domains = value.split("|")
+              if any(not item or item != item.strip() for item in raw_domains):
+                  return None, "empty or whitespace-padded denyallow domain"
+
+              domains = []
+              for raw_domain in raw_domains:
+                  domain = canonical_domain(raw_domain)
+                  if not domain:
+                      return None, f"invalid denyallow domain: {raw_domain}"
+                  domains.append(domain)
+
+              if len(set(domains)) != len(domains):
+                  return None, "duplicate denyallow domain"
+
+              return "|".join(sorted(domains)), None
+
+
+          def validate_client_value(value: str):
+              # AdGuard DNS client entries may be IP/CIDR or client names; ~ excludes an entry.
+              # Preserve the original value: client identifiers may be case-sensitive.
+              if not value or value != value.strip():
+                  return None, "invalid client value"
+
+              if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                  return None, "control character in client value"
+
+              entries, error = split_outside_quotes(value, "|")
+              if error:
+                  return None, error
+              if any(not entry for entry in entries):
+                  return None, "empty client entry"
+
+              for entry in entries:
+                  item = entry[1:].strip() if entry.startswith("~") else entry
+                  if not item:
+                      return None, "empty negated client entry"
+
+                  if item.startswith(("'", '"')):
+                      quote = item[0]
+                      if len(item) < 2 or item[-1] != quote:
+                          return None, "malformed quoted client name"
+                  elif any(char in item for char in ("'", '"', "\\")):
+                      return None, "quotes and escapes in client names must be quoted"
+                  elif any(char.isspace() for char in item):
+                      return None, "client names containing whitespace must be quoted"
+
+              return value, None
+
 
           def parse_modifiers(modifier_text: str):
-              # 校验并规范化修饰符，仅支持 important 与 dnstype
-              # $client、$ctag 依赖运行环境，$denyallow 跨方言不兼容，
-              # $dnsrewrite 会改写响应而非单纯过滤，因此均刻意不予接受
+              # Only accept modifiers with defined DNS semantics. Unknown modifiers are
+              # rejected instead of being stripped, which could broaden block/allow scope.
               if not modifier_text:
                   return None, "empty modifier list"
 
-              # 受支持的修饰符不需要引号或转义；含这些字符的值直接拒绝，
-              # 避免不完整地解析复杂语法
-              if any(char in modifier_text for char in "\\'\"\r\n\t"):
-                  return None, "quoted or escaped modifier values are unsupported"
-
-              raw_modifiers = modifier_text.split(",")
-
-              if any(not item.strip() for item in raw_modifiers):
+              raw_modifiers, split_error = split_outside_quotes(modifier_text, ",")
+              if split_error:
+                  return None, split_error
+              if any(not item for item in raw_modifiers):
                   return None, "malformed modifier list"
 
               normalized = []
               seen = set()
 
-              for raw_modifier in raw_modifiers:
-                  token = raw_modifier.strip()
+              for token in raw_modifiers:
                   key, separator, value = token.partition("=")
                   key = key.strip().lower()
+                  value = value.strip()
 
                   if not key:
                       return None, "empty modifier name"
-
-                  # badfilter 已在 extract_badfilter 中提前剥离并单独处理，
-                  # 若仍到达这里（例如出现在输出规则中），说明不合法，直接拒绝
                   if key == "badfilter":
                       return None, "badfilter is not allowed in output rules"
-
                   if key not in ALLOWED_MODIFIERS:
                       return None, f"unsupported or non-portable modifier: {key}"
-
                   if key in seen:
                       return None, f"duplicate modifier: {key}"
-
                   seen.add(key)
 
                   if key == "important":
                       if separator:
                           return None, "important must not have a value"
-
                       normalized.append(("important", None))
                       continue
 
+                  if not separator:
+                      return None, f"{key} requires a value"
+
                   if key == "dnstype":
-                      if not separator:
-                          return None, "dnstype requires a value"
-
                       parsed_value, error = parse_dns_type_value(value)
-                      if error:
-                          return None, error
+                  elif key == "denyallow":
+                      parsed_value, error = parse_denyallow_value(value)
+                  elif key == "client":
+                      parsed_value, error = validate_client_value(value)
+                  else:
+                      return None, f"unsupported modifier: {key}"
 
-                      normalized.append(("dnstype", parsed_value))
-                      continue
+                  if error:
+                      return None, error
+                  normalized.append((key, parsed_value))
 
-                  return None, f"unsupported modifier: {key}"
-
-              # 修饰符顺序不影响匹配语义，按名称排序以保证去重结果确定
+              # Modifier order does not affect semantics; sort for deterministic deduplication.
               normalized.sort(key=lambda item: item[0])
-
               result = []
               for key, value in normalized:
-                  if value is None:
-                      result.append(key)
-                  else:
-                      result.append(f"{key}={value}")
+                  result.append(key if value is None else f"{key}={value}")
 
               return ",".join(result), None
 
-          def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=False):
-              # 解析 AdGuard DNS 主机名规则，返回 (规范化规则, 错误信息)，且不扩大匹配范围
-              # 接受的格式：||example.com^、@@||example.com^、
-              #            ||example.com^$important、||example.com^$dnstype=A|AAAA
-              # 未锚定主机名、URL 路径、正则、单管道、通配符、IP 字面量、
-              # 仅浏览器修饰符的规则均被拒绝
-              # allow_exact_anchor 仅用于校验输出：Hosts 转换产生的 |domain^
-              # 只匹配该主机名本身，不含其子域名
+
+          def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
+              # Parse supported AdGuard DNS rules without widening their hostname scope.
+              # ||domain^ covers the domain and subdomains; |domain^ covers only that host.
+              # Browser-context modifiers are rejected rather than silently removed.
               if not candidate:
                   return None, "empty rule"
 
@@ -376,27 +459,28 @@ jobs:
               return True, [f"|{domain}^" for domain in domains], None
 
           def extract_badfilter(candidate: str):
-              # 检测并剥离 $badfilter 修饰符，返回 (是否含 badfilter, 剥离后的规则文本)
-              # 剥离后的文本即被该 badfilter 规则禁用的"目标规则"
+              # Detect and strip $badfilter while preserving the target rule's other modifiers.
+              # Split commas outside quotes so a client name containing a comma is not corrupted.
               if candidate.count("$") != 1:
                   return False, candidate
 
               pattern, _, modifier_text = candidate.partition("$")
-              tokens = modifier_text.split(",")
+              tokens, split_error = split_outside_quotes(modifier_text, ",")
+              if split_error:
+                  return False, candidate
 
               if not any(token.strip().lower() == "badfilter" for token in tokens):
                   return False, candidate
 
               remaining = [
-                  token for token in tokens
+                  token.strip() for token in tokens
                   if token.strip().lower() != "badfilter"
               ]
-
-              # 若剥离后已无其他修饰符，则目标规则不带 $
               if remaining:
                   return True, pattern + "$" + ",".join(remaining)
 
               return True, pattern
+
 
           def classify_and_convert(line: str):
               # 对单行分类并转换，返回 (规则列表, 类型, 拒绝原因)
@@ -472,6 +556,10 @@ jobs:
                   if reason:
                       stats["rejected"] += 1
                       stats[f"reason: {reason}"] += 1
+                      # Track rejected exceptions separately: they are potential allowlist
+                      # semantic gaps, not ordinary unsupported blocking rules.
+                      if line.strip().startswith("@@"):
+                          stats["rejected: exception rule"] += 1
 
                       if len(rejected_samples) < 25:
                           rejected_samples.append(
@@ -616,8 +704,8 @@ jobs:
               lines = [
                   "## AdGuard DNS rule conversion",
                   "",
-                  "| Input | Output | Input lines | Output rules | Rejected | Duplicates | Badfilter removed | Badfilter unmatched |",
-                  "|---|---|---:|---:|---:|---:|---:|---:|",
+                  "| Input | Output | Input lines | Output rules | Rejected | Rejected exceptions | Duplicates | Badfilter removed | Badfilter unmatched |",
+                  "|---|---|---:|---:|---:|---:|---:|---:|---:|",
               ]
 
               for result in results:
@@ -628,6 +716,7 @@ jobs:
                       f"| {result['input_lines']} "
                       f"| {len(result['rules'])} "
                       f"| {stats['rejected']} "
+                      f"| {stats['rejected: exception rule']} "
                       f"| {stats['duplicates']} "
                       f"| {stats['badfilter: removed']} "
                       f"| {stats['badfilter: unmatched']} |"
@@ -671,6 +760,57 @@ jobs:
 
               with open(summary_path, "a", encoding="utf-8") as summary:
                   summary.write("\n".join(lines) + "\n")
+
+          def run_semantic_self_tests():
+              # Guard the most important semantic boundaries against future regressions.
+              cases = [
+                  ("||Example.COM^", "||example.com^"),
+                  ("@@||Example.COM^", "@@||example.com^"),
+                  ("|Example.COM^", "|example.com^"),
+                  ("@@|Example.COM^", "@@|example.com^"),
+                  (
+                      "||example.org^$denyallow=Sub.example.org|safe.org",
+                      "||example.org^$denyallow=safe.org|sub.example.org",
+                  ),
+                  (
+                      "||example.org^$dnstype=AAAA|A",
+                      "||example.org^$dnstype=A|AAAA",
+                  ),
+                  (
+                      "||example.org^$important,dnstype=AAAA|A",
+                      "||example.org^$dnstype=A|AAAA,important",
+                  ),
+                  (
+                      "||example.org^$client='Home, TV'",
+                      "||example.org^$client='Home, TV'",
+                  ),
+              ]
+
+              for source_rule, expected in cases:
+                  actual, error = parse_adguard_dns_rule(source_rule)
+                  if error or actual != expected:
+                      raise RuntimeError(
+                          "Semantic self-test failed for "
+                          f"{source_rule!r}: got {actual!r}, error={error!r}"
+                      )
+
+              # Browser-context restrictions must not be stripped into broader DNS rules.
+              _, error = parse_adguard_dns_rule("||example.org^$script")
+              if not error:
+                  raise RuntimeError(
+                      "Semantic self-test failed: browser-only $script must be rejected"
+                  )
+
+              has_badfilter, target = extract_badfilter(
+                  "||example.org^$denyallow=sub.example.org,badfilter"
+              )
+              if not has_badfilter or target != "||example.org^$denyallow=sub.example.org":
+                  raise RuntimeError("Semantic self-test failed: badfilter target extraction")
+
+              print("Semantic self-tests passed.")
+
+
+          run_semantic_self_tests()
 
           # 待处理的 输入文件 -> 输出文件 映射（完整版与精简版）
           configurations = [
