@@ -90,6 +90,19 @@ TARGET_PROFILES = {
     },
     "generic": {"adguard": True},
 }
+# Source families whose semantics belong to a DNS-aware engine, not a browser URL
+# filter. They are explicitly reported as out of target scope rather than being
+# reinterpreted as browser rules or making an otherwise valid browser build fail.
+BROWSER_TARGET_EXCLUDED_SOURCE_REASONS = {
+    "dns": (
+        "DNS filtering rules depend on DNS-resolution semantics and belong in a DNS "
+        "filter output, not an AdGuard browser request-filter list."
+    ),
+    "cname": (
+        "CNAME-chain rules require DNS-aware request inspection; a static browser "
+        "filter cannot preserve that source-level behavior."
+    ),
+}
 MAX_INCLUDE_DEPTH = 12
 ADGUARD_SDNS_CONFIGURATION_URL = (
     "https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/configuration.json"
@@ -126,6 +139,8 @@ class SourceSummary:
     unsupported_lines: int = 0
     ignored_system_mappings: int = 0
     excluded_by_metadata: int = 0
+    input_lines_skipped_by_target: int = 0
+    target_skip_reason: str | None = None
     metadata_patterns: int = 0
     error: str | None = None
 
@@ -1100,6 +1115,31 @@ def compile_fetched_sources(
             input_lines=len(text.splitlines()),
         )
         state.summaries[source.url] = summary
+
+        # Exclusion selector files are metadata for a DNS-list compiler, never
+        # active browser blocking rules.
+        if source.kind == "exclusions":
+            summary.status = "consumed-as-metadata"
+            summary.target_skip_reason = (
+                "This file contains upstream exclusion metadata, not active filter rules."
+            )
+            continue
+
+        # A DNS blocklist is not interchangeable with a browser request filter:
+        # e.g. a DNS IP rule can block a hostname because its resolution points
+        # to that IP, while a browser rule sees only the request URL. CNAME lists
+        # likewise require DNS-aware request inspection. Keep these families out
+        # of this target and make the exclusion visible in the report.
+        if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
+            summary.status = "skipped-target-mismatch"
+            summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
+            summary.input_lines_skipped_by_target = sum(
+                1
+                for raw in text.splitlines()
+                if raw.strip() and not is_comment_or_header(raw.strip())
+            )
+            continue
+
         try:
             expanded_lines.extend(
                 expand_filter_preprocessor(source, text, target, cache)
@@ -1140,20 +1180,26 @@ def compile_fetched_sources(
             metadata_patterns=sum(metadata_pattern_counts.values()),
         )
 
-    # CNAME original-tracker lists require a CNAME-aware request scanner.
-    cname_active: dict[str, int] = {}
     for expanded in expanded_lines:
         source = expanded.source
-        if source.kind == "cname":
-            if not is_comment_or_header(expanded.text.strip()):
-                cname_active[source.url] = cname_active.get(source.url, 0) + 1
-            continue
-        if source.kind == "exclusions":
-            continue
-
         summary = state.summaries[source.url]
         raw_rule = expanded.text.rstrip("\r\n")
         line = raw_rule.strip()
+
+        # An included fragment can be classified independently of its parent
+        # source. Apply the same target boundary to it as to manifest sources.
+        if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
+            summary.status = "skipped-target-mismatch"
+            summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
+            if line and not is_comment_or_header(line):
+                summary.input_lines_skipped_by_target += 1
+            continue
+        if source.kind == "exclusions":
+            summary.status = "consumed-as-metadata"
+            summary.target_skip_reason = (
+                "This file contains upstream exclusion metadata, not active filter rules."
+            )
+            continue
         if not is_comment_or_header(line):
             matched_exclusions = source_exclusions.get(source.url, [])
             if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
@@ -1177,21 +1223,6 @@ def compile_fetched_sources(
                 state.records.add(output_rule)
                 summary.emitted_rules += 1
 
-    for source_url, active_count in cname_active.items():
-        summary = state.summaries[source_url]
-        summary.unsupported_lines += active_count
-        state.issues.append({
-            "source": source_url,
-            "format": "cname",
-            "line": None,
-            "rule": "<source-level CNAME scanning requirement>",
-            "reason": (
-                "this source is intended for CNAME-chain-aware scanning; "
-                "mapping it to an ordinary browser URL rule would change its scope"
-            ),
-            "affected_rule_count": active_count,
-        })
-
     return state
 
 def build_report(state: CompileState, *, source_failures: list[dict[str, str]], output_path: str, target: str) -> dict[str, object]:
@@ -1207,6 +1238,8 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "comments_or_headers": summary.ignored_comments,
             "ignored_system_mappings": summary.ignored_system_mappings,
             "excluded_by_upstream_metadata": summary.excluded_by_metadata,
+            "input_lines_skipped_by_target": summary.input_lines_skipped_by_target,
+            "target_skip_reason": summary.target_skip_reason,
             "metadata_patterns": summary.metadata_patterns,
             "unsupported_lines": summary.unsupported_lines,
             "error": summary.error,
@@ -1219,13 +1252,23 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         "source_count": len(source_summaries) + len(source_failures),
         "source_summaries": source_summaries,
         "source_failures": source_failures,
+        "sources_skipped_by_target": sum(
+            1 for summary in state.summaries.values()
+            if summary.status == "skipped-target-mismatch"
+        ),
+        "input_lines_skipped_by_target": sum(
+            summary.input_lines_skipped_by_target
+            for summary in state.summaries.values()
+        ),
         "unsupported_count": len(state.issues),
         "unsupported_rules": state.issues,
         "semantic_guarantee": (
-            "Rules classified as native are preserved as Adblock-compatible syntax; "
+            "Native browser-compatible rules are preserved as Adblock-compatible syntax; "
             "hosts and domains-only entries become exact-host HTTP(S) URL regex rules; "
-            "DNS rules are converted only for supported patterns/modifiers. "
-            "This is not a proof for arbitrary regex or engine-specific rules."
+            "DNS and CNAME source families are explicitly excluded from the browser target "
+            "and listed in the report. In-scope rules that cannot be translated safely "
+            "still fail strict compilation. This is not a proof for arbitrary regex or "
+            "engine-specific rules."
         ),
     }
 
@@ -1309,9 +1352,47 @@ def run_regression_tests() -> None:
     try:
         compile_line("cname", "||tracker.example.com^")
     except CompilationError:
-        tests.append(("CNAME-scan-only rules rejected for browser output", True, True))
+        tests.append(("CNAME syntax cannot be compiled as an ordinary browser rule", True, True))
     else:
         raise AssertionError("CNAME-scanner semantics must not be changed to ordinary URL blocking")
+
+    dns_source = Source("https://example.invalid/dns-list.txt", "dns")
+    dns_state = compile_fetched_sources(
+        [(dns_source, "||ads.example^\n203.0.113.7$network\n")],
+        "chromium-mv3",
+    )
+    check("DNS-only sources do not leak into browser rules", len(dns_state.records), 0)
+    check("DNS-only sources are reported as target exclusions",
+          dns_state.summaries[dns_source.url].status, "skipped-target-mismatch")
+    check("DNS-only source rules are counted in the audit",
+          dns_state.summaries[dns_source.url].input_lines_skipped_by_target, 2)
+    check("target-excluded DNS rules do not fail browser compilation", len(dns_state.issues), 0)
+
+    cname_source = Source("https://example.invalid/cname-list.txt", "cname")
+    cname_state = compile_fetched_sources(
+        [(cname_source, "||tracker.example.com^\n")],
+        "chromium-mv3",
+    )
+    check("CNAME-only source is audited outside browser target",
+          cname_state.summaries[cname_source.url].status, "skipped-target-mismatch")
+    check("CNAME-only source does not cause false conversion", len(cname_state.records), 0)
+    check("CNAME-only source does not become an unsupported-rule error", len(cname_state.issues), 0)
+
+    mixed_sources = [
+        (Source("https://example.invalid/hosts.txt", "hosts"), "0.0.0.0 Ads.Example.com\n"),
+        (Source("https://example.invalid/domains.txt", "domains"), "Tracker.Example.net\n"),
+        (Source("https://example.invalid/adblock.txt", "adblock"), "||Ads.Example.com^\n"),
+    ]
+    mixed_state = compile_fetched_sources(mixed_sources, "chromium-mv3")
+    check("hosts, domain-only, and native Adblock sources compile together",
+          len(mixed_state.issues), 0)
+    check("native Adblock rules keep their native semantics",
+          "||ads.example.com^" in mixed_state.records, True)
+    check("hosts source keeps exact-host scope",
+          exact_hostname_regex_rule("ads.example.com") in mixed_state.records, True)
+    check("domains-only source keeps exact-host scope",
+          exact_hostname_regex_rule("tracker.example.net") in mixed_state.records, True)
+
     try:
         classify_source("https://example.invalid/new-list.txt")
     except CompilationError:
@@ -1451,30 +1532,10 @@ def main() -> int:
     # Deterministic processing order, independent of network completion order.
     fetched.sort(key=lambda item: sources.index(item[0]))
 
-    source_exclusions: dict[str, list[ExclusionMatcher]] = {}
-    metadata_pattern_counts: dict[str, int] = {}
-    metadata_config_url: str | None = None
-    try:
-        (
-            source_exclusions,
-            metadata_pattern_counts,
-            metadata_config_url,
-        ) = load_adguard_dns_exclusion_map(fetched)
-    except CompilationError as error:
-        source_failures.append({
-            "url": ADGUARD_SDNS_CONFIGURATION_URL,
-            "format": "source-metadata",
-            "error": str(error),
-        })
-        print(f"[METADATA FAILED] {ADGUARD_SDNS_CONFIGURATION_URL}: {error}", file=sys.stderr)
-
-    state = compile_fetched_sources(
-        fetched,
-        args.target,
-        source_exclusions=source_exclusions,
-        metadata_pattern_counts=metadata_pattern_counts,
-        metadata_config_url=metadata_config_url,
-    )
+    # This generator produces an AdGuard browser filter. DNS-specific exclusion
+    # metadata is consumed by a DNS-list compiler, not by this output target.
+    # compile_fetched_sources records DNS/CNAME families as target exclusions.
+    state = compile_fetched_sources(fetched, args.target)
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
     report = build_report(state, source_failures=source_failures, output_path=args.output, target=args.target)
     report_path = Path(args.report)
