@@ -1530,8 +1530,8 @@ def run_regression_tests() -> None:
           "||ads.example.com^" in mixed_state.records, True)
     check("hosts source keeps exact-host scope",
           exact_hostname_regex_rule("ads.example.com") in mixed_state.records, True)
-    check("domains-only source keeps exact-host scope",
-          exact_hostname_regex_rule("tracker.example.net") in mixed_state.records, True)
+    check("domains-only source keeps domain-and-subdomain scope",
+          "||tracker.example.net^" in mixed_state.records, True)
 
     try:
         classify_source("https://example.invalid/new-list.txt")
