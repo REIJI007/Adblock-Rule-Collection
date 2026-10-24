@@ -617,6 +617,11 @@ def parse_hosts_as_adguard(line: str):
     except (ValueError, IndexError):
         return False, None, None
 
+    # A lone IP is valid AdGuard DNS domains-only syntax (it matches
+    # domains resolving to that address), not an incomplete Hosts mapping.
+    if len(parts) == 1:
+        return False, None, None
+
     if len(parts) < 2:
         return True, None, "Hosts mapping has no hostname"
 
