@@ -461,8 +461,9 @@ jobs:
           def extract_badfilter(candidate: str):
               # Detect and strip $badfilter while preserving the target rule's other modifiers.
               # Split delimiters outside quotes so a client name may safely contain commas or "$".
-              body = candidate[2:] if candidate.startswith("@@") else candidate
-              parts, split_error = split_outside_quotes(body, "$")
+              # Keep the @@ exception prefix: badfilter must disable the exact same
+              # allow/block rule, not accidentally turn an exception target into a block target.
+              parts, split_error = split_outside_quotes(candidate, "$")
               if split_error or len(parts) != 2:
                   return False, candidate
 
@@ -812,6 +813,10 @@ jobs:
               )
               if not has_badfilter or target != "||example.org^$denyallow=sub.example.org":
                   raise RuntimeError("Semantic self-test failed: badfilter target extraction")
+
+              has_badfilter, target = extract_badfilter("@@||example.org^$badfilter")
+              if not has_badfilter or target != "@@||example.org^":
+                  raise RuntimeError("Semantic self-test failed: exception badfilter target extraction")
 
               print("Semantic self-tests passed.")
 
