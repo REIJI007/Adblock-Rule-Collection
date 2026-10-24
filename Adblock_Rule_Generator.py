@@ -63,6 +63,22 @@ HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
 SUPPORTED_SOURCE_KINDS = {"adblock", "hosts", "domains", "dns", "cname"}
 
+# AdGuard preprocessor conditions are platform-dependent. The output is one
+# target-specific browser filter, not a multi-platform FiltersRegistry build.
+KNOWN_CONDITION_FLAGS = {
+    "adguard", "adguard_app_windows", "adguard_app_mac", "adguard_app_android",
+    "adguard_app_ios", "adguard_ext_safari", "adguard_ext_chromium",
+    "adguard_ext_firefox", "adguard_ext_edge", "adguard_ext_opera",
+    "adguard_ext_android_cb", "ext_ublock",
+}
+TARGET_PROFILES = {
+    "chromium": {"adguard": True, "adguard_ext_chromium": True},
+    "firefox": {"adguard": True, "adguard_ext_firefox": True},
+    "safari": {"adguard": True, "adguard_ext_safari": True},
+    "generic": {"adguard": True},
+}
+MAX_INCLUDE_DEPTH = 12
+
 # These are known non-portable uBlock Origin operators, not ordinary ABP rules.
 # Do not silently publish them as if AdGuard had identical behavior.
 NON_PORTABLE_NATIVE_PATTERNS = (
@@ -135,10 +151,12 @@ def classify_source(url: str) -> str:
         return "dns"
 
     if "adguardteam/cname-trackers/" in lowered:
-        # These lists are explicitly intended for CNAME-chain-aware scanners,
-        # not ordinary browser URL blocking. Treating them as domain rules would
-        # broaden their intended meaning.
-        return "cname"
+        if "/data/combined_original_trackers.txt" in path:
+            # This specific list is for CNAME-chain-aware scanners.
+            return "cname"
+        # The combined_disguised_* lists are explicitly published for
+        # traditional content blockers and use native Adblock-style rules.
+        return "adblock"
 
     # Known raw GitHub repositories that publish browser Adblock-compatible rules.
     raw_repo = ""
@@ -672,53 +690,286 @@ def add_issue(state: CompileState, summary: SourceSummary, line_number: int, ori
         "reason": reason,
     })
 
-def compile_fetched_sources(fetched: list[tuple[Source, str]]) -> CompileState:
-    state = CompileState()
-    for source, text in fetched:
-        summary = SourceSummary(url=source.url, kind=source.kind, status="ok")
-        state.summaries[source.url] = summary
-        lines = text.splitlines()
-        summary.input_lines = len(lines)
-        if source.kind == "cname":
-            active_lines = [
-                (number, raw.strip())
-                for number, raw in enumerate(lines, 1)
-                if not is_comment_or_header(raw.strip())
-            ]
-            summary.unsupported_lines = len(active_lines)
-            if active_lines:
-                state.issues.append({
-                    "source": source.url,
-                    "format": source.kind,
-                    "line": None,
-                    "rule": "<source-level CNAME scanning requirement>",
-                    "reason": (
-                        "this upstream is intended for CNAME-chain-aware scanning; "
-                        "mapping its rules to ordinary URL rules would change their scope"
-                    ),
-                    "affected_rule_count": len(active_lines),
-                })
+@dataclass(frozen=True)
+class ExpandedLine:
+    source: Source
+    line_number: int
+    text: str
+
+def target_condition_flags(target: str) -> dict[str, bool]:
+    if target not in TARGET_PROFILES:
+        raise CompilationError(f"unknown AdGuard target profile: {target}")
+    flags = {name: False for name in KNOWN_CONDITION_FLAGS}
+    flags.update(TARGET_PROFILES[target])
+    return flags
+
+def evaluate_filter_condition(expression: str, flags: dict[str, bool]) -> bool:
+    """Evaluate AdGuard !#if expressions with !, &&, || and parentheses."""
+    tokens: list[str] = []
+    cursor = 0
+    while cursor < len(expression):
+        if expression[cursor].isspace():
+            cursor += 1
             continue
-        for line_number, raw_line in enumerate(lines, 1):
-            line = raw_line.strip()
-            try:
-                translated, category = compile_line(source.kind, line)
-            except CompilationError as error:
-                add_issue(state, summary, line_number, line, str(error))
+        match = re.match(r"&&|\|\||[!()]|[A-Za-z_][A-Za-z0-9_]*", expression[cursor:])
+        if not match:
+            raise CompilationError(
+                f"unsupported token in filter condition near {expression[cursor:]!r}"
+            )
+        tokens.append(match.group(0))
+        cursor += len(match.group(0))
+
+    if not tokens:
+        raise CompilationError("empty filter preprocessor condition")
+    index = 0
+
+    def parse_primary() -> bool:
+        nonlocal index
+        if index >= len(tokens):
+            raise CompilationError("unexpected end of filter condition")
+        token = tokens[index]
+        if token == "!":
+            index += 1
+            return not parse_primary()
+        if token == "(":
+            index += 1
+            result = parse_or()
+            if index >= len(tokens) or tokens[index] != ")":
+                raise CompilationError("missing ')' in filter condition")
+            index += 1
+            return result
+        if token in {"&&", "||", ")"}:
+            raise CompilationError(f"unexpected operator {token!r} in filter condition")
+        if token not in flags:
+            raise CompilationError(f"unknown AdGuard preprocessor flag: {token}")
+        index += 1
+        return flags[token]
+
+    def parse_and() -> bool:
+        nonlocal index
+        result = parse_primary()
+        while index < len(tokens) and tokens[index] == "&&":
+            index += 1
+            rhs = parse_primary()
+            result = result and rhs
+        return result
+
+    def parse_or() -> bool:
+        nonlocal index
+        result = parse_and()
+        while index < len(tokens) and tokens[index] == "||":
+            index += 1
+            rhs = parse_and()
+            result = result or rhs
+        return result
+
+    result = parse_or()
+    if index != len(tokens):
+        raise CompilationError(f"unexpected token {tokens[index]!r} in filter condition")
+    return result
+
+def same_origin(left: str, right: str) -> bool:
+    a = urllib.parse.urlparse(left)
+    b = urllib.parse.urlparse(right)
+    return (
+        a.scheme.lower() == b.scheme.lower()
+        and (a.hostname or "").lower() == (b.hostname or "").lower()
+        and a.port == b.port
+    )
+
+def expand_filter_preprocessor(
+    source: Source,
+    text: str,
+    target: str,
+    cache: dict[str, tuple[Source, str]],
+    stack: tuple[str, ...] = (),
+) -> list[ExpandedLine]:
+    """Expand same-origin !#include directives and evaluate platform conditions."""
+    if len(stack) >= MAX_INCLUDE_DEPTH:
+        raise CompilationError(f"preprocessor include depth exceeds {MAX_INCLUDE_DEPTH}")
+    if source.url in stack:
+        cycle = " -> ".join((*stack, source.url))
+        raise CompilationError(f"recursive !#include cycle: {cycle}")
+
+    flags = target_condition_flags(target)
+    # Each frame contains the parent activation state, condition value, and else state.
+    frames: list[dict[str, bool]] = []
+    active = True
+    output: list[ExpandedLine] = []
+
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        line = raw_line.strip()
+
+        if_match = re.fullmatch(r"!#if\s+(.+)", line)
+        if if_match:
+            condition_value = evaluate_filter_condition(if_match.group(1), flags)
+            frames.append({
+                "parent_active": active,
+                "condition": condition_value,
+                "seen_else": False,
+            })
+            active = active and condition_value
+            continue
+
+        if re.fullmatch(r"!#else", line):
+            if not frames:
+                raise CompilationError(f"{source.url}:{line_number}: !#else without !#if")
+            frame = frames[-1]
+            if frame["seen_else"]:
+                raise CompilationError(f"{source.url}:{line_number}: duplicate !#else")
+            frame["seen_else"] = True
+            active = frame["parent_active"] and not frame["condition"]
+            continue
+
+        if re.fullmatch(r"!#endif", line):
+            if not frames:
+                raise CompilationError(f"{source.url}:{line_number}: !#endif without !#if")
+            frame = frames.pop()
+            active = frame["parent_active"]
+            continue
+
+        include_match = re.fullmatch(r"!#include\s+(.+)", line)
+        if include_match:
+            if not active:
                 continue
-            if category == "comment":
-                summary.ignored_comments += 1
-            if category == "system-host-mapping" or category.endswith("-with-system-alias"):
-                summary.ignored_system_mappings += 1
-            for output_rule in translated:
-                if output_rule in state.records:
-                    summary.duplicate_rules += 1
-                else:
-                    state.records.add(output_rule)
-                    summary.emitted_rules += 1
+            include_path = include_match.group(1).strip()
+            if len(include_path) >= 2 and include_path[0] == include_path[-1] and include_path[0] in {"'", '"'}:
+                include_path = include_path[1:-1]
+            include_url = urllib.parse.urljoin(source.url, include_path)
+            parsed_include = urllib.parse.urlparse(include_url)
+            if parsed_include.scheme not in {"https", "http"} or not parsed_include.hostname:
+                raise CompilationError(f"{source.url}:{line_number}: invalid !#include target {include_path!r}")
+            if not same_origin(source.url, include_url):
+                raise CompilationError(
+                    f"{source.url}:{line_number}: cross-origin !#include is not allowed: {include_url}"
+                )
+            if include_url not in cache:
+                try:
+                    include_kind = classify_source(include_url)
+                except CompilationError:
+                    # Includes are fragments of their parent filter; absent an
+                    # explicit source override, they inherit the parent's syntax.
+                    include_kind = source.kind
+                included_source = Source(include_url, include_kind)
+                _, included_text = fetch_source(included_source)
+                cache[include_url] = (included_source, included_text)
+            included_source, included_text = cache[include_url]
+            output.extend(
+                expand_filter_preprocessor(
+                    included_source,
+                    included_text,
+                    target,
+                    cache,
+                    (*stack, source.url),
+                )
+            )
+            continue
+
+        if line.startswith(("!#if", "!#else", "!#endif", "!#include")):
+            if active:
+                raise CompilationError(
+                    f"{source.url}:{line_number}: malformed preprocessor directive: {line}"
+                )
+            continue
+
+        if active:
+            output.append(ExpandedLine(source, line_number, raw_line))
+
+    if frames:
+        raise CompilationError(f"{source.url}: unterminated !#if block")
+    return output
+
+def compile_fetched_sources(
+    fetched: list[tuple[Source, str]],
+    target: str,
+) -> CompileState:
+    state = CompileState()
+    cache: dict[str, tuple[Source, str]] = {
+        source.url: (source, text) for source, text in fetched
+    }
+
+    expanded_lines: list[ExpandedLine] = []
+    for source, text in fetched:
+        summary = SourceSummary(
+            url=source.url,
+            kind=source.kind,
+            status="ok",
+            input_lines=len(text.splitlines()),
+        )
+        state.summaries[source.url] = summary
+        try:
+            expanded_lines.extend(
+                expand_filter_preprocessor(source, text, target, cache)
+            )
+        except Exception as error:
+            summary.status = "preprocessor-error"
+            summary.error = f"{type(error).__name__}: {error}"
+            state.issues.append({
+                "source": source.url,
+                "format": source.kind,
+                "line": None,
+                "rule": "<filter preprocessor>",
+                "reason": summary.error,
+            })
+
+    # Files referenced through !#include may not be in the original manifest.
+    for source_url, (source, text) in cache.items():
+        if source_url not in state.summaries:
+            state.summaries[source_url] = SourceSummary(
+                url=source.url,
+                kind=source.kind,
+                status="included",
+                input_lines=len(text.splitlines()),
+            )
+
+    # CNAME original-tracker lists require a CNAME-aware request scanner. Record
+    # one source-level issue instead of pretending each domain is a browser rule.
+    cname_active: dict[str, int] = {}
+    for expanded in expanded_lines:
+        source = expanded.source
+        if source.kind == "cname":
+            if not is_comment_or_header(expanded.text.strip()):
+                cname_active[source.url] = cname_active.get(source.url, 0) + 1
+            continue
+
+        summary = state.summaries[source.url]
+        line = expanded.text.strip()
+        try:
+            translated, category = compile_line(source.kind, line)
+        except CompilationError as error:
+            add_issue(state, summary, expanded.line_number, line, str(error))
+            continue
+
+        if category == "comment":
+            summary.ignored_comments += 1
+        if category == "system-host-mapping" or category.endswith("-with-system-alias"):
+            summary.ignored_system_mappings += 1
+
+        for output_rule in translated:
+            if output_rule in state.records:
+                summary.duplicate_rules += 1
+            else:
+                state.records.add(output_rule)
+                summary.emitted_rules += 1
+
+    for source_url, active_count in cname_active.items():
+        summary = state.summaries[source_url]
+        summary.unsupported_lines += active_count
+        state.issues.append({
+            "source": source_url,
+            "format": "cname",
+            "line": None,
+            "rule": "<source-level CNAME scanning requirement>",
+            "reason": (
+                "this source is intended for CNAME-chain-aware scanning; "
+                "mapping it to an ordinary browser URL rule would change its scope"
+            ),
+            "affected_rule_count": active_count,
+        })
+
     return state
 
-def build_report(state: CompileState, *, source_failures: list[dict[str, str]], output_path: str) -> dict[str, object]:
+def build_report(state: CompileState, *, source_failures: list[dict[str, str]], output_path: str, target: str) -> dict[str, object]:
     source_summaries = []
     for summary in state.summaries.values():
         source_summaries.append({
@@ -735,7 +986,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         })
     return {
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "target": "AdGuard browser filter syntax",
+        "target": f"AdGuard browser filter syntax ({target})",
         "output": output_path,
         "unique_rule_count": len(state.records),
         "source_count": len(source_summaries) + len(source_failures),
@@ -786,6 +1037,22 @@ def run_regression_tests() -> None:
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
+    check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
+    check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
+    check("Chromium preprocessor condition evaluates true",
+          evaluate_filter_condition("adguard && adguard_ext_chromium && !adguard_ext_safari", target_condition_flags("chromium")), True)
+    check("Chromium preprocessor excludes Safari-only rules",
+          evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
+    conditional_source = Source("https://example.com/filter.txt", "adblock")
+    conditional_lines = expand_filter_preprocessor(
+        conditional_source,
+        "!#if (adguard_ext_chromium)\\n||chromium.example^\\n!#else\\n||other.example^\\n!#endif\\n",
+        "chromium",
+        {conditional_source.url: (conditional_source, "!#if (adguard_ext_chromium)\\n||chromium.example^\\n!#else\\n||other.example^\\n!#endif\\n")},
+    )
+    check("preprocessor selects only active target rules",
+          [line.text.strip() for line in conditional_lines],
+          ["||chromium.example^"])
     check("AdGuard DNS filter is classified as DNS", classify_source("https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"), "dns")
     check("CNAME tracker list is isolated as source-level semantics", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
     try:
@@ -883,6 +1150,7 @@ def run_regression_tests() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compile upstream blocklists into an AdGuard browser filter with explicit semantic-loss reporting.")
+    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default="chromium", help="AdGuard preprocessor profile for one target browser (default: chromium)")
     parser.add_argument("--output", default=OUTPUT_DEFAULT, help=f"compiled filter path (default: {OUTPUT_DEFAULT})")
     parser.add_argument("--report", default=REPORT_DEFAULT, help=f"JSON compilation report (default: {REPORT_DEFAULT})")
     parser.add_argument("--allow-lossy", action="store_true", help="explicitly publish only translatable rules; report all omitted rules")
@@ -917,9 +1185,9 @@ def main() -> int:
 
     # Deterministic processing order, independent of network completion order.
     fetched.sort(key=lambda item: sources.index(item[0]))
-    state = compile_fetched_sources(fetched)
+    state = compile_fetched_sources(fetched, args.target)
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
-    report = build_report(state, source_failures=source_failures, output_path=args.output)
+    report = build_report(state, source_failures=source_failures, output_path=args.output, target=args.target)
     report_path = Path(args.report)
     output_path = Path(args.output)
 
@@ -956,6 +1224,7 @@ def main() -> int:
     header = [
         "! Title: Adblock-Rule-Collection",
         "! Description: Semantically compiled upstream rules for AdGuard browser filtering",
+        "! Target: " + args.target,
         "! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
         "! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0",
         "! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0",
