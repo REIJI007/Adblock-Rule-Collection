@@ -77,8 +77,8 @@ KNOWN_CONDITION_FLAGS = {
     "adguard_ext_edge", "adguard_ext_edge_mv3", "adguard_ext_opera",
     "adguard_ext_opera_mv3", "adguard_ext_android_cb", "ext_ublock",
     "ext_ubol", "ext_abp", "ext_safari", "env_mobile", "env_safari", "env_chromium",
-    "env_firefox", "env_edge", "env_mv3", "cap_html_filtering", "cap_ipaddress",
-    "cap_user_stylesheet",
+    "env_firefox", "env_edge", "env_mv3", "env_legacy",
+    "cap_html_filtering", "cap_ipaddress", "cap_user_stylesheet",
 }
 TARGET_PROFILES = {
     # chromium means the AdGuard Chromium MV2 profile; use chromium-mv3 for MV3.
@@ -1442,6 +1442,8 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("env_chromium && !env_mobile", target_condition_flags("chromium-mv3")), True)
     check("Chromium MV3 exposes the user stylesheet capability",
           evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("chromium-mv3")), True)
+    check("AdGuard Chromium MV3 is not a uBlock legacy environment",
+          evaluate_filter_condition("!env_legacy", target_condition_flags("chromium-mv3")), True)
     check("Safari does not inherit the Chromium stylesheet capability",
           evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("safari")), False)
     check("AdGuard CNAME include from an official filter source is allowlisted",
