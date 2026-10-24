@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - "Adblock_Rule_Generator.py"
+      - "Adblock_Rule_Generator_Lite.py"
       - ".github/workflows/semantic-compiler-tests.yml"
+      - ".github/workflows/semantic-compiler-lite-tests.yml"
   workflow_dispatch:
 
 permissions:
