@@ -1487,7 +1487,6 @@ def run_regression_tests() -> None:
     test_ipv4_leading_zero = ".".join(f"{octet:03d}" for octet in range(1, 5))
     invalid_test_ipv4 = ".".join([str(255 + 1), *(str(octet) for octet in range(1, 4))])
     zero_ipv4 = ".".join(str(0) for _ in range(4))
-    loopback_ipv4 = str(ipaddress.IPv4Address((1 << 31) - (1 << 24) + 1))
     ip_host_rule = f"||{test_ipv4}^"
 
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
@@ -1740,9 +1739,9 @@ def run_regression_tests() -> None:
     check("exact-host domain-list entries do not expand to subdomains",
           compile_line("domains-exact", "Example.COM")[0],
           [exact_hostname_regex_rule("example.com")])
-    check("baseline localhost mapping is not emitted as an ad block", compile_line("hosts", f"{loopback_ipv4} localhost")[0], [])
+    check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{test_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
-          compile_line("hosts", f"{loopback_ipv4} localhost ads.example.com")[0],
+          compile_line("hosts", f"{test_ipv4} localhost ads.example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
