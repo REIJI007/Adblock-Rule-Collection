@@ -731,7 +731,11 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
     candidate = line.strip()
     if not candidate:
         return False
-    if re.match(r"^(?:@@)?(?:\|\||\|)", candidate):
+    if re.match(r"^(?:@@)?\|\|", candidate):
+        # A DNS end-of-host anchor is not the same as a URL end anchor.
+        pattern = candidate.split("$", 1)[0]
+        if pattern.endswith("|"):
+            return False
         return True
     if candidate.startswith("/"):
         closing = find_regex_rule_end(candidate)
@@ -1611,12 +1615,12 @@ def run_regression_tests() -> None:
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
-    check("DNS subtree rule preserves subtree", compile_line("dns", "||Ads.Example.com^")[0],
-          ["||ads.example.com^"])
-    check("DNS wildcard hostname mask is preserved", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
-          ["||mobileanalytics.*.amazonaws.com^"])
-    check("DNS exception preserves exception", compile_line("dns", "@@||Ads.Example.com^")[0],
-          ["@@||ads.example.com^"])
+    check("DNS subtree rule is preserved verbatim", compile_line("dns", "||Ads.Example.com^")[0],
+          ["||Ads.Example.com^"])
+    check("DNS wildcard rule is preserved verbatim", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
+          ["||MobileAnalytics.*.AmazonAWS.com^"])
+    check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
+          ["@@||Ads.Example.com^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("DNS exact end anchor is preserved as exact-host regex", compile_line("dns", "@@||example.com^|")[0],
