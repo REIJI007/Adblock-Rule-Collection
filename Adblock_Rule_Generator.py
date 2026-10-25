@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Compile heterogeneous upstream blocklists into one AdGuard browser filter.
+"""将多个上游过滤列表编译为 AdGuard 浏览器规则。
 
-Important contract:
-- Native Adblock/AdGuard filter rules are preserved, except safe normalization of
-  simple domain-anchored rules and exact duplicate removal.
-- Hosts entries and domains-only entries are translated to exact-host URL regexes
-  instead of broad ||domain^ rules, which would include subdomains.
-- DNS-only semantics that cannot be expressed by a browser filter are reported.
-  By default, any such rule aborts publication; --allow-lossy is an explicit
-  escape hatch and is recorded in the JSON report.
-- Existing output is replaced atomically only after compilation passes.
+原生规则仅做安全规范化和去重；Hosts 与纯域名来源按各自匹配范围转换。
+无法证明兼容的规则会记录在审计报告中；严格模式失败时不会覆盖旧产物。
 """
 from __future__ import annotations
 
@@ -35,7 +28,7 @@ REPORT_DEFAULT = "ADBLOCK_RULE_COLLECTION.semantic-report.json"
 FETCH_WORKERS = 12
 FETCH_TIMEOUT_SECONDS = 18
 
-# These are actual filter operators, not comment prefixes.
+# 这些是过滤操作符，不是注释前缀。
 VALID_HASH_RULE_PREFIXES = (
     "##", "#@#", "#$#", "#$@#", "#?#", "#@?#", "#%#", "#@%#",
 )
@@ -44,8 +37,8 @@ FILTER_DIRECTIVE_RE = re.compile(
     r"^!#(?:if|else|endif|include|safari_cb_affinity|pragma)\b",
     re.IGNORECASE,
 )
-# These hostnames are system loopback aliases, not advertising/tracker hosts.
-# A hosts blocklist often carries these default mappings for compatibility.
+# 这些是系统回环别名，不是广告或跟踪域名。
+
 SYSTEM_HOST_ALIASES = {
     "localhost",
     "localhost.localdomain",
@@ -57,19 +50,18 @@ SYSTEM_HOST_ALIASES = {
 DOMAIN_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\Z", re.IGNORECASE)
 HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
-# Explicit overrides for user-added sources whose format cannot be inferred safely.
-# Example: SOURCE_FORMAT_OVERRIDES["https://example.org/domains.txt"] = "domains"
-# "domains" uses normal domain-blocklist scope (the domain and its subdomains).
-# Use "domains-exact" only when the source contract says entries match one hostname
-# without extending to descendants. A bare-domain line alone does not encode scope.
-# Allowed values: adblock, hosts, domains, domains-exact, dns, cname.
+# 无法可靠识别的自定义来源，需在此显式指定格式。
+
+# domains 匹配域名及其子域；domains-exact 只匹配该主机名。
+
+# 可选来源格式：adblock、hosts、domains、domains-exact、dns、cname。
 SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
 SUPPORTED_SOURCE_KINDS = {
     "adblock", "hosts", "domains", "domains-exact", "dns", "cname", "exclusions"
 }
 
-# AdGuard preprocessor conditions are platform-dependent. The output is one
-# target-specific browser filter, not a multi-platform FiltersRegistry build.
+# 条件指令按目标平台求值；输出仅面向指定的浏览器配置。
+
 KNOWN_CONDITION_FLAGS = {
     "adguard", "adguard_app_windows", "adguard_app_mac", "adguard_app_android",
     "adguard_app_ios", "adguard_app_cli", "adguard_ext_safari",
@@ -81,7 +73,7 @@ KNOWN_CONDITION_FLAGS = {
     "cap_html_filtering", "cap_ipaddress", "cap_user_stylesheet",
 }
 TARGET_PROFILES = {
-    # chromium means the AdGuard Chromium MV2 profile; use chromium-mv3 for MV3.
+    # chromium 对应 Chromium MV2；MV3 请使用 chromium-mv3。
     "chromium": {
         "adguard": True, "adguard_ext_chromium": True, "env_chromium": True,
         "cap_user_stylesheet": True,
@@ -99,9 +91,8 @@ TARGET_PROFILES = {
     },
     "generic": {"adguard": True},
 }
-# Source families whose semantics belong to a DNS-aware engine, not a browser URL
-# filter. They are explicitly reported as out of target scope rather than being
-# reinterpreted as browser rules or making an otherwise valid browser build fail.
+# DNS/CNAME 来源依赖 DNS 语义，不纳入浏览器规则，并在审计中单独记录。
+
 BROWSER_TARGET_EXCLUDED_SOURCE_REASONS = {
     "dns": (
         "DNS filtering rules depend on DNS-resolution semantics and belong in a DNS "
@@ -117,12 +108,11 @@ ADGUARD_SDNS_CONFIGURATION_URL = (
     "https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/configuration.json"
 )
 
-# These are known non-portable uBlock Origin operators, not ordinary ABP rules.
-# Do not silently publish them as if AdGuard had identical behavior.
+# 已知与目标引擎不兼容的 uBlock Origin 操作不能直接透传。
+
 NON_PORTABLE_NATIVE_PATTERNS = (
-    # AdGuard has its own scriptlet syntax (#%#//scriptlet(...)); uBO's +js()
-    # must not be passed through as though the two syntaxes were interchangeable.
-    # These procedural operators are not part of AdGuard's documented Extended CSS.
+    # AdGuard 与 uBlock Origin 的脚本规则语法不同，不能视为等价。
+
     (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() has no verified AdGuard equivalent"),
     (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator has no verified AdGuard equivalent"),
 )
@@ -156,19 +146,15 @@ class SourceSummary:
 
 @dataclass
 class CompileState:
-    # A set avoids retaining millions of redundant source-line objects for rules
-    # already deduplicated into the final output.
+    # 使用集合去重，避免在内存中保留大量重复规则。
+
     records: set[str] = field(default_factory=set)
     issues: list[dict[str, object]] = field(default_factory=list)
     target_exclusions: list[dict[str, object]] = field(default_factory=list)
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
 def classify_source(url: str) -> str:
-    """Explicit source-family adapter for the curated upstream manifest.
-
-    Unknown source families fail closed. Add a format mapping here before adding
-    a new upstream; do not infer format from the downloaded line contents.
-    """
+    """按显式清单识别上游格式；未知来源默认拒绝。"""
     override = SOURCE_FORMAT_OVERRIDES.get(url)
     if override is not None:
         if override not in SUPPORTED_SOURCE_KINDS:
@@ -187,8 +173,8 @@ def classify_source(url: str) -> str:
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
 
-    # In AdGuardSDNSFilter, exclusions.txt is metadata consumed by the hostlist
-    # compiler to remove matching source rules; it is not an active blocklist.
+    # exclusions.txt 是来源排除元数据，不是实际拦截规则。
+
     if (
         hostname == "raw.githubusercontent.com"
         and path.startswith("/adguardteam/adguardsdnsfilter/")
@@ -204,9 +190,8 @@ def classify_source(url: str) -> str:
         return "dns"
 
     if hostname == "adguardteam.github.io" and path.startswith("/cname-trackers/data/"):
-        # The CNAME-tracker project publishes two semantically different families:
-        # disguised tracker hostnames are ordinary browser-blocking rules, whereas
-        # original trackers and microsites require CNAME-aware DNS inspection.
+        # CNAME 来源需区分：disguised 列表可用于浏览器；original 和 microsites 需要 DNS 感知。
+
         if (
             "/data/microsites/" in path
             or "/data/combined_original_trackers" in path
@@ -230,8 +215,8 @@ def classify_source(url: str) -> str:
         )
 
     if "adguardteam/cname-trackers/" in lowered:
-        # Original trackers and microsites require DNS/CNAME-aware inspection,
-        # including their justdomains variants.
+        # original 跟踪器和 microsites（含 justdomains 版本）需要 DNS/CNAME 感知。
+
         if (
             "/data/combined_original_trackers" in path
             or "/data/combined_disguised_microsites" in path
@@ -239,15 +224,14 @@ def classify_source(url: str) -> str:
             return "cname"
         if path.endswith("_justdomains.txt"):
             return "domains"
-        # The combined_disguised_* files with Adblock syntax remain native rules.
+
         return "adblock"
 
-    # Outside the CNAME project special cases, the *justdomains naming convention
-    # denotes a domain-only feed rather than native Adblock syntax.
+    # 除 CNAME 特例外，*_justdomains.txt 按纯域名列表处理。
+
     if basename.endswith("_justdomains.txt"):
         return "domains"
 
-    # Known raw GitHub repositories that publish browser Adblock-compatible rules.
     raw_repo = ""
     if hostname == "raw.githubusercontent.com":
         segments = [segment for segment in path.split("/") if segment]
@@ -264,7 +248,6 @@ def classify_source(url: str) -> str:
     if raw_repo in native_repositories:
         return "adblock"
 
-    # Other known native browser-filter hosts in this curated manifest.
     if hostname in {
         "filters.adavoid.org",
         "easylist.to",
@@ -287,12 +270,7 @@ def build_sources(urls: Iterable[str]) -> list[Source]:
     return sources
 
 def canonical_hostname(value: str, *, allow_single_label: bool = True) -> str | None:
-    """Return validated lowercase ASCII/IDNA hostname, or None.
-
-    A single-label name is permitted for hosts files; callers may separately
-    enforce fully-qualified names where their source format requires that.
-    IP literals, wildcards, URL syntax and empty labels are not hostnames here.
-    """
+    """校验并规范化主机名；是否允许单标签由调用方决定，非法值返回 None。"""
     if not value or value != value.strip() or "*" in value:
         return None
     if value.endswith(".."):
@@ -335,7 +313,7 @@ def is_comment_or_header(line: str) -> bool:
     return False
 
 def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> str | None:
-    """Canonicalize a hostname or IPv4 literal used in a network filter rule."""
+    """规范化网络规则中的主机名或 IPv4 地址。"""
     try:
         address = ipaddress.ip_address(value)
         if address.version == 4:
@@ -345,16 +323,12 @@ def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> s
         return canonical_hostname(value, allow_single_label=allow_single_label)
 
 def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
-    """Compile an exact host block into an AdGuard URL-regex rule.
-
-    This intentionally does not use ||host^, because that rule includes all
-    subdomains. Scope is browser HTTP(S) URLs with this exact authority host.
-    """
+    """生成仅匹配指定 HTTP(S) 主机名的 AdGuard 正则规则，不扩展到子域。"""
     domain = canonical_host_or_ipv4(hostname)
     if not domain:
         raise CompilationError(f"invalid exact hostname: {hostname!r}")
     escaped = re.escape(domain)
-    # The slashes are escaped because slash delimits an AdGuard regex rule.
+    # AdGuard 正则以斜杠分隔，规则正文中的斜杠需转义。
     body = (
         r"^https?:\/\/(?:[^\/?#@]+@)?"
         + escaped
@@ -363,11 +337,9 @@ def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
     return ("@@" if exception else "") + "/" + body + "/"
 
 def normalize_native_domain_rule(line: str) -> str:
-    """Normalize only simple domain-anchored rules; keep all other syntax intact."""
-    # A bare IPv4 token in a native browser filter is intended to match the
-    # request host, not arbitrary occurrences in a URL. Normalize it to the
-    # standard AdGuard host-anchored form. DNS-format bare IPs are handled by
-    # the DNS adapter instead and are never sent through this function.
+    """仅规范化简单域名锚定规则，其余语法保持原样。"""
+    # 原生浏览器规则中的裸 IPv4 应匹配主机，而非 URL 任意位置。
+
     bare_ipv4 = re.fullmatch(
         r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
         line,
@@ -378,9 +350,8 @@ def normalize_native_domain_rule(line: str) -> str:
             raise CompilationError(
                 f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
             )
-        # Some upstream blocklists pad IPv4 octets with leading zeroes.
-        # Interpret these source tokens as decimal octets and emit the canonical
-        # dotted-decimal form, so equivalent addresses deduplicate consistently.
+        # 将带前导零的 IPv4 八位组按十进制规范化，便于等价去重。
+
         ip_literal = ".".join(str(octet) for octet in octets)
         return (
             (bare_ipv4.group("exception") or "")
@@ -394,10 +365,8 @@ def normalize_native_domain_rule(line: str) -> str:
         return line
     hostname = canonical_host_or_ipv4(match.group("host"), allow_single_label=False)
     if not hostname:
-        # Native upstream filter syntax is already the target grammar. If a
-        # source uses a legal-but-non-hostname token, preserve its original form
-        # rather than inventing a different rule or rejecting it on our own
-        # narrower hostname validator.
+        # 遇到无法按主机名规范化但可能合法的上游语法时，保留原规则，避免改变匹配范围。
+
         return line
     return (
         (match.group("exception") or "")
@@ -416,7 +385,7 @@ def detect_nonportable_native_rule(line: str) -> str | None:
     return None
 
 def canonical_wildcard_hostname_mask(value: str) -> str | None:
-    """Validate and lowercase a DNS hostname mask with simple '*' wildcards."""
+    """校验并转为小写的 DNS 主机名通配模式。"""
     if not value or value != value.strip() or len(value) > 253:
         return None
     if not re.fullmatch(r"[A-Za-z0-9*.-]+", value):
@@ -429,8 +398,8 @@ def canonical_wildcard_hostname_mask(value: str) -> str | None:
             if not DOMAIN_LABEL_RE.fullmatch(label):
                 return None
         else:
-            # Literal characters adjacent to a wildcard must not force an
-            # impossible leading/trailing hyphen in every matching DNS label.
+            # 通配符标签校验不能误拒绝有效的首尾字符。
+
             if not re.fullmatch(r"[a-z0-9*-]+", label):
                 return None
             if label.startswith("-") or label.endswith("-"):
@@ -438,7 +407,7 @@ def canonical_wildcard_hostname_mask(value: str) -> str | None:
     return value.lower()
 
 def split_modifiers(modifier_text: str) -> list[str]:
-    """Split modifiers on commas outside quoted values."""
+    """按引号外的逗号拆分规则修饰符。"""
     result: list[str] = []
     start = 0
     quote: str | None = None
@@ -467,7 +436,7 @@ def split_modifiers(modifier_text: str) -> list[str]:
     return result
 
 def find_regex_rule_end(body: str) -> int | None:
-    """Return the index of the closing slash in a slash-delimited regex rule."""
+    """返回斜杠分隔正则中结束斜杠的位置。"""
     if not body.startswith("/"):
         return None
     escaped = False
@@ -483,14 +452,14 @@ def find_regex_rule_end(body: str) -> int | None:
     return None
 
 def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> str | None:
-    """Wrap a conservative, anchored hostname regex in an HTTP(S) URL matcher."""
+    """将受限的主机名正则包装为 HTTP(S) URL 匹配规则。"""
     if not (regex_body.startswith("^") and regex_body.endswith("$")):
         return None
     inner = regex_body[1:-1]
     if not inner or "/" in inner or any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
         return None
-    # Only the common JavaScript/Python-compatible regex subset is translated.
-    # Non-capturing groups are allowed; other special group forms are rejected.
+    # 仅转换可证明兼容的正则子集；不支持的特殊分组会被拒绝。
+
     if re.search(r"\(\?(?!:)", inner):
         return None
     check_inner = inner.replace("(?:", "")
@@ -512,14 +481,14 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
     return ("@@" if exception else "") + "/" + url_pattern + "/"
 
 def compile_dns_rule(line: str) -> str:
-    """Translate only DNS rule forms whose browser-filter meaning is provable."""
+    """只转换能明确证明浏览器匹配语义的 DNS 规则。"""
     exception = line.startswith("@@")
     body = line[2:] if exception else line
     if body.startswith("@@"):
         raise CompilationError("misplaced DNS exception marker")
 
-    # Regex delimiters must be processed before '$' modifiers because '$' may
-    # also be the regex end-anchor.
+    # 先识别正则的结束位置，再解析 `$` 修饰符，避免混淆正则锚点。
+
     if body.startswith("/"):
         closing = find_regex_rule_end(body)
         if closing is None:
@@ -543,11 +512,8 @@ def compile_dns_rule(line: str) -> str:
                     f"DNS-only or unsupported modifier on regex rule: {token}"
                 )
 
-        # A regex explicitly matching a URL scheme already has URL scope, so
-        # preserving its original pattern retains the target matcher semantics.
-        # Some DNS feeds use a literal "https?:" regex prefix and escaped
-        # slashes. Detect that textual URL-scope form before treating the regex
-        # as a hostname matcher.
+        # 已包含 HTTP(S) 作用域的正则保持原样，不再按主机名正则改写。
+
         has_url_scope = (
             "https?:" in regex_body.lower()
             or "http?:" in regex_body.lower()
@@ -600,8 +566,8 @@ def compile_dns_rule(line: str) -> str:
                 )
         modifiers = normalized_modifiers
 
-    # A bare domain/IP in a domains-only DNS list is an exact-host rule, not a
-    # subtree rule. The URL-regex wrapper preserves that narrower scope.
+    # 纯域名列表中的裸域名只匹配该主机，不应扩展到子域。
+
     if (
         not pattern.startswith(("||", "|"))
         and not any(ch in pattern for ch in "*^/")
@@ -621,7 +587,7 @@ def compile_dns_rule(line: str) -> str:
             return translated + ("$" + ",".join(modifiers) if modifiers else "")
         raise CompilationError(f"unsupported DNS domain or address rule: {pattern}")
 
-    # A trailing hostname-end anchor is not the same as a URL-end anchor.
+    # 主机名结束锚点与整个 URL 的结束锚点含义不同。
     exact_pipe = re.fullmatch(
         r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|",
         pattern,
@@ -642,8 +608,8 @@ def compile_dns_rule(line: str) -> str:
         translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # A leading-dot hostname mask selects subdomains but not the apex. Convert
-    # it to a domain-anchored wildcard instead of an unanchored URL substring.
+    # `.example.com` 只匹配子域，不匹配根域。
+
     leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^", pattern)
     if leading_dot:
         hostname = canonical_hostname(
@@ -656,15 +622,14 @@ def compile_dns_rule(line: str) -> str:
         )
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # Host-start masks without a separator/end anchor already use the same
-    # leading-host operator in AdGuard browser filters. Preserve their prefix
-    # semantics, including partial final labels.
+    # 保留主机前缀规则的原有语义，包括末标签前缀匹配。
+
     if re.fullmatch(r"\|\|[A-Za-z0-9*.-]+", pattern):
         translated = ("@@" if exception else "") + pattern.lower()
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # A single leading pipe with '^' means exact hostname in DNS scope. It must
-    # not become an entire-URL-start anchor in browser scope.
+    # 单竖线加 `^` 表示精确主机锚点，不能改成 URL 起始锚点。
+
     exact_match = re.fullmatch(r"\|([^|^*/$]+)\^", pattern)
     if exact_match:
         hostname = canonical_host_or_ipv4(
@@ -675,7 +640,7 @@ def compile_dns_rule(line: str) -> str:
         translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
-    # Standard hostname-subtree rules and simple hostname wildcards.
+    # 处理标准子域规则和简单主机名通配规则。
     subtree_match = re.fullmatch(r"\|\|([^|^/$]+)\^", pattern)
     if subtree_match:
         raw_mask = subtree_match.group(1)
@@ -694,8 +659,8 @@ def compile_dns_rule(line: str) -> str:
             if hostname:
                 translated = ("@@" if exception else "") + "||" + hostname + "^"
             elif re.fullmatch(r"[A-Za-z0-9_.-]+", raw_mask):
-                # Preserve source-valid hostname labels that are not accepted by
-                # the strict IDNA hostname normalizer, without broadening them.
+                # 对严格 IDNA 校验不接受的上游标签，保留原样且不扩大匹配范围。
+
                 translated = ("@@" if exception else "") + "||" + raw_mask.lower() + "^"
             else:
                 raise CompilationError(f"invalid DNS hostname mask: {pattern}")
@@ -715,8 +680,8 @@ def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str]
     if len(parts) < 2:
         raise CompilationError("hosts mapping has no hostname")
 
-    # Ordinary hosts address mappings are DNS resolution overrides, not blocks.
-    # Do not rewrite arbitrary A/AAAA mappings as browser request blocks.
+    # 普通 Hosts 地址映射是 DNS 指向，不等同于浏览器拦截规则。
+
     if not (address.is_unspecified or address.is_loopback):
         raise CompilationError(
             f"hosts address {address} is a name-to-IP mapping, not a block; "
@@ -741,12 +706,7 @@ def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str]
     return output, category
 
 def compile_domain_line(line: str) -> str:
-    """Compile a normal domain-blocklist entry for the domain and its subdomains.
-
-    This preserves the repository's established bare-domain contract (||domain^).
-    Source formats that explicitly promise exact-host-only matching must use the
-    separate domains-exact adapter instead.
-    """
+    """将纯域名条目编译为匹配该域名及其子域的规则。"""
     candidate = line.split("#", 1)[0].strip()
     hostname = canonical_hostname(candidate, allow_single_label=False)
     if not hostname:
@@ -754,7 +714,7 @@ def compile_domain_line(line: str) -> str:
     return "||" + hostname + "^"
 
 def compile_domain_exact_line(line: str) -> str:
-    """Compile a bare domain that blocks only this exact hostname."""
+    """将裸域名编译为仅匹配该主机名的规则。"""
     candidate = line.split("#", 1)[0].strip()
     hostname = canonical_hostname(candidate, allow_single_label=False)
     if not hostname:
@@ -775,8 +735,8 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         reason = detect_nonportable_native_rule(line)
         if reason:
             raise CompilationError(reason)
-        # Native browser filter rules already use the target rule language.
-        # Normalize simple domain-anchored rules and standalone IPv4 host tokens.
+        # 原生规则保留目标语法；只规范化简单域名锚点和裸 IPv4。
+
         return [normalize_native_domain_rule(line)], "native"
 
     if kind == "hosts":
@@ -801,12 +761,12 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         )
 
     if kind == "dns":
-        # DNS/domain-list formats permit inline comments after whitespace. A
-        # hostname cannot legally contain '#', so removing this suffix is safe.
+        # DNS/域名行允许附带行尾注释；域名本身不能包含 `#`，可安全截断。
+
         line = line.split("#", 1)[0].strip()
         if not line:
             return [], "comment"
-        # DNS lists can contain either Adblock-style host rules or hosts entries.
+        # DNS 列表可能混有 Adblock 规则或 Hosts 映射，分别处理。
         fields = line.split()
         looks_like_hosts = False
         if len(fields) >= 2:
@@ -861,7 +821,7 @@ def target_condition_flags(target: str) -> dict[str, bool]:
     return flags
 
 def evaluate_filter_condition(expression: str, flags: dict[str, bool]) -> bool:
-    """Evaluate AdGuard !#if expressions with !, &&, || and parentheses."""
+    """计算 AdGuard 的 !#if 条件表达式。"""
     tokens: list[str] = []
     cursor = 0
     while cursor < len(expression):
@@ -941,7 +901,7 @@ def same_origin(left: str, right: str) -> bool:
     )
 
 def allow_preprocessor_include(parent_url: str, include_url: str) -> bool:
-    """Allow same-origin includes plus a narrow official AdGuard CNAME include path."""
+    """仅允许同源 include，以及指定的 AdGuard CNAME 跨域路径。"""
     if same_origin(parent_url, include_url):
         return True
     parent = urllib.parse.urlparse(parent_url)
@@ -962,7 +922,7 @@ def expand_filter_preprocessor(
     cache: dict[str, tuple[Source, str]],
     stack: tuple[str, ...] = (),
 ) -> list[ExpandedLine]:
-    """Expand same-origin !#include directives and evaluate platform conditions."""
+    """展开 include 指令，并按目标平台计算条件。"""
     if len(stack) >= MAX_INCLUDE_DEPTH:
         raise CompilationError(f"preprocessor include depth exceeds {MAX_INCLUDE_DEPTH}")
     if source.url in stack:
@@ -970,7 +930,7 @@ def expand_filter_preprocessor(
         raise CompilationError(f"recursive !#include cycle: {cycle}")
 
     flags = target_condition_flags(target)
-    # Each frame contains the parent activation state, condition value, and else state.
+    # 每层条件记录父级状态、条件结果和 else 状态。
     frames: list[dict[str, bool]] = []
     active = True
     output: list[ExpandedLine] = []
@@ -1015,8 +975,8 @@ def expand_filter_preprocessor(
                     f"{source.url}:{line_number}: Safari content-blocker affinity "
                     "cannot be preserved in one flat filter file"
                 )
-            # Affinity only partitions Safari content blockers; for non-Safari
-            # targets the enclosed rules remain active but the metadata is removed.
+            # affinity 只影响 Safari 内容拦截器；其他目标移除该元数据。
+
             continue
 
         if re.fullmatch(r"!#safari_cb_affinity", line):
@@ -1048,9 +1008,8 @@ def expand_filter_preprocessor(
                 try:
                     include_kind = classify_source(include_url)
                 except CompilationError:
-                    # Same-origin includes may be syntax fragments of their parent
-                    # filter. Cross-origin includes must have an explicit, recognized
-                    # format; never guess a remote source's semantics.
+                    # 同源 include 可作为语法片段；跨域 include 必须显式识别格式，不能猜测。
+
                     if not same_origin(source.url, include_url):
                         raise
                     include_kind = source.kind
@@ -1097,12 +1056,7 @@ class ExclusionMatcher:
         raise AssertionError(f"unknown exclusion matcher kind: {self.kind}")
 
 def parse_hostlist_exclusion_patterns(text: str) -> list[ExclusionMatcher]:
-    """Mirror AdGuard HostlistCompiler exclusion wildcard semantics.
-
-    - Plain text: case-sensitive substring match against the original rule.
-    - * wildcard: case-insensitive whole-line wildcard match.
-    - /regex/: case-insensitive, multiline regex search.
-    """
+    """按 AdGuard HostlistCompiler 的规则匹配排除项：文本、通配符和正则。"""
     result: list[ExclusionMatcher] = []
     seen: set[str] = set()
     for raw in text.splitlines():
@@ -1132,11 +1086,7 @@ def parse_hostlist_exclusion_patterns(text: str) -> list[ExclusionMatcher]:
 def load_adguard_dns_exclusion_map(
     fetched: list[tuple[Source, str]],
 ) -> tuple[dict[str, list[ExclusionMatcher]], dict[str, int], str | None]:
-    """Load AdGuardSDNSFilter's source-to-exclusion relationships.
-
-    The exclusion file is not a blocklist. Its patterns are only applied to the
-    exact input sources that configuration.json declares to use them.
-    """
+    """读取 AdGuard SDNSFilter 的来源与排除规则关联；只对配置指定的来源生效。"""
     exclusion_sources = {
         source.url: text
         for source, text in fetched
@@ -1222,8 +1172,8 @@ def compile_fetched_sources(
         )
         state.summaries[source.url] = summary
 
-        # Exclusion selector files are metadata for a DNS-list compiler, never
-        # active browser blocking rules.
+        # 排除选择器是 DNS 列表编译的元数据，不是浏览器拦截规则。
+
         if source.kind == "exclusions":
             summary.status = "consumed-as-metadata"
             summary.target_skip_reason = (
@@ -1231,11 +1181,8 @@ def compile_fetched_sources(
             )
             continue
 
-        # A DNS blocklist is not interchangeable with a browser request filter:
-        # e.g. a DNS IP rule can block a hostname because its resolution points
-        # to that IP, while a browser rule sees only the request URL. CNAME lists
-        # likewise require DNS-aware request inspection. Keep these families out
-        # of this target and make the exclusion visible in the report.
+        # DNS 规则依赖解析结果，CNAME 规则依赖别名链，不能直接转换成浏览器 URL 规则。
+
         if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
             summary.status = "skipped-target-mismatch"
             summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
@@ -1261,7 +1208,7 @@ def compile_fetched_sources(
                 "reason": summary.error,
             })
 
-    # Files referenced through !#include may not be in the original manifest.
+    # include 可能引入清单之外的来源，需一并纳入审计。
     for source_url, (source, text) in cache.items():
         if source_url not in state.summaries:
             state.summaries[source_url] = SourceSummary(
@@ -1271,8 +1218,8 @@ def compile_fetched_sources(
                 input_lines=len(text.splitlines()),
             )
 
-    # Exclusion files are metadata. Their patterns are applied only to the
-    # upstream source URLs explicitly linked to them in AdGuard's configuration.
+    # 排除规则只应用于 AdGuard 配置明确关联的来源。
+
     for source, _ in fetched:
         if source.kind == "exclusions":
             summary = state.summaries[source.url]
@@ -1292,8 +1239,8 @@ def compile_fetched_sources(
         raw_rule = expanded.text.rstrip("\r\n")
         line = raw_rule.strip()
 
-        # An included fragment can be classified independently of its parent
-        # source. Apply the same target boundary to it as to manifest sources.
+        # include 片段也按自身格式分类，并执行同样的目标兼容性检查。
+
         if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
             summary.status = "skipped-target-mismatch"
             summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
@@ -1311,11 +1258,8 @@ def compile_fetched_sources(
             if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
                 summary.excluded_by_metadata += 1
                 continue
-        # Some well-understood source rules have no equivalent in the selected
-        # AdGuard browser target. Do not silently rewrite them or fail an entire
-        # million-rule build because of a known engine mismatch: exclude each
-        # such rule explicitly, including its source and reason, in the audit.
-        # Unknown in-scope conversion failures below remain strict errors.
+        # 已知不兼容规则逐条记录并排除；未知转换错误仍由严格模式阻止发布。
+
         target_exclusion_reason = (
             detect_nonportable_native_rule(line)
             if source.kind == "adblock" and line and not is_comment_or_header(line)
@@ -1761,19 +1705,18 @@ def main() -> int:
                 source_failures.append({"url": source.url, "format": source.kind, "error": message})
                 print(f"[FETCH FAILED] {source.kind}: {source.url}: {message}", file=sys.stderr)
 
-    # Deterministic processing order, independent of network completion order.
+    # 固定处理顺序，避免下载完成顺序影响输出。
     fetched.sort(key=lambda item: sources.index(item[0]))
 
-    # This generator produces an AdGuard browser filter. DNS-specific exclusion
-    # metadata is consumed by a DNS-list compiler, not by this output target.
-    # compile_fetched_sources records DNS/CNAME families as target exclusions.
+    # 本生成器输出浏览器规则；DNS/CNAME 来源单独记录，不混入产物。
+
     state = compile_fetched_sources(fetched, args.target)
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
     report = build_report(state, source_failures=source_failures, output_path=args.output, target=args.target)
     report_path = Path(args.report)
     output_path = Path(args.output)
 
-    # Always retain an audit report, even when strict mode prevents publication.
+    # 严格编译失败时仍保留审计报告。
     atomic_write_text(report_path, json.dumps(report, ensure_ascii=False, indent=2) + "\n")
 
     if source_failures and not args.allow_source_failures:
