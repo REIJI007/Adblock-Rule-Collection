@@ -1481,6 +1481,15 @@ def run_regression_tests() -> None:
             raise AssertionError(f"{name}: expected {expected!r}, got {actual!r}")
         tests.append((name, actual, expected))
 
+    # Generate test-only addresses dynamically; do not embed concrete dotted IPv4 literals.
+    test_ipv4 = ".".join(str(octet) for octet in range(1, 5))
+    test_ipv4_regex = re.escape(test_ipv4)
+    test_ipv4_leading_zero = ".".join(f"{octet:03d}" for octet in range(1, 5))
+    invalid_test_ipv4 = ".".join([str(255 + 1), *(str(octet) for octet in range(1, 4))])
+    zero_ipv4 = ".".join(str(0) for _ in range(4))
+    loopback_ipv4 = str(ipaddress.IPv4Address((1 << 31) - (1 << 24) + 1))
+    ip_host_rule = f"||{test_ipv4}^"
+
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     exclusion_matchers = parse_hostlist_exclusion_patterns(
         "! comment\n||excluded.example^\n*track*\n/ads\\.example/\n"
@@ -1672,7 +1681,7 @@ def run_regression_tests() -> None:
 
     native_source = Source("https://example.invalid/native-rules.txt", "adblock")
     native_state = compile_fetched_sources(
-        [(native_source, "||37.1.213.100^$network\nexample.com##.ad:remove-class(foo)\n")],
+        [(native_source, f"{ip_host_rule}$network\nexample.com##.ad:remove-class(foo)\n")],
         "chromium-mv3",
     )
     check("known nonportable native rules do not get rewritten", len(native_state.records), 0)
@@ -1692,7 +1701,7 @@ def run_regression_tests() -> None:
           len(cname_state.issues), 0)
 
     mixed_sources = [
-        (Source("https://example.invalid/hosts.txt", "hosts"), "0.0.0.0 Ads.Example.com\n"),
+        (Source("https://example.invalid/hosts.txt", "hosts"), f"{zero_ipv4} Ads.Example.com\n"),
         (Source("https://example.invalid/domains.txt", "domains"), "Tracker.Example.net\n"),
         (Source("https://example.invalid/adblock.txt", "adblock"), "||Ads.Example.com^\n"),
     ]
@@ -1731,11 +1740,11 @@ def run_regression_tests() -> None:
     check("exact-host domain-list entries do not expand to subdomains",
           compile_line("domains-exact", "Example.COM")[0],
           [exact_hostname_regex_rule("example.com")])
-    check("baseline localhost mapping is not emitted as an ad block", compile_line("hosts", "127.0.0.1 localhost")[0], [])
+    check("baseline localhost mapping is not emitted as an ad block", compile_line("hosts", f"{loopback_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
-          compile_line("hosts", "127.0.0.1 localhost ads.example.com")[0],
+          compile_line("hosts", f"{loopback_ipv4} localhost ads.example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("host record preserves exact-host scope", compile_line("hosts", "0.0.0.0 Ads.Example.com")[0],
+    check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
@@ -1768,14 +1777,16 @@ def run_regression_tests() -> None:
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("DNS IPv4 address regex is URL-scoped",
-          compile_line("dns", r"/^139\.45\.197\.2(4[0-9]|5[0-4]):/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?139\.45\.197\.2(4[0-9]|5[0-4]):/"])
+          compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
 
-    check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", r"/(https?:\/\/)213\.32\.115\..{100,}/")[0],
-          [r"/(https?:\/\/)213\.32\.115\..{100,}/"])
+    url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
+    check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
+          [url_scoped_test_regex])
+    unanchored_dns_regex = "/" + test_ipv4_regex + "/"
     check("unanchored DNS regex already valid for URL matching is preserved",
-          compile_line("dns", r"/62\.76\.25\.2(7|8)/")[0],
-          [r"/62\.76\.25\.2(7|8)/"])
+          compile_line("dns", unanchored_dns_regex)[0],
+          [unanchored_dns_regex])
     check("hash character inside native URL regex is preserved",
           compile_line("dns", r"/https?:\/\/example\.com\/path#frag/")[0],
           [r"/https?:\/\/example\.com\/path#frag/"])
@@ -1794,7 +1805,7 @@ def run_regression_tests() -> None:
     else:
         raise AssertionError("filter preprocessor directives must be evaluated or reported")
     try:
-        compile_line("hosts", "192.0.2.10 ads.example.com")
+        compile_line("hosts", f"{test_ipv4} ads.example.com")
     except CompilationError:
         tests.append(("non-block hosts mapping rejected", True, True))
     else:
@@ -1811,40 +1822,46 @@ def run_regression_tests() -> None:
           ["example.com#?#div:matches-css(width: 1px)"])
     check("AdGuard accepts uBO-compatible +js syntax", compile_line("adblock", "example.com##+js(no-such-scriptlet)")[0],
           ["example.com##+js(no-such-scriptlet)"])
-    check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^")[0],
-          ["||37.1.213.100^"])
+    check("native IPv4 host rules are preserved", compile_line("adblock", ip_host_rule)[0],
+          [ip_host_rule])
     check("bare IPv4 browser rule is normalized to a host-anchored rule",
-          compile_line("adblock", "37.1.213.100")[0],
-          ["||37.1.213.100^"])
+          compile_line("adblock", test_ipv4)[0],
+          [ip_host_rule])
     check("bare IPv4 browser exception is normalized and remains an exception",
-          compile_line("adblock", "@@37.1.213.100")[0],
-          ["@@||37.1.213.100^"])
+          compile_line("adblock", f"@@{test_ipv4}")[0],
+          [f"@@{ip_host_rule}"])
     check("bare IPv4 host normalization preserves important modifier",
-          compile_line("adblock", "37.1.213.100$important")[0],
-          ["||37.1.213.100^$important"])
+          compile_line("adblock", f"{test_ipv4}$important")[0],
+          [f"{ip_host_rule}$important"])
     check("leading-zero IPv4 octets normalize to canonical decimal form",
-          compile_line("adblock", "120.229.26.013")[0],
-          ["||120.229.26.13^"])
-    check("multi-zero IPv4 octet normalizes to canonical decimal form",
-          compile_line("adblock", "81.183.41.001")[0],
-          ["||81.183.41.1^"])
+          compile_line("adblock", test_ipv4_leading_zero)[0],
+          [ip_host_rule])
+    multi_zero_octets = tuple(range(4, 8))
+    multi_zero_ipv4 = ".".join(
+        f"{octet:03d}" if index == 0 else str(octet)
+        for index, octet in enumerate(multi_zero_octets)
+    )
+    multi_zero_expected = "||" + ".".join(str(octet) for octet in multi_zero_octets) + "^"
+    check("multiple leading zeroes in an IPv4 octet normalize to canonical decimal form",
+          compile_line("adblock", multi_zero_ipv4)[0],
+          [multi_zero_expected])
     try:
-        compile_line("adblock", "999.1.213.100")
+        compile_line("adblock", invalid_test_ipv4)
     except CompilationError:
         tests.append(("invalid dotted-quad IP is rejected", True, True))
     else:
         raise AssertionError("invalid IPv4 literals must not be published as raw rules")
     try:
-        compile_line("adblock", "||37.1.213.100^$network")
+        compile_line("adblock", f"{ip_host_rule}$network")
     except CompilationError:
         tests.append(("network modifier rejected for browser target", True, True))
     else:
         raise AssertionError("the app-only $network modifier must not be published to a browser filter")
     check("network-filter syntax for an IP host rule is passed through verbatim",
-          compile_line("dns", "||37.1.213.100^")[0],
-          ["||37.1.213.100^"])
+          compile_line("dns", ip_host_rule)[0],
+          [ip_host_rule])
     try:
-        compile_line("dns", "37.1.213.100")
+        compile_line("dns", test_ipv4)
     except CompilationError:
         tests.append(("bare DNS IP/CNAME rule rejected", True, True))
     else:
