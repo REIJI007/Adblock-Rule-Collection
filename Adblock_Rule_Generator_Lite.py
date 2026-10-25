@@ -1740,9 +1740,9 @@ def run_regression_tests() -> None:
     check("exact-host domain-list entries do not expand to subdomains",
           compile_line("domains-exact", "Example.COM")[0],
           [exact_hostname_regex_rule("example.com")])
-    check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{test_ipv4} localhost")[0], [])
+    check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{zero_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
-          compile_line("hosts", f"{test_ipv4} localhost ads.example.com")[0],
+          compile_line("hosts", f"{zero_ipv4} localhost ads.example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
