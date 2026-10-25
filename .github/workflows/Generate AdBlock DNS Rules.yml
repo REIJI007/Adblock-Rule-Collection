@@ -737,6 +737,36 @@ jobs:
                   seen.add(candidate)
                   validated += 1
 
+          # 分别生成主版和 Lite 版 DNS 规则，并在全部通过校验后写入文件。
+          output_specs = [
+              (
+                  "ADBLOCK_RULE_COLLECTION.txt",
+                  "ADBLOCK_RULE_COLLECTION_DNS.txt",
+                  "Adblock-Rule-Collection-DNS",
+              ),
+              (
+                  "ADBLOCK_RULE_COLLECTION_Lite.txt",
+                  "ADBLOCK_RULE_COLLECTION_DNS_Lite.txt",
+                  "Adblock-Rule-Collection-DNS-Lite",
+              ),
+          ]
+
+          generated_results = [
+              compile_file(input_path, output_path, title)
+              for input_path, output_path, title in output_specs
+          ]
+
+          for result in generated_results:
+              validate_generated_document(result)
+
+          for result in generated_results:
+              output_path = Path(result["output_path"])
+              output_path.write_text(result["document"], encoding="utf-8")
+              print(
+                  f"Generated {output_path}: "
+                  f"{len(result['rules'])} DNS rules."
+              )
+
       - name: Commit and safely push DNS rules
         shell: bash
         run: |
