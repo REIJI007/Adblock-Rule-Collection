@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """将多个上游过滤列表编译为 AdGuard 网络过滤规则。
 
-默认以 AdGuard for Windows 桌面过滤引擎为目标；原生规则尽量保留语义，Hosts 与纯域名来源按各自匹配范围转换。
+默认以 AdGuard for Windows 桌面过滤引擎为目标；符合网络过滤语法的原生规则（包括 DNS/CNAME 来源中的规则）尽量原样保留，其他可安全转换的条目按目标语义转换。
 无法证明兼容的规则会记录在审计报告中；严格模式失败时不会覆盖旧产物。
 """
 from __future__ import annotations
@@ -99,18 +99,8 @@ TARGET_PROFILES = {
     },
     "generic": {"adguard": True},
 }
-# DNS/CNAME 来源依赖 DNS 语义，不纳入浏览器规则，并在审计中单独记录。
-
-NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS = {
-    "dns": (
-        "DNS filtering rules depend on DNS-resolution semantics and belong in a DNS "
-        "filter output, not an AdGuard network-filter list."
-    ),
-    "cname": (
-        "CNAME-chain rules require DNS-aware request inspection; a static network "
-        "filter cannot preserve that source-level behavior."
-    ),
-}
+# DNS/CNAME 来源逐条编译：已符合网络过滤语法的规则原样保留；
+# DNS 专用修饰符无法在网络过滤层复现时，按目标兼容性规则单独排除并审计。
 MAX_INCLUDE_DEPTH = 12
 ADGUARD_SDNS_CONFIGURATION_URL = (
     "https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/configuration.json"
@@ -124,7 +114,8 @@ NON_PORTABLE_NATIVE_PATTERNS = (
     (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() has no verified AdGuard equivalent"),
     (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator has no verified AdGuard equivalent"),
 )
-DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag|network)(?:=|,|$)", re.IGNORECASE)
+DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag)(?:=|,|$)", re.IGNORECASE)
+NETWORK_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)network(?:=|,|$)", re.IGNORECASE)
 
 class CompilationError(RuntimeError):
     pass
@@ -385,9 +376,11 @@ def normalize_native_domain_rule(line: str) -> str:
         + (match.group("tail") or "")
     )
 
-def detect_nonportable_native_rule(line: str) -> str | None:
+def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | None:
     if DNS_ONLY_MODIFIER_RE.search(line):
-        return "DNS-only modifier cannot be represented safely in an AdGuard browser filter"
+        return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
+    if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
+        return "AdGuard application-only $network modifier is not supported by this target"
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
@@ -534,7 +527,7 @@ def compile_dns_rule(line: str) -> str:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
                 raise CompilationError(
-                    "DNS hostname regex cannot be proven equivalent as a browser URL regex"
+                    "DNS hostname regex cannot be proven equivalent as a network-filter URL regex"
                 )
 
         if normalized_regex_modifiers:
@@ -588,7 +581,7 @@ def compile_dns_rule(line: str) -> str:
         else:
             raise CompilationError(
                 "bare IP in AdGuard DNS syntax matches CNAME targets resolving to that IP; "
-                "an AdGuard browser filter cannot preserve DNS-resolution semantics"
+                "an AdGuard network filter cannot preserve DNS-resolution semantics"
             )
         hostname = canonical_hostname(pattern, allow_single_label=False)
         if hostname:
@@ -730,7 +723,29 @@ def compile_domain_exact_line(line: str) -> str:
         raise CompilationError(f"not a valid exact-host domains entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
 
-def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
+def looks_like_native_network_filter_rule(line: str) -> bool:
+    """Return whether a DNS/CNAME entry already uses recognizable network-filter syntax.
+
+    DNS-only hostname expressions are deliberately not classified as native URL rules;
+    they must go through the conservative DNS-to-network conversion path instead.
+    """
+    candidate = line.strip()
+    if not candidate:
+        return False
+    if re.match(r"^(?:@@)?(?:\|\||\|)", candidate):
+        return True
+    if candidate.startswith("/"):
+        closing = find_regex_rule_end(candidate)
+        if closing is None:
+            return False
+        regex_body = candidate[1:closing]
+        # A hostname-only DNS regex needs URL scoping before it can work on requests.
+        return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+    if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
+        return True
+    return "://" in candidate
+
+def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[list[str], str]:
     line = raw_line.strip()
     if FILTER_DIRECTIVE_RE.match(line):
         raise CompilationError(
@@ -741,7 +756,7 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         return [], "comment"
 
     if kind == "adblock":
-        reason = detect_nonportable_native_rule(line)
+        reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
         # 原生规则保留目标语法；只规范化简单域名锚点和裸 IPv4。
@@ -758,10 +773,15 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
         return [compile_domain_exact_line(line)], "domains-exact"
 
     if kind == "cname":
-        raise CompilationError(
-            "this source requires CNAME-chain inspection; a static AdGuard browser "
-            "filter cannot preserve that source-level behavior"
-        )
+        # CNAME 来源的常规规则本身通常就是标准 AdGuard 网络过滤语法。
+        # 原样纳入可增加直接匹配覆盖，但不能因此声称已实现 DNS CNAME 链检查。
+        reason = detect_nonportable_native_rule(line, target)
+        if reason:
+            raise CompilationError(reason)
+        if looks_like_native_network_filter_rule(line):
+            return [line], "native-cname"
+        # 非原生条目只在能够保守转换时才纳入；无法证明等价时交给严格审计阻止发布。
+        return [compile_dns_rule(line)], "cname-converted"
 
     if kind == "exclusions":
         raise CompilationError(
@@ -786,7 +806,14 @@ def compile_line(kind: str, raw_line: str) -> tuple[list[str], str]:
                 pass
         if looks_like_hosts:
             return compile_hosts_line(line, category="hosts-in-dns")
-        return [compile_dns_rule(line)], "dns"
+        # 已经是网络过滤规则语法的 DNS 来源条目保持原文；非原生 DNS 表达式
+        # 才尝试转换为网络过滤语法。DNS 专用修饰符不在此处被静默丢弃。
+        if looks_like_native_network_filter_rule(line):
+            reason = detect_nonportable_native_rule(line, target)
+            if reason:
+                raise CompilationError(reason)
+            return [line], "native-dns"
+        return [compile_dns_rule(line)], "dns-converted"
 
     raise CompilationError(f"unknown source format: {kind}")
 
@@ -1190,18 +1217,6 @@ def compile_fetched_sources(
             )
             continue
 
-        # DNS 规则依赖解析结果，CNAME 规则依赖别名链，不能直接转换成浏览器 URL 规则。
-
-        if source.kind in NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS:
-            summary.status = "skipped-target-mismatch"
-            summary.target_skip_reason = NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
-            summary.input_lines_skipped_by_target = sum(
-                1
-                for raw in text.splitlines()
-                if raw.strip() and not is_comment_or_header(raw.strip())
-            )
-            continue
-
         try:
             expanded_lines.extend(
                 expand_filter_preprocessor(source, text, target, cache)
@@ -1248,14 +1263,7 @@ def compile_fetched_sources(
         raw_rule = expanded.text.rstrip("\r\n")
         line = raw_rule.strip()
 
-        # include 片段也按自身格式分类，并执行同样的目标兼容性检查。
-
-        if source.kind in NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS:
-            summary.status = "skipped-target-mismatch"
-            summary.target_skip_reason = NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
-            if line and not is_comment_or_header(line):
-                summary.input_lines_skipped_by_target += 1
-            continue
+        # include 片段也按自身格式分类，并执行同样的逐条目标兼容性检查。
         if source.kind == "exclusions":
             summary.status = "consumed-as-metadata"
             summary.target_skip_reason = (
@@ -1270,8 +1278,8 @@ def compile_fetched_sources(
         # 已知不兼容规则逐条记录并排除；未知转换错误仍由严格模式阻止发布。
 
         target_exclusion_reason = (
-            detect_nonportable_native_rule(line)
-            if source.kind == "adblock" and line and not is_comment_or_header(line)
+            detect_nonportable_native_rule(line, target)
+            if source.kind in {"adblock", "dns", "cname"} and line and not is_comment_or_header(line)
             else None
         )
         if target_exclusion_reason:
@@ -1286,7 +1294,7 @@ def compile_fetched_sources(
             continue
 
         try:
-            translated, category = compile_line(source.kind, line)
+            translated, category = compile_line(source.kind, line, target=target)
         except CompilationError as error:
             add_issue(state, summary, expanded.line_number, line, str(error))
             continue
@@ -1349,7 +1357,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "Native AdGuard-compatible network-filter rules are preserved as Adblock-compatible syntax; "
             "hosts entries become exact-host HTTP(S) URL regex rules; domains-only entries use "
             "domain-and-subdomain scope unless explicitly configured as domains-exact; "
-            "DNS and CNAME source families are explicitly excluded from this network-filter output. "
+            "Native network-filter syntax from DNS/CNAME sources is retained where compatible; non-native DNS entries are converted only when safe, DNS-only modifiers are excluded individually, and copied CNAME patterns do not implement DNS CNAME-chain inspection. "
             "Known non-portable rules are excluded individually with source-line diagnostics; "
             "unknown in-scope conversion failures still fail strict compilation. All exclusions "
             "are visible in the report. This is not a proof for arbitrary regex or "
@@ -1509,25 +1517,32 @@ def run_regression_tests() -> None:
           [line.text.strip() for line in conditional_lines],
           ["||chromium.example^"])
     check("AdGuard DNS filter is classified as DNS", classify_source("https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"), "dns")
-    check("CNAME tracker list is isolated as source-level semantics", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
-    try:
-        compile_line("cname", "||tracker.example.com^")
-    except CompilationError:
-        tests.append(("CNAME syntax cannot be compiled as an ordinary browser rule", True, True))
-    else:
-        raise AssertionError("CNAME-scanner semantics must not be changed to ordinary URL blocking")
+    check("CNAME tracker list is classified by its source semantics",
+          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"),
+          "cname")
+    check("CNAME network-filter syntax is preserved verbatim",
+          compile_line("cname", "||tracker.Example.com^")[0],
+          ["||tracker.Example.com^"])
+    check("DNS network-filter syntax is preserved verbatim",
+          compile_line("dns", "||Ads.Example.com^")[0],
+          ["||Ads.Example.com^"])
+    check("DNS plain host entries are converted to exact-host URL rules",
+          compile_line("dns", "tracker.example.com")[0],
+          [exact_hostname_regex_rule("tracker.example.com")])
 
     dns_source = Source("https://example.invalid/dns-list.txt", "dns")
     dns_state = compile_fetched_sources(
-        [(dns_source, "||ads.example^\n203.0.113.7$network\n")],
+        [(dns_source, "||ads.example^\n||types.example^$dnstype=A\n")],
         "chromium-mv3",
     )
-    check("DNS-only sources do not leak into browser rules", len(dns_state.records), 0)
-    check("DNS-only sources are reported as target exclusions",
-          dns_state.summaries[dns_source.url].status, "skipped-target-mismatch")
-    check("DNS-only source rules are counted in the audit",
-          dns_state.summaries[dns_source.url].input_lines_skipped_by_target, 2)
-    check("target-excluded DNS rules do not fail browser compilation", len(dns_state.issues), 0)
+    check("native DNS-source rule is retained in the network filter",
+          "||ads.example^" in dns_state.records, True)
+    check("DNS-only modifier is excluded individually",
+          len(dns_state.target_exclusions), 1)
+    check("DNS source is not skipped wholesale",
+          dns_state.summaries[dns_source.url].status, "ok")
+    check("unsupported syntax was not silently discarded",
+          len(dns_state.issues), 0)
 
     native_source = Source("https://example.invalid/native-rules.txt", "adblock")
     native_state = compile_fetched_sources(
@@ -1545,10 +1560,10 @@ def run_regression_tests() -> None:
         [(cname_source, "||tracker.example.com^\n")],
         "chromium-mv3",
     )
-    check("CNAME-only source is audited outside browser target",
-          cname_state.summaries[cname_source.url].status, "skipped-target-mismatch")
-    check("CNAME-only source does not cause false conversion", len(cname_state.records), 0)
-    check("CNAME-only source does not become an unsupported-rule error", len(cname_state.issues), 0)
+    check("CNAME source is not skipped wholesale",
+          "||tracker.example.com^" in cname_state.records, True)
+    check("CNAME source syntax does not cause conversion errors",
+          len(cname_state.issues), 0)
 
     mixed_sources = [
         (Source("https://example.invalid/hosts.txt", "hosts"), "0.0.0.0 Ads.Example.com\n"),
@@ -1675,12 +1690,9 @@ def run_regression_tests() -> None:
         tests.append(("network modifier rejected for browser target", True, True))
     else:
         raise AssertionError("the app-only $network modifier must not be published to a browser filter")
-    try:
-        compile_line("dns", "||37.1.213.100^")
-    except CompilationError:
-        tests.append(("IP-like DNS hostname matcher rejected as ambiguous", True, True))
-    else:
-        raise AssertionError("IP-like DNS rules must not be converted to URL-host blockers")
+    check("network-filter syntax for an IP host rule is passed through verbatim",
+          compile_line("dns", "||37.1.213.100^")[0],
+          ["||37.1.213.100^"])
     try:
         compile_line("dns", "37.1.213.100")
     except CompilationError:
