@@ -1476,8 +1476,10 @@ def run_regression_tests() -> None:
 
     scoped_excluded_source = Source("https://example.invalid/excluded-source.txt", "adblock")
     scoped_unrelated_source = Source("https://example.invalid/unrelated-source.txt", "adblock")
+    scoped_metadata_source = Source("https://example.invalid/exclusions.txt", "exclusions")
     scoped_rule = "||excluded.example^"
     scoped_fetched = [
+        (scoped_metadata_source, scoped_rule + "\n"),
         (scoped_excluded_source, scoped_rule + "\n"),
         (scoped_unrelated_source, scoped_rule + "\n"),
     ]
