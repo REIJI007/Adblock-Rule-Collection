@@ -1,7 +1,7 @@
 # Adblock Rule Collection
 
 <p align="center">
-  多源广告过滤规则集合，自动整合、去重与转换规则。
+margin-bottom: 40px;">Adblock-Rule-Collection</h1>
 </p>
 
 <p align="center">
