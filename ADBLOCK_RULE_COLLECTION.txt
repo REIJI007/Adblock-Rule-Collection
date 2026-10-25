@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-25 14:42:29 (UTC+8)
-! Total rules: 1655695
+! Generated: 2026-10-25 14:52:30 (UTC+8)
+! Total rules: 1655697
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -72479,6 +72479,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /lib.js|$important,domain=petbook.de
 /lib/analytics.js
 /lib/crlt.js$script,third-party
+/lib/devtools-detector
 /lib/f_ad_code.js
 /lib/kbv-cookieconsent.js$domain=kbv.de|116117.de
 /libraries/analytics/*.js$domain=origins.com|aveda.com|aveda.com.tr|clinique.com|clinique.com.tr|esteelauder.com|jomalone.com|maccosmetics.com
@@ -119586,11 +119587,12 @@ anihq.cc##+js(rmnt, #text, /Adblock/i)
 anihq.cc##+js(rmnt, script, _blank, includes, window.open)
 anihq.org>>##+js(nowoif)
 anikai.to#%#//scriptlet('set-cookie', '__p_mov', '1')
-anikaitv.to,anikototv.to##+js(set, console.clear, trueFunc)
-anikaitv.to,anikototv.to##+js(set, console.log, trueFunc)
 anikore.jp##.boardDetail__list > li:has(> div[id])
 anikore.jp##html[class^="loading"]:style(visibility: visible !important;)
 anikore.jp#$#html[class^="loading"] { visibility: visible !important; }
+anikoto.*,anikaitv.to,anikototv.to##+js(set, console.clear, trueFunc)
+anikoto.*,anikaitv.to,anikototv.to##+js(set, console.log, trueFunc)
+anikoto.*,anikototv.to###networkloop-ad
 anikototv.to###ak-ci-bar
 aniktoptup.my.id
 anikuro.to##div[style="position: absolute; z-index: 99999"]
@@ -1422453,6 +1422455,7 @@ zzzyk.com###Tinfo
 ||qqpmt.heyremmy.com^
 ||qqppz.com^
 ||qqpuygzonbens.website^
+||qqpwojgbqkvus.online^
 ||qqq-telegram.com^$all
 ||qqq-www-987.site^
 ||qqq123987.site^
@@ -1601680,7 +1601683,6 @@ zzzyk.com###Tinfo
 ||vidverto.io^
 ||vidverto.io^$third-party
 ||vidwestxyz.com^
-||vidwish.live/lib/devtools-detector
 ||vidwxdkxvlvew.online^
 ||vidxhot.net/out.php?$popup
 ||vidy.st/scripts/xyz.js
