@@ -24,6 +24,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.TOKEN || github.token }}
 
+      - name: 同步 main 分支
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git pull --rebase origin main
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
