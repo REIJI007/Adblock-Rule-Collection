@@ -841,8 +841,15 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         )
 
     if kind == "dns":
-        # DNS/域名行允许附带行尾注释；域名本身不能包含 `#`，可安全截断。
+        # Preserve a complete rule first: '#' can be part of a regex or a cosmetic
+        # operator, so only strip inline comments from non-native DNS entries.
+        if looks_like_native_network_filter_rule(line):
+            reason = detect_nonportable_native_rule(line, target)
+            if reason:
+                raise CompilationError(reason)
+            return [line], "native-dns"
 
+        # Plain DNS entries may contain trailing source comments.
         line = line.split("#", 1)[0].strip()
         if not line:
             return [], "comment"
@@ -1700,6 +1707,9 @@ def run_regression_tests() -> None:
     check("unanchored DNS regex already valid for URL matching is preserved",
           compile_line("dns", r"/62\.76\.25\.2(7|8)/")[0],
           [r"/62\.76\.25\.2(7|8)/"])
+    check("hash character inside native URL regex is preserved",
+          compile_line("dns", r"/https?:\/\/example\.com\/path#frag/")[0],
+          [r"/https?:\/\/example\.com\/path#frag/"])
     check("DNS hostname regex with nested groups is URL-scoped",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
