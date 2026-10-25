@@ -1,0 +1,280 @@
+name: Generate AdBlock IPv6 Host List
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/20 * * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - "ADBLOCK_RULE_COLLECTION.txt"
+      - "ADBLOCK_RULE_COLLECTION_Lite.txt"
+      - ".github/workflows/Generate AdBlock IPV6 Host List.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-adblock-hosts-ipv6
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 同步远程分支
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          git fetch origin "$branch"
+          git pull --rebase origin "$branch"
+
+      - name: Generate IPv6 Hosts lists
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import ipaddress
+          import re
+          from pathlib import Path
+          from datetime import datetime, timezone, timedelta
+
+          SOURCES = [
+              ("ADBLOCK_RULE_COLLECTION.txt",
+               "ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt",
+               "Adblock-Rule-Collection-Host-IPV6"),
+              ("ADBLOCK_RULE_COLLECTION_Lite.txt",
+               "ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt",
+               "Adblock-Rule-Collection-Host-IPV6-Lite"),
+          ]
+
+          DOMAIN_RE = re.compile(
+              r"^\|\|([a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)\^$",
+              re.IGNORECASE,
+          )
+
+          def normalize_domain(value):
+              value = value.strip().rstrip(".").lower()
+              if not value or len(value) > 253:
+                  return None
+
+              try:
+                  value = value.encode("idna").decode("ascii")
+              except UnicodeError:
+                  return None
+
+              labels = value.split(".")
+              if len(labels) < 2:
+                  return None
+
+              for label in labels:
+                  if (
+                      not label
+                      or len(label) > 63
+                      or not re.fullmatch(
+                          r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+                          label,
+                      )
+                  ):
+                      return None
+
+              try:
+                  ipaddress.ip_address(value)
+                  return None
+              except ValueError:
+                  pass
+
+              return value
+
+          def parse_rules(path):
+              lines = path.read_text(
+                  encoding="utf-8-sig", errors="replace"
+              ).splitlines()
+
+              blocked = set()
+              exceptions = set()
+              badfilters = set()
+
+              for raw in lines:
+                  line = raw.strip()
+                  if not line or line.startswith(("!", "#", "[")):
+                      continue
+
+                  match = DOMAIN_RE.fullmatch(line)
+                  if match:
+                      domain = normalize_domain(match.group(1))
+                      if domain:
+                          blocked.add(domain)
+                      continue
+
+                  if line.startswith("@@||"):
+                      exception_match = re.fullmatch(
+                          r"@@\|\|([a-z0-9.-]+)\^",
+                          line,
+                          re.IGNORECASE,
+                      )
+                      if exception_match:
+                          domain = normalize_domain(
+                              exception_match.group(1)
+                          )
+                          if domain:
+                              exceptions.add(domain)
+                      continue
+
+                  if "$badfilter" in line.lower():
+                      base = re.sub(
+                          r"\$badfilter(?:,|$)",
+                          "",
+                          line,
+                          flags=re.IGNORECASE,
+                      ).rstrip("$,")
+                      base_match = DOMAIN_RE.fullmatch(base)
+                      if base_match:
+                          domain = normalize_domain(base_match.group(1))
+                          if domain:
+                              badfilters.add(domain)
+
+              # 仅禁用完全匹配的规则，保留独立的子域名规则。
+              blocked.difference_update(badfilters)
+
+              # Hosts 格式无法表示允许列表中的例外规则，因此需要排除
+              # 例外域名及其所有下级域名，避免将其加入拦截列表。
+              blocked = {
+                  domain for domain in blocked
+                  if not any(
+                      domain == exc or domain.endswith("." + exc)
+                      for exc in exceptions
+                  )
+              }
+
+              return sorted(blocked)
+
+          # 获取东八区（UTC+8）当前时间
+          beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
+
+          for source_name, output_name, title in SOURCES:
+              source = Path(source_name)
+              if not source.is_file():
+                  raise SystemExit(f"Missing input file: {source_name}")
+
+              domains = parse_rules(source)
+              output = Path(output_name)
+
+              header = [
+                  f"#Title: {title}",
+                  "#Description: 一个汇总了多个广告过滤器过滤规则的Host文件，每20分钟更新一次，确保即时同步上游减少误杀",
+                  "#Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
+                  "#LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0",
+                  "#LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0",
+                  f"#Generated: {beijing_time}",
+                  f"#RuleCount: {len(domains)}",
+                  "",
+              ]
+
+              output.write_text(
+                  "\n".join(header + [
+                      f":: {domain}" for domain in domains
+                  ]) + "\n",
+                  encoding="utf-8",
+              )
+
+              print(f"{source_name}: {len(domains)} domains -> {output_name}")
+          PY
+
+      - name: Validate generated files
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          files = {
+              "ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt":
+                  "#Title: Adblock-Rule-Collection-Host-IPV6",
+              "ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt":
+                  "#Title: Adblock-Rule-Collection-Host-IPV6-Lite",
+          }
+
+          for name, expected_title in files.items():
+              path = Path(name)
+              if not path.is_file():
+                  raise SystemExit(f"Output missing: {name}")
+
+              lines = path.read_text(encoding="utf-8").splitlines()
+              if not lines or lines[0] != expected_title:
+                  raise SystemExit(
+                      f"Unexpected title in {name}: "
+                      f"{lines[0] if lines else '<empty file>'}"
+                  )
+
+              rule_count_index = next(
+                  (i for i, line in enumerate(lines)
+                   if line.startswith("#RuleCount: ")),
+                  None,
+              )
+              if (
+                  rule_count_index is None
+                  or rule_count_index + 1 >= len(lines)
+                  or lines[rule_count_index + 1] != ""
+              ):
+                  raise SystemExit(
+                      f"Missing blank line between header and rules: {name}"
+                  )
+
+              for line in lines:
+                  if not line or line.startswith("#"):
+                      continue
+                  if not re.fullmatch(r":: [a-z0-9.-]+", line):
+                      raise SystemExit(
+                          f"Invalid IPv6 Hosts line in {name}: {line}"
+                      )
+              print(f"Validated: {name}")
+          PY
+
+      - name: Commit and safely push changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt \
+                  ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "Update IPv6 Hosts lists"
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::与远程分支同步失败，停止推送以避免覆盖远程提交。"
+            exit 1
+          fi
+          if git push origin "HEAD:$branch"; then
+            echo "Push successful."
+            exit 0
+          fi
+          for attempt in 1 2 3 4 5; do
+            echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程分支并尝试变基。"
+            git fetch origin "$branch"
+            if ! git rebase -X ours "origin/$branch"; then
+              git rebase --abort || true
+              echo "::error::无法自动同步远程提交。"
+              exit 1
+            fi
+            if git push origin "HEAD:$branch"; then
+              echo "Push successful."
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo "::error::多次尝试后仍无法推送。"
+          exit 1
