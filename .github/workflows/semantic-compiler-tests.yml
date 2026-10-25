@@ -48,8 +48,8 @@ jobs:
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           echo "strict_compiler_exit_code=$code" > semantic-live-audit-status.txt
           echo "Strict compilation exit code: $code"
-          # Keep this step alive so the audit summary and artifact upload can run.
-          # The summary step will fail the job if strict compilation was rejected.
+          # 保留此步骤的成功状态，以便后续生成审计摘要并上传审计产物。
+          # 如果严格编译未通过，后续的摘要步骤会将此任务标记为失败。
           exit 0
       - name: Summarize strict audit
         if: always()
