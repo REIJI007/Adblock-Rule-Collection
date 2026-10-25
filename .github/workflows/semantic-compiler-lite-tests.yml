@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python Adblock_Rule_Generator_Lite.py --output /tmp/semantic-compiled-lite-filter.txt --report semantic-lite-live-audit.json
+          python Adblock_Rule_Generator_Lite.py --target adguard-windows --output /tmp/semantic-compiled-lite-filter.txt --report semantic-lite-live-audit.json
           code=$?
           echo "strict_compiler_exit_code=$code" > semantic-lite-live-audit-status.txt
           echo "Strict Lite compilation exit code: $code"
