@@ -525,9 +525,23 @@ def compile_dns_rule(line: str) -> str:
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
-                raise CompilationError(
-                    "DNS hostname regex cannot be proven equivalent as a network-filter URL regex"
+                # Some upstream DNS filters use anchored IPv4-address regexes,
+                # often followed by a port delimiter. These can be scoped to a
+                # request URL without changing the address-expression itself.
+                ipv4_regex = re.match(
+                    r"^\^[0-9]{1,3}(?:\\\.[0-9]{1,3}){2,3}(?::|$)",
+                    regex_body,
                 )
+                if ipv4_regex:
+                    url_scoped_body = (
+                        r"^https?:\/\/(?:[^\/?#@]+@)?"
+                        + regex_body[1:]
+                    )
+                    translated = (("@@" if exception else "") + "/" + url_scoped_body + "/")
+                else:
+                    raise CompilationError(
+                        "DNS hostname regex cannot be proven equivalent as a network-filter URL regex"
+                    )
 
         if normalized_regex_modifiers:
             translated += "$" + ",".join(normalized_regex_modifiers)
@@ -611,7 +625,7 @@ def compile_dns_rule(line: str) -> str:
 
     # `.example.com` 只匹配子域，不匹配根域。
 
-    leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^", pattern)
+    leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^?", pattern)
     if leading_dot:
         hostname = canonical_hostname(
             leading_dot.group(1), allow_single_label=False
@@ -723,30 +737,36 @@ def compile_domain_exact_line(line: str) -> str:
     return exact_hostname_regex_rule(hostname)
 
 def looks_like_native_network_filter_rule(line: str) -> bool:
-    """Return whether a DNS/CNAME entry already uses recognizable network-filter syntax.
+    """Recognize entries that already use AdGuard network-filter syntax.
 
-    DNS-only hostname expressions are deliberately not classified as native URL rules;
-    they must go through the conservative DNS-to-network conversion path instead.
+    Hostname-only DNS expressions (plain domains and hostname regexes) are
+    converted to URL-scoped network rules. Existing Adblock-compatible patterns
+    are passed through verbatim, including wildcard, caret, and end-anchor forms.
     """
     candidate = line.strip()
     if not candidate:
         return False
-    if re.match(r"^(?:@@)?\|\|", candidate):
-        # A DNS end-of-host anchor is not the same as a URL end anchor.
-        pattern = candidate.split("$", 1)[0]
-        if pattern.endswith("|"):
-            return False
-        return True
+
     if candidate.startswith("/"):
         closing = find_regex_rule_end(candidate)
         if closing is None:
             return False
         regex_body = candidate[1:closing]
-        # A hostname-only DNS regex needs URL scoping before it can work on requests.
         return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
-    return "://" in candidate
+
+    # Anchored filters and common Adblock wildcard/separator patterns are
+    # already valid network-filter syntax. Do not rewrite them just because
+    # the source was classified as DNS or CNAME.
+    if candidate.startswith(("||", "@@||", "|", "@@|")):
+        return True
+    if "://" in candidate:
+        return True
+    if re.fullmatch(r"\S*[\^|*]\S*", candidate):
+        return True
+    return False
 
 def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[list[str], str]:
     line = raw_line.strip()
@@ -1621,10 +1641,20 @@ def run_regression_tests() -> None:
           ["||MobileAnalytics.*.AmazonAWS.com^"])
     check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||Ads.Example.com^"])
+    check("DNS wildcard exact-host exception uses existing filter syntax",
+          compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
+          ["@@||cdn.us*.exponea.com^|"])
+    check("unanchored separator and wildcard filters remain unchanged",
+          compile_line("dns", "-adx-*.rayjump.com^")[0],
+          ["-adx-*.rayjump.com^"])
+    check("DNS leading-dot mask without caret is converted safely",
+          compile_line("dns", ".3.n.2.1.l50.js")[0],
+          ["||*.3.n.2.1.l50.js^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("DNS exact end anchor is preserved as exact-host regex", compile_line("dns", "@@||example.com^|")[0],
-          [r"@@/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("Adblock-compatible DNS exception end-anchor rule is preserved verbatim",
+          compile_line("dns", "@@||example.com^|")[0],
+          ["@@||example.com^|"])
     check("DNS partial domain anchor keeps prefix semantics", compile_line("dns", "||advertising.civitai.")[0],
           ["||advertising.civitai."])
     check("DNS leading-dot mask excludes apex", compile_line("dns", ".example.com^")[0],
