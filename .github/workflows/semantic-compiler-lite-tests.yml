@@ -47,8 +47,8 @@ jobs:
           code=$?
           echo "strict_compiler_exit_code=$code" > semantic-lite-live-audit-status.txt
           echo "Strict Lite compilation exit code: $code"
-          # Keep this step alive so the audit report can still be uploaded.
-          # The summary step fails the job if strict compilation was rejected.
+          # 保留此步骤的成功状态，以便后续仍可上传审计报告。
+          # 如果严格编译未通过，后续的摘要步骤会将此任务标记为失败。
           exit 0
       - name: Summarize strict Lite audit
         if: always()
