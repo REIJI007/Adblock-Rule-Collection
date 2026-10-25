@@ -337,28 +337,8 @@ def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
 
 def normalize_native_domain_rule(line: str) -> str:
     """仅规范化简单域名锚定规则，其余语法保持原样。"""
-    # 原生浏览器规则中的裸 IPv4 应匹配主机，而非 URL 任意位置。
+    # Preserve unanchored host-looking tokens verbatim: they can be valid URL-substring rules.
 
-    bare_ipv4 = re.fullmatch(
-        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
-        line,
-    )
-    if bare_ipv4:
-        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
-        if any(octet > 255 for octet in octets):
-            raise CompilationError(
-                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
-            )
-        # 将带前导零的 IPv4 八位组按十进制规范化，便于等价去重。
-
-        ip_literal = ".".join(str(octet) for octet in octets)
-        return (
-            (bare_ipv4.group("exception") or "")
-            + "||"
-            + ip_literal
-            + "^"
-            + (bare_ipv4.group("tail") or "")
-        )
     match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
         return line
@@ -810,7 +790,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        # 原生规则保留目标语法；只规范化简单域名锚点和裸 IPv4。
+        # 原生规则保留目标语法；仅对可证明等价的简单域名锚点做规范化。
 
         return [normalize_native_domain_rule(line)], "native"
 
@@ -1242,6 +1222,31 @@ def load_adguard_dns_exclusion_map(
 
     return patterns_by_source, pattern_counts_by_metadata_url, ADGUARD_SDNS_CONFIGURATION_URL
 
+def compile_sources_with_metadata(
+    fetched: list[tuple[Source, str]],
+    target: str,
+    metadata_loader=None,
+    *,
+    require_metadata: bool = False,
+) -> tuple[CompileState, dict[str, int], str | None]:
+    """Compile with source-scoped upstream exclusions; fail closed if required metadata is absent."""
+    if require_metadata and not any(source.kind == "exclusions" for source, _ in fetched):
+        raise CompilationError(
+            "required source-exclusion metadata source was not fetched; refusing to compile without it"
+        )
+
+    loader = metadata_loader or load_adguard_dns_exclusion_map
+    source_exclusions, metadata_pattern_counts, metadata_config_url = loader(fetched)
+    state = compile_fetched_sources(
+        fetched,
+        target,
+        source_exclusions=source_exclusions,
+        metadata_pattern_counts=metadata_pattern_counts,
+        metadata_config_url=metadata_config_url,
+    )
+    return state, metadata_pattern_counts, metadata_config_url
+
+
 def compile_fetched_sources(
     fetched: list[tuple[Source, str]],
     target: str,
@@ -1467,6 +1472,49 @@ def run_regression_tests() -> None:
           exclusion_matchers[2].matches("||ads.example^"), True)
     check("exclusion patterns do not match unrelated rules",
           any(pattern.matches("||safe.example^") for pattern in exclusion_matchers), False)
+
+    scoped_excluded_source = Source("https://example.invalid/excluded-source.txt", "adblock")
+    scoped_unrelated_source = Source("https://example.invalid/unrelated-source.txt", "adblock")
+    scoped_metadata_source = Source("https://example.invalid/exclusions.txt", "exclusions")
+    scoped_rule = "||excluded.example^"
+    scoped_fetched = [
+        (scoped_metadata_source, scoped_rule + "\n"),
+        (scoped_excluded_source, scoped_rule + "\n"),
+        (scoped_unrelated_source, scoped_rule + "\n"),
+    ]
+
+    def deterministic_exclusion_loader(_fetched):
+        return (
+            {scoped_excluded_source.url: parse_hostlist_exclusion_patterns(scoped_rule + "\n")},
+            {"https://example.invalid/exclusions.txt": 1},
+            "https://example.invalid/configuration.json",
+        )
+
+    scoped_state, _, _ = compile_sources_with_metadata(
+        scoped_fetched,
+        "adguard-windows",
+        metadata_loader=deterministic_exclusion_loader,
+        require_metadata=True,
+    )
+    check("source exclusions are applied only to their associated source",
+          (
+              scoped_state.summaries[scoped_excluded_source.url].excluded_by_metadata,
+              scoped_state.summaries[scoped_unrelated_source.url].emitted_rules,
+              scoped_rule in scoped_state.records,
+          ),
+          (1, 1, True))
+
+    try:
+        compile_sources_with_metadata(
+            [],
+            "adguard-windows",
+            metadata_loader=lambda _fetched: ({}, {}, None),
+            require_metadata=True,
+        )
+    except CompilationError:
+        tests.append(("missing required exclusion metadata source fails closed", True, True))
+    else:
+        raise AssertionError("required exclusion metadata must not be bypassed")
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
@@ -1744,27 +1792,24 @@ def run_regression_tests() -> None:
           ["example.com##+js(no-such-scriptlet)"])
     check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^")[0],
           ["||37.1.213.100^"])
-    check("bare IPv4 browser rule is normalized to a host-anchored rule",
+    check("unanchored IPv4-looking native rule preserves URL-substring scope",
           compile_line("adblock", "37.1.213.100")[0],
-          ["||37.1.213.100^"])
-    check("bare IPv4 browser exception is normalized and remains an exception",
+          ["37.1.213.100"])
+    check("unanchored IPv4-looking exception remains unanchored",
           compile_line("adblock", "@@37.1.213.100")[0],
-          ["@@||37.1.213.100^"])
-    check("bare IPv4 host normalization preserves important modifier",
+          ["@@37.1.213.100"])
+    check("unanchored IPv4-looking rule preserves modifiers",
           compile_line("adblock", "37.1.213.100$important")[0],
-          ["||37.1.213.100^$important"])
-    check("leading-zero IPv4 octets normalize to canonical decimal form",
+          ["37.1.213.100$important"])
+    check("leading-zero IPv4-looking rule remains unchanged",
           compile_line("adblock", "120.229.26.013")[0],
-          ["||120.229.26.13^"])
-    check("multi-zero IPv4 octet normalizes to canonical decimal form",
+          ["120.229.26.013"])
+    check("multi-zero IPv4-looking rule remains unchanged",
           compile_line("adblock", "81.183.41.001")[0],
-          ["||81.183.41.1^"])
-    try:
-        compile_line("adblock", "999.1.213.100")
-    except CompilationError:
-        tests.append(("invalid dotted-quad IP is rejected", True, True))
-    else:
-        raise AssertionError("invalid IPv4 literals must not be published as raw rules")
+          ["81.183.41.001"])
+    check("invalid dotted-quad-looking URL substring is not reclassified as an IP",
+          compile_line("adblock", "999.1.213.100")[0],
+          ["999.1.213.100"])
     try:
         compile_line("adblock", "||37.1.213.100^$network")
     except CompilationError:
@@ -1831,9 +1876,29 @@ def main() -> int:
     # 固定处理顺序，避免下载完成顺序影响输出。
     fetched.sort(key=lambda item: sources.index(item[0]))
 
-    # 本生成器输出网络过滤规则；DNS/CNAME 来源单独记录，不混入该产物。
-
-    state = compile_fetched_sources(fetched, args.target)
+    # Apply source-specific upstream exclusions. If required metadata fails,
+    # only build a diagnostic report; never publish without those semantics.
+    metadata_failures: list[dict[str, str]] = []
+    try:
+        state, metadata_pattern_counts, metadata_config_url = compile_sources_with_metadata(
+            fetched,
+            args.target,
+            require_metadata=any(source.kind == "exclusions" for source in sources),
+        )
+    except Exception as error:
+        message = f"{type(error).__name__}: {error}"
+        metadata_failure = {
+            "url": ADGUARD_SDNS_CONFIGURATION_URL,
+            "format": "source-metadata",
+            "error": message,
+        }
+        metadata_failures.append(metadata_failure)
+        source_failures.append(metadata_failure)
+        print(f"[METADATA FAILED] required source-exclusion metadata: {message}", file=sys.stderr)
+        # Diagnostic compilation only; the fatal gate below prevents publishing.
+        state = compile_fetched_sources(fetched, args.target)
+        metadata_pattern_counts = {}
+        metadata_config_url = ADGUARD_SDNS_CONFIGURATION_URL
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
     report = build_report(state, source_failures=source_failures, output_path=args.output, target=args.target)
     report_path = Path(args.report)
@@ -1841,6 +1906,14 @@ def main() -> int:
 
     # 严格编译失败时仍保留审计报告。
     atomic_write_text(report_path, json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+
+    if metadata_failures:
+        print(
+            "ABORTED: required source-exclusion metadata is unavailable. "
+            f"Existing output was not changed. Review {report_path}.",
+            file=sys.stderr,
+        )
+        return 2
 
     if source_failures and not args.allow_source_failures:
         print(
