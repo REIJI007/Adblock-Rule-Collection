@@ -128,11 +128,11 @@ jobs:
                           if domain:
                               badfilters.add(domain)
 
-              # Disable exact rules only; preserve independent subdomain rules.
+              # 仅禁用完全匹配的规则，保留独立的子域名规则。
               blocked.difference_update(badfilters)
 
-              # Hosts cannot represent allowlist exceptions. Exclude the
-              # exception domain and its descendants from the block list.
+              # Hosts 格式无法表示允许列表中的例外规则，因此需要排除
+              # 例外域名及其所有下级域名，避免将其加入拦截列表。
               blocked = {
                   domain for domain in blocked
                   if not any(
