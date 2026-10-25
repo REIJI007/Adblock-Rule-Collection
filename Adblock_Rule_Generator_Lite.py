@@ -526,22 +526,32 @@ def compile_dns_rule(line: str) -> str:
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
-                # Some upstream DNS filters use anchored IPv4-address regexes,
-                # often followed by a port delimiter. These can be scoped to a
-                # request URL without changing the address-expression itself.
-                ipv4_regex = re.match(
-                    r"^\^[0-9]{1,3}(?:\\\.[^/:?#]+){2,3}:",
-                    regex_body,
-                )
-                if ipv4_regex:
-                    url_scoped_body = (
-                        r"^https?:\/\/(?:[^\/?#@]+@)?"
-                        + regex_body[1:]
-                    )
+                if regex_body.startswith("^"):
+                    # DNS hostname/IP expressions are not URL-scoped. Wrap anchored
+                    # patterns in an HTTP(S) authority matcher; preserve their regex
+                    # expression, adding URL authority boundaries when the source
+                    # regex is anchored to the end of the hostname.
+                    if regex_body.endswith("$"):
+                        inner = regex_body[1:-1]
+                        boundary = (
+                            r"(?:[\/?#]|$)"
+                            if ":" in inner
+                            else r"(?::[0-9]+)?(?:[\/?#]|$)"
+                        )
+                        url_scoped_body = (
+                            r"^https?:\/\/(?:[^\/?#@]+@)?"
+                            + inner
+                            + boundary
+                        )
+                    else:
+                        url_scoped_body = (
+                            r"^https?:\/\/(?:[^\/?#@]+@)?"
+                            + regex_body[1:]
+                        )
                     translated = (("@@" if exception else "") + "/" + url_scoped_body + "/")
                 else:
                     raise CompilationError(
-                        "DNS hostname regex cannot be proven equivalent as a network-filter URL regex"
+                        "DNS regex cannot be proven equivalent as a network-filter URL regex"
                     )
 
         if normalized_regex_modifiers:
@@ -740,9 +750,8 @@ def compile_domain_exact_line(line: str) -> str:
 def looks_like_native_network_filter_rule(line: str) -> bool:
     """Recognize entries that already use AdGuard network-filter syntax.
 
-    Hostname-only DNS expressions (plain domains and hostname regexes) are
-    converted to URL-scoped network rules. Existing Adblock-compatible patterns
-    are passed through verbatim, including wildcard, caret, and end-anchor forms.
+    Valid native filter patterns are passed through verbatim. Bare domain names
+    and leading-dot DNS suffix masks are handled by the conservative DNS adapter.
     """
     candidate = line.strip()
     if not candidate:
@@ -753,13 +762,17 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
         if closing is None:
             return False
         regex_body = candidate[1:closing]
-        return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None:
+            return True
+        # Unanchored regexes already operate on arbitrary URL text. Host-anchored
+        # DNS regexes need URL scoping before they can be used for requests.
+        return not regex_body.startswith("^")
 
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
 
     # Anchored filters and common Adblock wildcard/separator patterns are
-    # already valid network-filter syntax. Do not rewrite them just because
+    # already valid network-filter syntax. Do not rewrite them merely because
     # the source was classified as DNS or CNAME.
     if candidate.startswith(("||", "@@||", "|", "@@|")):
         return True
@@ -767,6 +780,15 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
         return True
     if re.fullmatch(r"\S*[\^|*]\S*", candidate):
         return True
+    if candidate.startswith("."):
+        # DNS suffix notation is not a plain URL substring and is adapted below.
+        return False
+
+    # Valid unanchored hostnames are treated as DNS host expressions and converted
+    # to exact-host URL rules. Other one-token patterns are already valid generic
+    # URL-substring filters and should remain unchanged.
+    if re.fullmatch(r"\S+", candidate):
+        return canonical_hostname(candidate, allow_single_label=False) is None
     return False
 
 def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[list[str], str]:
@@ -1671,6 +1693,12 @@ def run_regression_tests() -> None:
 
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", r"/(https?:\/\/)213\.32\.115\..{100,}/")[0],
           [r"/(https?:\/\/)213\.32\.115\..{100,}/"])
+    check("unanchored DNS regex already valid for URL matching is preserved",
+          compile_line("dns", r"/62\.76\.25\.2(7|8)/")[0],
+          [r"/62\.76\.25\.2(7|8)/"])
+    check("DNS hostname regex with nested groups is URL-scoped",
+          compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
