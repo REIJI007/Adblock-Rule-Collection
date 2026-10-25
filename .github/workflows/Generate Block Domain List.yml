@@ -17,7 +17,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          branch="${GITHUB_REF_NAME}"
+          branch="main"
           git fetch origin "$branch"
           git pull --rebase origin "$branch"
 
@@ -229,7 +229,7 @@ jobs:
           fi
           git commit -m "Update AdBlock Domain rules"
           set -euo pipefail
-          branch="${GITHUB_REF_NAME}"
+          branch="main"
           git fetch origin "$branch"
           if ! git rebase -X ours "origin/$branch"; then
             git rebase --abort || true
