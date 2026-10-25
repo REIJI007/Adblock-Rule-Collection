@@ -22,9 +22,9 @@
 
 ## 使用方式
 
-复制对应链接，导入支持该规则格式的过滤工具。也可在 [Releases](https://github.com/REIJI007/Adblock-Rule-Collection/releases) 下载文件。
+复制对应链接，在 **AdGuard for Windows 的「广告拦截」模块**中添加为自定义过滤器。完整版与精简版均默认按 AdGuard for Windows 桌面过滤引擎的条件编译，而不是按 Chromium MV3 浏览器扩展编译。也可在 [Releases](https://github.com/REIJI007/Adblock-Rule-Collection/releases) 下载文件。
 
-支持 AdGuard、Adblock Plus、uBlock Origin、Brave 等兼容工具。
+其他过滤器或浏览器扩展可能不支持全部规则语法；本项目不保证其与 AdGuard for Windows 具有相同的规则覆盖率。
 
 ## 规则来源
 
