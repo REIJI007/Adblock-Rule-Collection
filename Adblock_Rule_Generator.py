@@ -529,7 +529,7 @@ def compile_dns_rule(line: str) -> str:
                 # often followed by a port delimiter. These can be scoped to a
                 # request URL without changing the address-expression itself.
                 ipv4_regex = re.match(
-                    r"^\^[0-9]{1,3}(?:\\\.[0-9]{1,3}){2,3}(?::|$)",
+                    r"^\^[0-9]{1,3}(?:\\\.[^/:?#]+){2,3}:",
                     regex_body,
                 )
                 if ipv4_regex:
@@ -1662,6 +1662,10 @@ def run_regression_tests() -> None:
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("DNS IPv4 address regex is URL-scoped",
+          compile_line("dns", r"/^139\.45\.197\.2(4[0-9]|5[0-4]):/")[0],
+          [r"/^https?:\/\/(?:[^\/?#@]+@)?139\.45\.197\.2(4[0-9]|5[0-4]):/"])
+
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", r"/(https?:\/\/)213\.32\.115\..{100,}/")[0],
           [r"/(https?:\/\/)213\.32\.115\..{100,}/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
