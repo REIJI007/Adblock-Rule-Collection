@@ -337,7 +337,28 @@ def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
 
 def normalize_native_domain_rule(line: str) -> str:
     """仅规范化简单域名锚定规则，其余语法保持原样。"""
-    # Preserve unanchored host-looking tokens verbatim: they can be valid URL-substring rules.
+    # 原生浏览器规则中的裸 IPv4 规范化为主机锚定规则。
+    # DNS 来源由专用适配器处理，避免误按浏览器语义转换。
+
+    bare_ipv4 = re.fullmatch(
+        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
+        line,
+    )
+    if bare_ipv4:
+        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
+        if any(octet > 255 for octet in octets):
+            raise CompilationError(
+                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
+            )
+        # 将带前导零的 IPv4 八位组按十进制规范化，便于等价去重。
+        ip_literal = ".".join(str(octet) for octet in octets)
+        return (
+            (bare_ipv4.group("exception") or "")
+            + "||"
+            + ip_literal
+            + "^"
+            + (bare_ipv4.group("tail") or "")
+        )
 
     match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
@@ -790,7 +811,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        # 原生规则保留目标语法；仅对可证明等价的简单域名锚点做规范化。
+        # 原生规则保留目标语法；规范化简单域名锚点和裸 IPv4。
 
         return [normalize_native_domain_rule(line)], "native"
 
@@ -1793,24 +1814,27 @@ def run_regression_tests() -> None:
           ["example.com##+js(no-such-scriptlet)"])
     check("native IPv4 host rules are preserved", compile_line("adblock", "||37.1.213.100^")[0],
           ["||37.1.213.100^"])
-    check("unanchored IPv4-looking native rule preserves URL-substring scope",
+    check("bare IPv4 browser rule is normalized to a host-anchored rule",
           compile_line("adblock", "37.1.213.100")[0],
-          ["37.1.213.100"])
-    check("unanchored IPv4-looking exception remains unanchored",
+          ["||37.1.213.100^"])
+    check("bare IPv4 browser exception is normalized and remains an exception",
           compile_line("adblock", "@@37.1.213.100")[0],
-          ["@@37.1.213.100"])
-    check("unanchored IPv4-looking rule preserves modifiers",
+          ["@@||37.1.213.100^"])
+    check("bare IPv4 host normalization preserves important modifier",
           compile_line("adblock", "37.1.213.100$important")[0],
-          ["37.1.213.100$important"])
-    check("leading-zero IPv4-looking rule remains unchanged",
+          ["||37.1.213.100^$important"])
+    check("leading-zero IPv4 octets normalize to canonical decimal form",
           compile_line("adblock", "120.229.26.013")[0],
-          ["120.229.26.013"])
-    check("multi-zero IPv4-looking rule remains unchanged",
+          ["||120.229.26.13^"])
+    check("multi-zero IPv4 octet normalizes to canonical decimal form",
           compile_line("adblock", "81.183.41.001")[0],
-          ["81.183.41.001"])
-    check("invalid dotted-quad-looking URL substring is not reclassified as an IP",
-          compile_line("adblock", "999.1.213.100")[0],
-          ["999.1.213.100"])
+          ["||81.183.41.1^"])
+    try:
+        compile_line("adblock", "999.1.213.100")
+    except CompilationError:
+        tests.append(("invalid dotted-quad IP is rejected", True, True))
+    else:
+        raise AssertionError("invalid IPv4 literals must not be published as raw rules")
     try:
         compile_line("adblock", "||37.1.213.100^$network")
     except CompilationError:
