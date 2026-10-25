@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: '*/20 * * * *'
   push:
+    branches:
+      - main
     paths:
       - "ADBLOCK_RULE_COLLECTION.txt"
       - "ADBLOCK_RULE_COLLECTION_Lite.txt"
