@@ -47,10 +47,10 @@ jobs:
 
           SOURCES = [
               ("ADBLOCK_RULE_COLLECTION.txt",
-               "ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt",
+               "ADBLOCK_RULE_COLLECTION_HOST_IPV6.txt",
                "Adblock-Rule-Collection-Host-IPV6"),
               ("ADBLOCK_RULE_COLLECTION_Lite.txt",
-               "ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt",
+               "ADBLOCK_RULE_COLLECTION_HOST_IPV6_Lite.txt",
                "Adblock-Rule-Collection-Host-IPV6-Lite"),
           ]
 
@@ -195,9 +195,9 @@ jobs:
           import re
 
           files = {
-              "ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt":
+              "ADBLOCK_RULE_COLLECTION_HOST_IPV6.txt":
                   "#Title: Adblock-Rule-Collection-Host-IPV6",
-              "ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt":
+              "ADBLOCK_RULE_COLLECTION_HOST_IPV6_Lite.txt":
                   "#Title: Adblock-Rule-Collection-Host-IPV6-Lite",
           }
 
@@ -243,8 +243,8 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt \
-                  ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt
+          git add ADBLOCK_RULE_COLLECTION_HOST_IPV6.txt \
+                  ADBLOCK_RULE_COLLECTION_HOST_IPV6_Lite.txt
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
