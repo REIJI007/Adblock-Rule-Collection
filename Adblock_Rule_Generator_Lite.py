@@ -1815,7 +1815,7 @@ def main() -> int:
 ! Generated: {timestamp} (UTC+8)
 ! Total rules: {num_rules}
 """
-    document = header + "\n".join(rules) + "\n"
+    document = header.rstrip("\n") + "\n\n" + "\n".join(rules) + "\n"
     atomic_write_text(output_path, document)
 
     print(f"Published {len(rules)} unique rules to {output_path}")
