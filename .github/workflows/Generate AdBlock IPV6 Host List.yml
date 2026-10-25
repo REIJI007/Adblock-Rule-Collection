@@ -26,6 +26,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: 同步远程分支
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          git fetch origin "$branch"
+          git pull --rebase origin "$branch"
+
       - name: Generate IPv6 Hosts lists
         shell: bash
         run: |
@@ -227,16 +235,43 @@ jobs:
               print(f"Validated: {name}")
           PY
 
-      - name: Commit changes
+      - name: Commit and safely push changes
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ADBLOCK_RULE_COLLECTION_IPv6_Hosts.txt \
                   ADBLOCK_RULE_COLLECTION_IPv6_Hosts_Lite.txt
-          if ! git diff --cached --quiet; then
-            git commit -m "Update IPv6 Hosts lists"
-            git push
-          else
+          if git diff --cached --quiet; then
             echo "No changes to commit."
+            exit 0
           fi
+          git commit -m "Update IPv6 Hosts lists"
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::与远程分支同步失败，停止推送以避免覆盖远程提交。"
+            exit 1
+          fi
+          if git push origin "HEAD:$branch"; then
+            echo "Push successful."
+            exit 0
+          fi
+          for attempt in 1 2 3 4 5; do
+            echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程分支并尝试变基。"
+            git fetch origin "$branch"
+            if ! git rebase -X ours "origin/$branch"; then
+              git rebase --abort || true
+              echo "::error::无法自动同步远程提交。"
+              exit 1
+            fi
+            if git push origin "HEAD:$branch"; then
+              echo "Push successful."
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo "::error::多次尝试后仍无法推送。"
+          exit 1
