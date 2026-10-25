@@ -37,9 +37,11 @@ jobs:
 
           SOURCES = [
               ("ADBLOCK_RULE_COLLECTION.txt",
-               "ADBLOCK_RULE_COLLECTION_Hosts.txt"),
+               "ADBLOCK_RULE_COLLECTION_Hosts.txt",
+               "Adblock-Rule-Collection-Host"),
               ("ADBLOCK_RULE_COLLECTION_Lite.txt",
-               "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt"),
+               "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt",
+               "Adblock-Rule-Collection-Host-Lite"),
           ]
 
           DOMAIN_RE = re.compile(
@@ -148,7 +150,7 @@ jobs:
           # 获取东八区（UTC+8）当前时间
           beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
 
-          for source_name, output_name in SOURCES:
+          for source_name, output_name, title in SOURCES:
               source = Path(source_name)
               if not source.is_file():
                   raise SystemExit(f"Missing input file: {source_name}")
@@ -157,7 +159,7 @@ jobs:
               output = Path(output_name)
 
               header = [
-                  "#Title: Adblock-Rule-Collection-Host",
+                  f"#Title: {title}",
                   "#Description: 一个汇总了多个广告过滤器过滤规则的Host文件，每20分钟更新一次，确保即时同步上游减少误杀",
                   "#Homepage: https://github.com/REIJI007/Adblock-Rule-Collection",
                   "#LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0",
@@ -184,17 +186,40 @@ jobs:
           from pathlib import Path
           import re
 
-          files = [
-              "ADBLOCK_RULE_COLLECTION_Hosts.txt",
-              "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt",
-          ]
+          files = {
+              "ADBLOCK_RULE_COLLECTION_Hosts.txt":
+                  "#Title: Adblock-Rule-Collection-Host",
+              "ADBLOCK_RULE_COLLECTION_Hosts_Lite.txt":
+                  "#Title: Adblock-Rule-Collection-Host-Lite",
+          }
 
-          for name in files:
+          for name, expected_title in files.items():
               path = Path(name)
               if not path.is_file():
                   raise SystemExit(f"Output missing: {name}")
 
-              for line in path.read_text(encoding="utf-8").splitlines():
+              lines = path.read_text(encoding="utf-8").splitlines()
+              if not lines or lines[0] != expected_title:
+                  raise SystemExit(
+                      f"Unexpected title in {name}: "
+                      f"{lines[0] if lines else '<empty file>'}"
+                  )
+
+              rule_count_index = next(
+                  (i for i, line in enumerate(lines)
+                   if line.startswith("#RuleCount: ")),
+                  None,
+              )
+              if (
+                  rule_count_index is None
+                  or rule_count_index + 1 >= len(lines)
+                  or lines[rule_count_index + 1] != ""
+              ):
+                  raise SystemExit(
+                      f"Missing blank line between header and rules: {name}"
+                  )
+
+              for line in lines:
                   if not line or line.startswith("#"):
                       continue
                   if not re.fullmatch(
