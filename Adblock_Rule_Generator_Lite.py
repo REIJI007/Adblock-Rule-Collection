@@ -1,16 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Compile heterogeneous upstream blocklists into one AdGuard browser filter.
+"""将多个上游过滤列表编译为 AdGuard 浏览器规则。
 
-Important contract:
-- Native Adblock/AdGuard filter rules are preserved, except safe normalization of
-  simple domain-anchored rules and exact duplicate removal.
-- Hosts entries are translated to exact-host URL regexes. Domain-only entries use
-  normal domain-and-subdomain scope (||domain^) unless their source contract explicitly
-  requires exact-host scope via the domains-exact adapter.
-- DNS-only semantics that cannot be expressed by a browser filter are reported.
-  By default, any such rule aborts publication; --allow-lossy is an explicit
-  escape hatch and is recorded in the JSON report.
-- Existing output is replaced atomically only after compilation passes.
+原生规则仅做安全规范化和去重；Hosts 与纯域名来源按各自匹配范围转换。
+无法证明兼容的规则会记录在审计报告中；严格模式失败时不会覆盖旧产物。
 """
 from __future__ import annotations
 
