@@ -93,7 +93,7 @@ jobs:
                   if not line or line.startswith(("!", "#", "[")):
                       continue
 
-                  # Only support plain domain rules with no modifiers.
+                  # 仅处理不带修饰符的纯域名规则。
                   match = DOMAIN_RE.fullmatch(line)
                   if match:
                       domain = normalize_domain(match.group(1))
@@ -101,7 +101,7 @@ jobs:
                           blocked.add(domain)
                       continue
 
-                  # Domain-wide exceptions: @@||example.com^
+                  # 域名及其子域名的例外规则示例：@@||example.com^
                   if line.startswith("@@||"):
                       exception_match = re.fullmatch(
                           r"@@\|\|([a-z0-9.-]+)\^",
@@ -116,7 +116,7 @@ jobs:
                               exceptions.add(domain)
                       continue
 
-                  # $badfilter disables the exact corresponding rule.
+                  # $badfilter 用于禁用与其完全对应的规则。
                   if "$badfilter" in line.lower():
                       base = re.sub(
                           r"\$badfilter(?:,|$)",
@@ -130,11 +130,11 @@ jobs:
                           if domain:
                               badfilters.add(domain)
 
-              # Remove only exact disabled rules, not every subdomain.
+              # 仅移除被禁用的精确规则，不要连带移除所有子域名规则。
               blocked.difference_update(badfilters)
 
-              # Hosts cannot express exception semantics. Remove blocked
-              # domains covered by an exception, including their subdomains.
+              # Hosts 格式无法表达例外语义，因此需要移除被例外规则覆盖的
+              # 域名及其子域名。
               blocked = {
                   domain for domain in blocked
                   if not any(
