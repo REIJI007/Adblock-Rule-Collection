@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          python Adblock_Rule_Generator.py --output /tmp/semantic-compiled-filter.txt --report semantic-live-audit.json
+          python Adblock_Rule_Generator.py --target adguard-windows --output /tmp/semantic-compiled-filter.txt --report semantic-live-audit.json
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           echo "strict_compiler_exit_code=$code" > semantic-live-audit-status.txt
@@ -68,7 +68,7 @@ jobs:
           print("Target:", report.get("target"))
           print("Sources:", report.get("source_count"))
           print("Unique compiled rules:", report.get("unique_rule_count"))
-          print("Sources skipped because their semantics do not match the browser target:", report.get("sources_skipped_by_target"))
+          print("Sources skipped because their semantics do not match the network-filter target:", report.get("sources_skipped_by_target"))
           print("Input lines skipped by target:", report.get("input_lines_skipped_by_target"))
           print("Rules excluded as known target-incompatible:", report.get("target_excluded_rule_count"))
           print("Source fetch failures:", len(report.get("source_failures", [])))
