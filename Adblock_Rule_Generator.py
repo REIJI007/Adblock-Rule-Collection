@@ -584,7 +584,7 @@ def compile_dns_rule(line: str) -> str:
     # 纯域名列表中的裸域名只匹配该主机，不应扩展到子域。
 
     if (
-        not pattern.startswith(("||", "|"))
+        not pattern.startswith(("||", "|", "."))
         and not any(ch in pattern for ch in "*^/")
     ):
         try:
