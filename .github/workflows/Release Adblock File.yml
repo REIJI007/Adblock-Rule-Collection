@@ -17,6 +17,13 @@ jobs:
       - name: Checkout code  # 检出代码
         uses: actions/checkout@v3  # 使用官方的checkout操作来检出代码
 
+      - name: 同步 main 分支
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git pull --rebase origin main
+
       - name: Get current time  # 获取当前时间
         id: current-time  # 设置步骤ID，以便后续步骤引用
         run: echo "time=$(date +'%y%m%d%H%M')" >> $GITHUB_ENV  # 获取当前时间，并将其输出为GitHub Actions的环境变量
@@ -24,21 +31,46 @@ jobs:
       - name: Update timestamp file  # 更新时间戳文件
         run: echo "${{ env.time }}" > timestamp.txt  # 将当前时间写入timestamp.txt文件
 
-      - name: Force add and commit changes  # 强制添加和提交更改
+      - name: Force add and safely push changes  # 强制添加并安全推送更改
+        shell: bash
         run: |
+          set -euo pipefail
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add -f ADBLOCK_RULE_COLLECTION.txt ADBLOCK_RULE_COLLECTION_Lite.txt ADBLOCK_RULE_COLLECTION_HOST.txt ADBLOCK_RULE_COLLECTION_HOST_Lite.txt ADBLOCK_RULE_COLLECTION_DNS.txt ADBLOCK_RULE_COLLECTION_DNS_Lite.txt ADBLOCK_RULE_COLLECTION_HOST_IPV6.txt ADBLOCK_RULE_COLLECTION_HOST_IPV6_Lite.txt ADBLOCK_RULE_COLLECTION_DOMAIN.txt ADBLOCK_RULE_COLLECTION_DOMAIN_Lite.txt timestamp.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
           git commit -m "Forced update of adblock files and timestamp"
-          for attempt in {1..5}; do  # 尝试5次
-            if git push origin main; then
-              break
-            else
-              echo "Push failed, attempting to pull and rebase..."
-              git pull --rebase  # 拉取并合并远程更改
-              sleep $((attempt * 10))  # 指数级退避，首次等待10秒，第二次20秒，依此类推
+          set -euo pipefail
+          branch="main"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::与远程分支同步失败，停止推送以避免覆盖远程提交。"
+            exit 1
+          fi
+          if git push origin "HEAD:$branch"; then
+            echo "Push successful."
+            exit 0
+          fi
+          for attempt in 1 2 3 4 5; do
+            echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程分支并尝试变基。"
+            git fetch origin "$branch"
+            if ! git rebase -X ours "origin/$branch"; then
+              git rebase --abort || true
+              echo "::error::无法自动同步远程提交。"
+              exit 1
             fi
+            if git push origin "HEAD:$branch"; then
+              echo "Push successful."
+              exit 0
+            fi
+            sleep $((attempt * 2))
           done
+          echo "::error::多次尝试后仍无法推送。"
+          exit 1
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}  # 使用自定义的 TOKEN 进行身份验证
 
