@@ -1,0 +1,57 @@
+name: Independent A vs B semantic differential audit
+
+on:
+  pull_request:
+    paths:
+      - ".audit/semantic_differential_audit.py"
+      - ".github/workflows/semantic-differential-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  differential-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run independent source-to-output audit
+        run: python .audit/semantic_differential_audit.py
+      - name: Upload A/B outputs and differential reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: independent-a-vs-b-audit
+          path: semantic-diff-output/
+          if-no-files-found: warn
+          compression-level: 6
+      - name: Print report summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("semantic-diff-output/differential_summary.json")
+          if not p.exists():
+              print("No audit summary was produced.")
+              raise SystemExit(0)
+          d = json.loads(p.read_text(encoding="utf-8"))
+          for name, r in d["results"].items():
+              print(
+                  f"{name}: status={r['compiler_status']}; "
+                  f"A_all={r['A_all_raw_merged_unique_lines']}; "
+                  f"A_browser={r['A_browser_scope_raw_unique_lines']}; "
+                  f"B={r['B_unique_rules_read_from_compiler_output']}; "
+                  f"exact={r['B_exact_raw_rule_matches']}; "
+                  f"safe_converted={r['B_transformed_but_reference_equivalent']}; "
+                  f"scope_changed={r['B_transformed_with_known_semantic_scope_change']}; "
+                  f"unclassified={r['B_unclassified_no_reference_mapping']}; "
+                  f"conservative={r['B_conservative_semantics_supported_percent']}%"
+              )
+          PY
