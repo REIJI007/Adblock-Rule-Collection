@@ -736,3 +736,47 @@ jobs:
 
                   seen.add(candidate)
                   validated += 1
+
+      - name: Commit and safely push DNS rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ADBLOCK_RULE_COLLECTION_DNS.txt ADBLOCK_RULE_COLLECTION_DNS_Lite.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update AdBlock DNS rules"
+          branch="main"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::与远程 main 分支同步失败，停止推送以避免覆盖远程提交。"
+            exit 1
+          fi
+
+          if git push origin "HEAD:$branch"; then
+            echo "Push successful."
+            exit 0
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程 main 并尝试变基。"
+            git fetch origin "$branch"
+            if ! git rebase -X ours "origin/$branch"; then
+              git rebase --abort || true
+              echo "::error::无法自动同步远程 main 分支。"
+              exit 1
+            fi
+            if git push origin "HEAD:$branch"; then
+              echo "Push successful."
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+
+          echo "::error::多次尝试后仍无法推送 DNS 规则。"
+          exit 1
