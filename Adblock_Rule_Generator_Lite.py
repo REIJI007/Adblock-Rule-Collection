@@ -1659,8 +1659,9 @@ def run_regression_tests() -> None:
           ["@@||example.com^|"])
     check("DNS partial domain anchor keeps prefix semantics", compile_line("dns", "||advertising.civitai.")[0],
           ["||advertising.civitai."])
-    check("DNS leading-dot mask excludes apex", compile_line("dns", ".example.com^")[0],
-          ["||*.example.com^"])
+    check("DNS leading-dot rule is preserved when already valid network syntax",
+          compile_line("dns", ".example.com^")[0],
+          [".example.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
