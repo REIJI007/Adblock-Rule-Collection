@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""将多个上游过滤列表编译为 AdGuard 浏览器规则。
+"""将多个上游过滤列表编译为 AdGuard 网络过滤规则。
 
-原生规则仅做安全规范化和去重；Hosts 与纯域名来源按各自匹配范围转换。
+默认以 AdGuard for Windows 桌面过滤引擎为目标；原生规则尽量保留语义，Hosts 与纯域名来源按各自匹配范围转换。
 无法证明兼容的规则会记录在审计报告中；严格模式失败时不会覆盖旧产物。
 """
 from __future__ import annotations
@@ -25,6 +25,7 @@ from typing import Iterable
 
 OUTPUT_DEFAULT = "ADBLOCK_RULE_COLLECTION_Lite.txt"
 REPORT_DEFAULT = "ADBLOCK_RULE_COLLECTION_Lite.semantic-report.json"
+DEFAULT_TARGET = "adguard-windows"
 FETCH_WORKERS = 12
 FETCH_TIMEOUT_SECONDS = 18
 
@@ -73,6 +74,13 @@ KNOWN_CONDITION_FLAGS = {
     "cap_html_filtering", "cap_ipaddress", "cap_user_stylesheet",
 }
 TARGET_PROFILES = {
+    # 目标为 AdGuard for Windows 桌面过滤引擎，而非浏览器扩展。
+    "adguard-windows": {
+        "adguard": True,
+        "adguard_app_windows": True,
+        "cap_html_filtering": True,
+        "cap_ipaddress": True,
+    },
     # chromium 对应 Chromium MV2；MV3 请使用 chromium-mv3。
     "chromium": {
         "adguard": True, "adguard_ext_chromium": True, "env_chromium": True,
@@ -93,13 +101,13 @@ TARGET_PROFILES = {
 }
 # DNS/CNAME 来源依赖 DNS 语义，不纳入浏览器规则，并在审计中单独记录。
 
-BROWSER_TARGET_EXCLUDED_SOURCE_REASONS = {
+NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS = {
     "dns": (
         "DNS filtering rules depend on DNS-resolution semantics and belong in a DNS "
-        "filter output, not an AdGuard browser request-filter list."
+        "filter output, not an AdGuard network-filter list."
     ),
     "cname": (
-        "CNAME-chain rules require DNS-aware request inspection; a static browser "
+        "CNAME-chain rules require DNS-aware request inspection; a static network "
         "filter cannot preserve that source-level behavior."
     ),
 }
@@ -1184,9 +1192,9 @@ def compile_fetched_sources(
 
         # DNS 规则依赖解析结果，CNAME 规则依赖别名链，不能直接转换成浏览器 URL 规则。
 
-        if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
+        if source.kind in NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS:
             summary.status = "skipped-target-mismatch"
-            summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
+            summary.target_skip_reason = NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
             summary.input_lines_skipped_by_target = sum(
                 1
                 for raw in text.splitlines()
@@ -1242,9 +1250,9 @@ def compile_fetched_sources(
 
         # include 片段也按自身格式分类，并执行同样的目标兼容性检查。
 
-        if source.kind in BROWSER_TARGET_EXCLUDED_SOURCE_REASONS:
+        if source.kind in NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS:
             summary.status = "skipped-target-mismatch"
-            summary.target_skip_reason = BROWSER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
+            summary.target_skip_reason = NETWORK_FILTER_TARGET_EXCLUDED_SOURCE_REASONS[source.kind]
             if line and not is_comment_or_header(line):
                 summary.input_lines_skipped_by_target += 1
             continue
@@ -1319,7 +1327,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         })
     return {
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "target": f"AdGuard browser filter syntax ({target})",
+        "target": f"AdGuard network filter syntax ({target})",
         "output": output_path,
         "unique_rule_count": len(state.records),
         "source_count": len(source_summaries) + len(source_failures),
@@ -1338,10 +1346,10 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         "unsupported_count": len(state.issues),
         "unsupported_rules": state.issues,
         "semantic_guarantee": (
-            "Native browser-compatible rules are preserved as Adblock-compatible syntax; "
+            "Native AdGuard-compatible network-filter rules are preserved as Adblock-compatible syntax; "
             "hosts entries become exact-host HTTP(S) URL regex rules; domains-only entries use "
             "domain-and-subdomain scope unless explicitly configured as domains-exact; "
-            "DNS and CNAME source families are explicitly excluded from the browser target. "
+            "DNS and CNAME source families are explicitly excluded from this network-filter output. "
             "Known non-portable rules are excluded individually with source-line diagnostics; "
             "unknown in-scope conversion failures still fail strict compilation. All exclusions "
             "are visible in the report. This is not a proof for arbitrary regex or "
@@ -1417,6 +1425,26 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("!env_legacy", target_condition_flags("chromium-mv3")), True)
     check("Safari does not inherit the Chromium stylesheet capability",
           evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("safari")), False)
+    check("default compiler target is AdGuard for Windows", DEFAULT_TARGET, "adguard-windows")
+    windows_flags = target_condition_flags("adguard-windows")
+    check("Windows target selects Windows-specific rules",
+          evaluate_filter_condition("adguard && adguard_app_windows && !adguard_ext_chromium_mv3", windows_flags), True)
+    check("Windows target enables HTML filtering capability",
+          evaluate_filter_condition("cap_html_filtering", windows_flags), True)
+    check("Windows target enables IP-address filtering capability",
+          evaluate_filter_condition("cap_ipaddress", windows_flags), True)
+    check("Windows target does not inherit Chromium extension conditions",
+          evaluate_filter_condition("adguard_ext_chromium_mv3 || env_chromium || env_mv3", windows_flags), False)
+    windows_source = Source("https://example.com/windows-filter.txt", "adblock")
+    windows_text = "!#if adguard_app_windows\n||windows-only.example^\n!#else\n||other-platform.example^\n!#endif\n"
+    windows_lines = expand_filter_preprocessor(
+        windows_source,
+        windows_text,
+        "adguard-windows",
+        {windows_source.url: (windows_source, windows_text)},
+    )
+    check("Windows preprocessor selects Windows-specific rules",
+          [line.text.strip() for line in windows_lines], ["||windows-only.example^"])
     check("AdGuard CNAME include from an official filter source is allowlisted",
           allow_preprocessor_include(
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
@@ -1674,8 +1702,8 @@ def run_regression_tests() -> None:
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Compile upstream blocklists into an AdGuard browser filter with explicit semantic-loss reporting.")
-    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default="chromium-mv3", help="AdGuard target profile (default: chromium-mv3)")
+    parser = argparse.ArgumentParser(description="Compile upstream blocklists into an AdGuard network filter for the selected target, with explicit semantic-loss reporting.")
+    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default=DEFAULT_TARGET, help=f"AdGuard target profile (default: {DEFAULT_TARGET})")
     parser.add_argument("--output", default=OUTPUT_DEFAULT, help=f"compiled filter path (default: {OUTPUT_DEFAULT})")
     parser.add_argument("--report", default=REPORT_DEFAULT, help=f"JSON compilation report (default: {REPORT_DEFAULT})")
     parser.add_argument("--allow-lossy", action="store_true", help="explicitly publish only translatable rules; report all omitted rules")
@@ -1711,7 +1739,7 @@ def main() -> int:
     # 固定处理顺序，避免下载完成顺序影响输出。
     fetched.sort(key=lambda item: sources.index(item[0]))
 
-    # 本生成器输出浏览器规则；DNS/CNAME 来源单独记录，不混入产物。
+    # 本生成器输出网络过滤规则；DNS/CNAME 来源单独记录，不混入该产物。
 
     state = compile_fetched_sources(fetched, args.target)
     state.issues.sort(key=lambda issue: (str(issue["source"]), int(issue.get("line") or 0)))
