@@ -16,6 +16,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3  # 签出仓库的代码
 
+    - name: 同步远程分支
+      shell: bash
+      run: |
+        set -euo pipefail
+        branch="${GITHUB_REF_NAME}"
+        git fetch origin "$branch"
+        git pull --rebase origin "$branch"
+
     - name: Set up Python
       uses: actions/setup-python@v4  # 设置Python环境
       with:
@@ -29,37 +37,46 @@ jobs:
     - name: Run Adblock Rule Generator
       run: python Adblock_Rule_Generator.py  # 运行脚本生成广告过滤器文件
 
-    - name: Commit and push changes
+    - name: Commit and safely push changes
       id: push_changes  # 设置步骤ID以供后续引用
+      shell: bash
       run: |
-        # 配置git用户信息
+        set -euo pipefail
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add ADBLOCK_RULE_COLLECTION.txt
-        
-        # 尝试提交更改
-        git commit -m "Update AdBlock rules" || echo "No changes to commit"
-        
-        # 尝试推送更改前先拉取远程仓库
-        for attempt in {1..5}; do
-          echo "Attempt $attempt: Pulling latest changes from remote..."
-          if git pull --rebase; then
-            echo "Pull successful."
-          else
-            echo "Pull failed, skipping pull and continuing to push."
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+          exit 0
+        fi
+        git commit -m "Update AdBlock rules"
+        set -euo pipefail
+        branch="${GITHUB_REF_NAME}"
+        git fetch origin "$branch"
+        if ! git rebase -X ours "origin/$branch"; then
+          git rebase --abort || true
+          echo "::error::与远程分支同步失败，停止推送以避免覆盖远程提交。"
+          exit 1
+        fi
+        if git push origin "HEAD:$branch"; then
+          echo "Push successful."
+          exit 0
+        fi
+        for attempt in 1 2 3 4 5; do
+          echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程分支并尝试变基。"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::无法自动同步远程提交。"
+            exit 1
           fi
-
-          # 尝试推送更改
-          if git push; then
+          if git push origin "HEAD:$branch"; then
             echo "Push successful."
-            exit 0  # 退出脚本
-          else
-            echo "Push failed, retrying in $((attempt * 10)) seconds..."
-            sleep $((attempt * 10))  # 指数级退避，首次等待10秒，第二次20秒，依此类推
+            exit 0
           fi
+          sleep $((attempt * 2))
         done
-        
-        echo "Push failed after multiple attempts, exiting with error."
-        exit 1  # 最终失败退出
+        echo "::error::多次尝试后仍无法推送。"
+        exit 1
       env:
         GITHUB_TOKEN: ${{ secrets.TOKEN }}
