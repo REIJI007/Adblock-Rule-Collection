@@ -788,7 +788,13 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
     # to exact-host URL rules. Other one-token patterns are already valid generic
     # URL-substring filters and should remain unchanged.
     if re.fullmatch(r"\S+", candidate):
-        return canonical_hostname(candidate, allow_single_label=False) is None
+        try:
+            ipaddress.ip_address(candidate)
+            # A bare DNS IP entry can match CNAME resolution results, which a
+            # URL-substring rule cannot faithfully represent.
+            return False
+        except ValueError:
+            return canonical_hostname(candidate, allow_single_label=False) is None
     return False
 
 def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[list[str], str]:
