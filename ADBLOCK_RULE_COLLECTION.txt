@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-25 14:28:03 (UTC+8)
-! Total rules: 1655690
+! Generated: 2026-10-25 14:42:29 (UTC+8)
+! Total rules: 1655695
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -438518,6 +438518,7 @@ jelgava.lv,sseriga.edu#%#//scriptlet('ubo-set-cookie', 'user_gave_consent', '1')
 jellybabiesnft.web.app
 jellyesports.web.app
 jellynote.com##+js(nostif, byepopup, 5000)
+jelonka.com##+js(trusted-replace-argument, document.querySelector, 0, '', condition, /news-ad-access-gate/)
 jelonka.com##+js(trusted-set-local-storage-item, jelonka_news_ad_access_gate_v2_first_detected_at, $now$)
 jelonka.com##+js(trusted-set-local-storage-item, jelonka_news_ad_access_gate_v2_soft_dismissed_at, $now$)
 jelonka.com##.ad-area
@@ -841939,6 +841940,7 @@ zzzyk.com###Tinfo
 ||cidb5rr2t.com^
 ||ciderconcluded.com^
 ||ciderfeast.com^
+||ciderscautery.com^
 ||cidgroup.map.fastly.net/containers/d2f25e37-3d14-4917-82a0-7e0292f76ff2.js$all
 ||cidgroup.map.fastly.net/de/bundles/Showcase/1.58.0/app_threeSixtyView.js$all
 ||cidgroup.map.fastly.net/de/bundles/applicationShell/1.43.0/shell.js$all
@@ -926282,6 +926284,7 @@ zzzyk.com###Tinfo
 ||ehri.tt.omtrdc.net^
 ||ehrl.tdbankfinancialgroup.tt.omtrdc.net^
 ||ehrlgb.izlato.sk^
+||ehrpdehitrrma.space^
 ||ehrxthskewjm.com^
 ||ehrydnmdoe.com^
 ||ehrymwoiidbyr.space^
@@ -1161609,6 +1161612,7 @@ zzzyk.com###Tinfo
 ||exhibitiondeviateretain.com^$all
 ||exhibits86.com^
 ||exhibitsneeze.com^
+||exhjzmogurbeq.site^
 ||exhmuxe.cn^
 ||exhoduswibvbnwalet.gitbook.io^
 ||exhoduswibvbnwalet.gitbook.io^$all
@@ -1275803,6 +1275807,7 @@ zzzyk.com###Tinfo
 ||ixigua.com/api/feedv2^
 ||ixigua.com/at/log/
 ||ixilodonticsmout.cyou^
+||ixiondartman.com^
 ||ixiunv.com^$third-party
 ||ixjnnlhp.fannur.com^
 ||ixjplbufdjnnz.website^
