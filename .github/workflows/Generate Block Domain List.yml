@@ -54,9 +54,9 @@ jobs:
 
                   line = line.lower()
 
-                  # A $badfilter rule cancels only its corresponding rule.
-                  # Accept it here only when removing $badfilter leaves a pure
-                  # domain rule; other modifiers change the rule's identity.
+                  # $badfilter 规则只会取消与其对应的那一条规则。
+                  # 只有在移除 $badfilter 后仍得到纯粹的
+                  # 域名规则时才接受；其他修饰符会改变规则本身的含义。
                   bad_match = re.fullmatch(
                       r'(?P<exception>@@)?\|\|(?P<domain>[a-z0-9.-]+)\^\$badfilter',
                       line
@@ -67,9 +67,9 @@ jobs:
                           badfilters.add((bool(bad_match.group('exception')), domain))
                       continue
 
-                  # Only unconditional domain exceptions can safely be applied
-                  # to a DNS-wide list. Exceptions with modifiers (for example,
-                  # # $script) are resource-specific and are intentionally ignored.
+                  # 只有无条件的域名例外规则才能安全地应用到
+                  # 整个 DNS 域名列表。带有修饰符的例外规则（例如
+                  # $script）只针对特定请求资源，因此会被有意忽略。
                   exception_match = re.fullmatch(
                       r'@@\|\|([a-z0-9.-]+)\^',
                       line
@@ -80,7 +80,7 @@ jobs:
                           exceptions.add(domain)
                       continue
 
-                  # Only pure domain-block rules are included in this list.
+                  # 此列表仅收录纯域名拦截规则。
                   block_match = re.fullmatch(
                       r'\|\|([a-z0-9.-]+)\^',
                       line
@@ -90,15 +90,15 @@ jobs:
                       if is_valid_domain(domain):
                           blocks.add(domain)
 
-              # $badfilter removes only the exact matching domain rule.
-              # In particular, it must not erase independently-listed subdomains.
+              # $badfilter 只会移除完全匹配的域名规则。
+              # 尤其不能删除单独列出的子域名规则。
               active_blocks = {
                   domain for domain in blocks
                   if (False, domain) not in badfilters
               }
 
-              # Likewise, a badfilter can disable an exception rule. Apply only
-              # exceptions that remain active, then exclude their matching subtree.
+              # 同样，badfilter 也可以禁用一条例外规则。这里只应用
+              # 仍然有效的例外规则，然后排除与其匹配的整个子域名范围。
               active_exceptions = {
                   domain for domain in exceptions
                   if (True, domain) not in badfilters
