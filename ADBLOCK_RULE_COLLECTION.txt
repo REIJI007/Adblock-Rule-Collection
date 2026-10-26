@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-27 02:44:21 (UTC+8)
-! Total rules: 1764841
+! Generated: 2026-10-27 03:47:37 (UTC+8)
+! Total rules: 1764849
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -441053,7 +441053,6 @@ home-appliances.philips##body.modal-open:style(overflow: auto !important;)
 home-appliances.philips##shared-anonymous-consent-management-banner
 home-appliances.philips##vers-anonymous-consent-management-banner
 home-appliances.philips#$#body.modal-open { overflow: auto !important; }
-home-appliances.philips#%#//scriptlet('trusted-click-element', 'button[data-cy="accept-functional-cookies-btn"]')
 home-appliances.philips#%#//scriptlet('trusted-set-local-storage-item', 'analytics-consent', 'NOT_GIVEN')
 home-appliances.philips#%#//scriptlet('trusted-set-local-storage-item', 'marketing-cookies', 'NOT_GIVEN')
 home-appliances.philips#%#//scriptlet('trusted-set-local-storage-item', 'necessary-cookies', 'GIVEN')
@@ -790737,6 +790736,7 @@ zzzyk.com###Tinfo
 ||anuntul.ro/hotnews-widget.js$third-party
 ||anura.io^$third-party
 ||anuricridable.com^
+||anurygrovetensate.cyou^
 ||anvasoft.ca//js/embed.js$all
 ||anvasoft.ca/js/pages/kit_expand.js$all
 ||anvhe.natpat.com^
@@ -819786,6 +819786,7 @@ zzzyk.com###Tinfo
 ||bgn.gg^
 ||bgn.gg^$third-party
 ||bgnh.tastecard.tt.omtrdc.net^
+||bgnmalolpbxdi.site^
 ||bgnms.net.daraz.com^
 ||bgnrz.splashblanket.us^
 ||bgoboe.com^$all
@@ -1230667,6 +1230668,7 @@ zzzyk.com###Tinfo
 ||frghgjhjjhhj--aumento20.replit.app^
 ||frghgjhjjhhj--aumento20.replit.app^$all
 ||frgmpqsctzels.site^
+||frgnirieqpu.com^
 ||frgrgjfeijfegrfeifei.cfolks.pl^
 ||frgrgjfeijfegrfeifei.cfolks.pl^$all
 ||frgtytrgth.w3spaces.com^
@@ -1234082,6 +1234084,7 @@ zzzyk.com###Tinfo
 ||fvdm.le-petit-hotel.com^
 ||fveamyioppgja.site^
 ||fveco.com^$all
+||fvexvvrhbgxkp.space^
 ||fvfabtecrmfua.website^
 ||fvfcf.bugmd.com^
 ||fvfizj.icu^
@@ -1522638,6 +1522641,7 @@ zzzyk.com###Tinfo
 ||qcmkz.smartliner-usa.com^
 ||qcmlcwymvatsn.site^
 ||qcmlw.com/js/service.js
+||qcmqvitpocmwz.online^
 ||qcmtxdjqftulh.site^
 ||qcmxuy.hardloop.de^
 ||qcnlh.spicycubes.co^
@@ -1529227,6 +1529231,7 @@ zzzyk.com###Tinfo
 ||qtaxwgebqeplj.site^
 ||qtbaye.mona.ch^
 ||qtbci.ikonick.com^
+||qtbnxnptjlwsl.site^
 ||qtbsd.crocs.com^
 ||qtcbscfrwqupn0h-c.adkoffer.fr^
 ||qtcdjwwotogic.com^
@@ -1590605,6 +1590610,7 @@ zzzyk.com###Tinfo
 ||rgkka.leveret.com^
 ||rgks.net^
 ||rgktkz.bootybands.com^
+||rglaxjffofcme.online^
 ||rglmp.superfeast.com^
 ||rglqcmxaeldgx.site^
 ||rglzligjrivvg.online^
@@ -1700789,6 +1700795,7 @@ zzzyk.com###Tinfo
 ||urdap.forever21.com^
 ||urdatingassistant.com^
 ||urdgjuygwuhvn.online^
+||urdxdhvtbnsws.online^
 ||ure.pia.co.jp^$removeparam=c
 ||urealath.com^
 ||ureashi.com^$all
@@ -1757815,6 +1757822,7 @@ zzzyk.com###Tinfo
 ||zehnporn.com/img/12221.gif
 ||zehnporn.com/img/12221.gifimg/12221.gif
 ||zehrs.tt-qe5.omtrdc.net^
+||zehsirysefasm.space^
 ||zei.myavlive.com^
 ||zeidler.info^$all
 ||zeigraim.com^
