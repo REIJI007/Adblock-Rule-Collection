@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-27 03:46:40 (UTC+8)
-! Total rules: 1406043
+! Generated: 2026-10-27 04:47:56 (UTC+8)
+! Total rules: 1406057
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -93894,10 +93894,10 @@ aapc.com#$#.textHelp { display: block !important; }
 aapc.com#$#.w-14 { width: 8rem !important; }
 aapc.com#$#.xl\:top-\[25px\], .xl\:top-\[45px\] { top: 57px !important; }
 aapc.com#$#.xl\:w-\[102px\], .xl\:w-\[148px\] { width: 148px !important; height: 50px !important; }
+aapc.com#$#.z-20.fixed { position: absolute !important; }
 aapc.com#$#.z-\[5\] { padding: 1rem 0px !important; }
 aapc.com#$#div.order-2:nth-child(1) { opacity: 1 !important; }
 aapc.com#$#header.fixed > div:nth-child(2) { opacity: 0 !important; height: 0 !important; }
-aapc.com,cases.tf#$#.z-20.fixed { position: absolute !important; }
 aappublications.org###region-sidebar-first
 aappublications.org#$##section-superheader { position: absolute !important; }
 aardvark.co.nz##.tinyprint
@@ -95342,7 +95342,7 @@ adn40.mx###share-button
 adn40.mx##.ListSiguenos-SocialStrip
 adnauseam.io#$##ban_alert { position: absolute !important; }
 adnauseam.io#$##source { position: relative !important; animation: none !important; }
-adnauseam.io,al.com,alaskahighwaynews.ca,americanexpress.com,artfixdaily.com,assiniboiatimes.ca,bentkowski.info,biv.com,bowenislandundercurrent.com,burnabynow.com,buzzfeed.com,buzzfeednews.com,canoracourier.com,carlyleobserver.com,chicagobusiness.com,chrome.google.com,cigarbid.com,cnet.com,coastreporter.net,coinbase.com,coindesk.com,comicbook.com,community.jivesoftware.com,costco.com,craigslist.org,crainscleveland.com,crainsdetroit.com,crainsnewyork.com,creditcards.com,datalounge.com,dawsoncreekmirror.ca,delorainetimes.ca,delta-optimist.com,directvnow.com,discover.com,docs.aws.amazon.com,docusign.com,domains.google.com,droid-life.com,ebates.com,effectivealtruism.org,empireadvance.ca,estevanmercury.ca,everycaller.com,fablesofaesop.com,filmstro.com,fox13memphis.com,gatesnotes.com,getpocket.com,github.io,gocomics.com,groupninemedia.com,gulflive.com,haydenjames.io,hbr.org,heavy.com,hillreporter.com,historynet.com,hm.com,hollywoodreporter.com,humboldtjournal.ca,hunker.com,hybridcars.com,i24news.tv,indiatimes.com,investopedia.com,jd.com,kamsacktimes.com,keikai.io,khaleejtimes.com,kiplingcitizen.ca,kirkcenter.org,koditips.com,kohls.com,learningsolutionsmag.com,lehighvalleylive.com,lensculture.com,linkedin.com,longreads.com,lyft.com,mailgun.com,makershare.com,mardigras.com,marketplace.org,masslive.com,mindbodyonline.com,mlive.com,money.com,myactivity.google.com,nationalgeographic.org,nationalpost.com,newsoptimist.ca,newswhip.com,newwestrecord.ca,newyorkupstate.com,nj.com,njbiz.com,nola.com,npr.org,nsnews.com,oregonlive.com,oregonscientific.com,pennlive.com,pennzoil.com,pinterest.com,pipelinenews.ca,pipelinenewsnorth.ca,preecevilleprogress.com,princegeorgecitizen.com,privateinternetaccess.com,prpeak.com,pudding.cool,puppylinux.com,qz.com,radare.org,redfin.com,reference.com,rgagnon.com,richmond-news.com,robinhood.com,safeway.com,saksfifthavenue.com,sandboxie.com,sbgi.net,scripting.com,seattlemet.com,securityweek.com,seriouseats.com,silive.com,squamishchief.com,stackoverflow.blog,stanleyhotel.com,starwars.com,struckbylightning.org,substack.com,suntimes.com,symless.com,syracuse.com,tabbank.com,tabulator.info,ted.com,telesurtv.net,theartnewspaper.com,thefederalist.com,them.us,thenational.ae,theoutlook.ca,thepacker.com,thepioneerwoman.com,thespruce.com,thesprucecrafts.com,thespruceeats.com,thesprucepets.com,thisweekinstartups.com,timescolonist.com,tirerack.com,tisdalerecorder.ca,toptenreviews.com,tricitynews.com,tripplite.com,tripsavvy.com,ulalaunch.com,usgamer.net,vancourier.com,vancouversun.com,wallethub.com,walmart.com,wbur.org,weeklystandard.com,weyburnreview.com,weyburnthisweek.com,wilton.com,worldmarket.com,wweek.com,yorktonthisweek.com#$#body { overflow-x: hidden !important; overflow-y: scroll !important; padding-right: 0 !important; }
+adnauseam.io,al.com,alaskahighwaynews.ca,americanexpress.com,artfixdaily.com,assiniboiatimes.ca,bentkowski.info,biv.com,bowenislandundercurrent.com,burnabynow.com,buzzfeed.com,buzzfeednews.com,canoracourier.com,carlyleobserver.com,chicagobusiness.com,chrome.google.com,cigarbid.com,cnet.com,coastreporter.net,coinbase.com,coindesk.com,comicbook.com,community.jivesoftware.com,costco.com,craigslist.org,crainscleveland.com,crainsdetroit.com,crainsnewyork.com,creditcards.com,datalounge.com,dawsoncreekmirror.ca,delorainetimes.ca,delta-optimist.com,directvnow.com,discover.com,docs.aws.amazon.com,docusign.com,domains.google.com,droid-life.com,ebates.com,effectivealtruism.org,empireadvance.ca,estevanmercury.ca,everycaller.com,fablesofaesop.com,filmstro.com,fox13memphis.com,gatesnotes.com,getpocket.com,github.io,gocomics.com,groupninemedia.com,gulflive.com,haydenjames.io,hbr.org,heavy.com,hillreporter.com,historynet.com,hm.com,hollywoodreporter.com,humboldtjournal.ca,hunker.com,hybridcars.com,i24news.tv,indiatimes.com,investopedia.com,jd.com,kamsacktimes.com,keikai.io,khaleejtimes.com,kiplingcitizen.ca,kirkcenter.org,koditips.com,kohls.com,learningsolutionsmag.com,lehighvalleylive.com,lensculture.com,linkedin.com,longreads.com,lyft.com,mailgun.com,makershare.com,mardigras.com,marketplace.org,masslive.com,mindbodyonline.com,mlive.com,money.com,myactivity.google.com,nationalgeographic.org,nationalpost.com,newsoptimist.ca,newswhip.com,newwestrecord.ca,newyorkupstate.com,nj.com,njbiz.com,nola.com,npr.org,nsnews.com,oregonlive.com,oregonscientific.com,pennlive.com,pennzoil.com,pinterest.com,pipelinenewsnorth.ca,preecevilleprogress.com,princegeorgecitizen.com,privateinternetaccess.com,prpeak.com,pudding.cool,puppylinux.com,qz.com,radare.org,redfin.com,reference.com,rgagnon.com,richmond-news.com,robinhood.com,safeway.com,saksfifthavenue.com,sandboxie.com,sbgi.net,scripting.com,seattlemet.com,securityweek.com,seriouseats.com,silive.com,squamishchief.com,stackoverflow.blog,stanleyhotel.com,starwars.com,struckbylightning.org,substack.com,suntimes.com,symless.com,syracuse.com,tabbank.com,tabulator.info,ted.com,telesurtv.net,theartnewspaper.com,thefederalist.com,them.us,thenational.ae,theoutlook.ca,thepacker.com,thepioneerwoman.com,thespruce.com,thesprucecrafts.com,thespruceeats.com,thesprucepets.com,thisweekinstartups.com,timescolonist.com,tirerack.com,tisdalerecorder.ca,toptenreviews.com,tricitynews.com,tripplite.com,tripsavvy.com,ulalaunch.com,usgamer.net,vancourier.com,vancouversun.com,wallethub.com,walmart.com,wbur.org,weeklystandard.com,weyburnreview.com,weyburnthisweek.com,wilton.com,worldmarket.com,wweek.com,yorktonthisweek.com#$#body { overflow-x: hidden !important; overflow-y: scroll !important; padding-right: 0 !important; }
 adnkronos.com###overlay-empty
 adnkronos.com###pop-related
 adnkronos.com##.art-cta
@@ -97435,7 +97435,7 @@ alaskaair.com##.mobile-logo
 alaskaair.com#$##wrap > div.container > div.row { height: 0 !important; }
 alaskaair.com#$#.hentry { margin-top: 0 !important; }
 alaskaair.com#$#.masthead { position: relative !important; top: 0 !important; margin-top: -100px !important; margin-bottom: 0 !important; background-position-x: center !important; background-position-y: 0 !important; }
-alaskahighwaynews.ca,assiniboiatimes.ca,axios.com,blog.logrocket.com,bowenislandundercurrent.com,burnabynow.com,canoracourier.com,carlyleobserver.com,coastreporter.net,dawsoncreekmirror.ca,decred.org,delorainetimes.ca,delta-optimist.com,dog.com,empireadvance.ca,estevanmercury.ca,humboldtjournal.ca,jostens.com,kamsacktimes.com,kiplingcitizen.ca,kob.com,myschoolmenus.com,netgear.com,newsoptimist.ca,newwestrecord.ca,nsnews.com,pipelinenews.ca,pipelinenewsnorth.ca,preecevilleprogress.com,princegeorgecitizen.com,prpeak.com,richmond-news.com,sixthsense.rakuten.com,squamishchief.com,thebrag.com,theoutlook.ca,timescolonist.com,tisdalerecorder.ca,tricitynews.com,vancourier.com,wdio.com,weyburnreview.com,weyburnthisweek.com,wnyt.com,yorktonthisweek.com#$#.fixed-top { position: absolute !important; }
+alaskahighwaynews.ca,assiniboiatimes.ca,axios.com,blog.logrocket.com,bowenislandundercurrent.com,burnabynow.com,canoracourier.com,carlyleobserver.com,coastreporter.net,dawsoncreekmirror.ca,decred.org,delorainetimes.ca,delta-optimist.com,dog.com,empireadvance.ca,estevanmercury.ca,humboldtjournal.ca,jostens.com,kamsacktimes.com,kiplingcitizen.ca,kob.com,myschoolmenus.com,netgear.com,newsoptimist.ca,newwestrecord.ca,nsnews.com,pipelinenewsnorth.ca,preecevilleprogress.com,princegeorgecitizen.com,prpeak.com,richmond-news.com,sixthsense.rakuten.com,squamishchief.com,thebrag.com,theoutlook.ca,timescolonist.com,tisdalerecorder.ca,tricitynews.com,vancourier.com,wdio.com,weyburnreview.com,weyburnthisweek.com,wnyt.com,yorktonthisweek.com#$#.fixed-top { position: absolute !important; }
 alaskapublic.org,america.gov,checkpoint.com,dansdeals.com,globalanimal.org,intellihub.com,mashtips.com,minecraft-resourcepacks.com,mmanews.com,nextofwindows.com,orangebeanindiana.com,oscarmini.com,plagiarismtoday.com,radioink.com,rbr.com,seeitmarket.com,servethehome.com,techdator.net,technorms.com,thevisitorpanama.info,uspostnews.com,winbuzzer.com,zycrypto.com#$#.td-ss-main-sidebar { position: static !important; }
 alastonsuomi.com##.jb
 alatest.de##.identity-noticebar-content
@@ -121708,7 +121708,6 @@ cleveland.com##.adi-share-flyout
 cleveland.com#$##chainleftColumnInner, #chainrightColumnInner, .module__promo--wrapper { position: relative !important; top: 0 !important; }
 cleveland.com#$#.toprail { position: relative !important; top: 0 !important; --toprail-sticky-position: unset !important; }
 cleveland.com,fox11online.com,oregonlive.com,reuters.com,weartv.com#%#//scriptlet('ubo-aost', 'admiral', '.js?')
-cleveland.com,oregonlive.com,reuters.com#%#//scriptlet('ubo-aost', 'admiral', '.js?')
 cleveland19.com,fox5vegas.com,kfyrtv.com,newschannel10.com,wbng.com,webcenterfairbanks.com,wect.com,wsmv.com,wvva.com##.swing-in-top-fwd.navbar-brand
 cleveland19.com,tucsonnewsnow.com,wbtv.com,wlox.com##.story-feed
 clevelandclinic.org##.ad-policy__wrapper
@@ -558679,6 +558678,7 @@ zzzyk.com###Tinfo
 ||abnamro.tt.omtrdc.net^
 ||abncx.amv.fr^
 ||abnegateexcavator.com^$all
+||abngesjjvjdlo.space^
 ||abnormalitylovingmammal.com^
 ||abnormalrebel.com^$all
 ||abntex2-num.net.daraz.com^
@@ -578444,6 +578444,7 @@ zzzyk.com###Tinfo
 ||anuntul.ro/hotnews-widget.js$third-party
 ||anura.io^$third-party
 ||anuricridable.com^
+||anurygrovetensate.cyou^
 ||anvhe.natpat.com^
 ||anvibrt.m-pages.com^$all
 ||anvietlong.com^$all
@@ -628957,6 +628958,7 @@ zzzyk.com###Tinfo
 ||careertransition.net.daraz.com^
 ||careerunderstatement.com^
 ||careerwebsite.com/distrib_pages/jobs.cfm?
+||carefoxcarrussqually.cfd^
 ||carefree360.eu.tt.omtrdc.net^
 ||carefreefootball.pro^
 ||carefreervresorts.actonservice.com^
@@ -636361,6 +636363,7 @@ zzzyk.com###Tinfo
 ||cgdatar-es-1wdatar-es-1nter.net.daraz.com^
 ||cgdjy.top^
 ||cgdo.accountbackup-v2.tt-stage-ci1.omtrdc.net^
+||cgdxdofzndnkl.website^
 ||cgeimage.commutil.kr/jscomm/*/logger.js
 ||cgel9.9n3b7jip47h296m41mx.cyou^
 ||cgembz2001zxzpty.net.daraz.com^
@@ -995940,6 +995943,7 @@ zzzyk.com###Tinfo
 ||frgehzwmdaaxc.online^
 ||frghgjhjjhhj--aumento20.replit.app^$all
 ||frgmpqsctzels.site^
+||frgnirieqpu.com^
 ||frgrgjfeijfegrfeifei.cfolks.pl^$all
 ||frgtytrgth.w3spaces.com^$all
 ||frhaelmqfuudc.website^
@@ -999058,6 +999062,7 @@ zzzyk.com###Tinfo
 ||fvdm.le-petit-hotel.com^
 ||fveamyioppgja.site^
 ||fveco.com^$all
+||fvexvvrhbgxkp.space^
 ||fvfabtecrmfua.website^
 ||fvfcf.bugmd.com^
 ||fvfizj.icu^
@@ -1141498,6 +1141503,7 @@ zzzyk.com###Tinfo
 ||lss.notifysrv.com^
 ||lss.two.trade.tt.omtrdc.net^
 ||lss8dash.big.k8s.tt.omtrdc.net^
+||lssfgmuilnxpp.online^
 ||lsslb-sslutumn.net.daraz.com^
 ||lssocybaoqyeu.online^
 ||lsss.lomestar.de^
@@ -1146430,6 +1146436,7 @@ zzzyk.com###Tinfo
 ||maicaoren.cn^
 ||maiche.com/iframe/rank.html
 ||maicv.cn^
+||maidbqao.com^
 ||maidcontrarypenknife.com^
 ||maidcrewselfcontrol.com^$all
 ||maideatp.com^
@@ -1163095,6 +1163102,7 @@ zzzyk.com###Tinfo
 ||mgky6yjwq.com^
 ||mgladthereisso.com^
 ||mglink.abc-finance.uk^
+||mgljsmzvqbosp.website^
 ||mgln.ai^$~media,third-party
 ||mglsk.com^
 ||mgm.tt.omtrdc.net^
@@ -1203814,6 +1203822,7 @@ zzzyk.com###Tinfo
 ||pisism.com^
 ||pisism.com^$document
 ||pisism.com^$popup
+||pisokyrzkwgmk.online^
 ||pisqpr.puuilo.fi^
 ||pisrael.com^
 ||pissflightaurae.qpon^
@@ -1219268,6 +1219277,7 @@ zzzyk.com###Tinfo
 ||qcmkz.smartliner-usa.com^
 ||qcmlcwymvatsn.site^
 ||qcmlw.com/js/service.js
+||qcmqvitpocmwz.online^
 ||qcmtxdjqftulh.site^
 ||qcmxuy.hardloop.de^
 ||qcnlh.spicycubes.co^
@@ -1225783,6 +1225793,7 @@ zzzyk.com###Tinfo
 ||qtmojo.com^$third-party
 ||qtmvp.roamans.com^
 ||qtmweb-whatsapp.com^$document
+||qtnhlotbnaouw.online^
 ||qtnhmmqmoyxzd.space^
 ||qtnjuozkaltch.site^
 ||qtnmz.dweva.com^
@@ -1251538,6 +1251549,7 @@ zzzyk.com###Tinfo
 ||rgkka.leveret.com^
 ||rgks.net^
 ||rgktkz.bootybands.com^
+||rglaxjffofcme.online^
 ||rglmp.superfeast.com^
 ||rglqcmxaeldgx.site^
 ||rglzligjrivvg.online^
@@ -1399519,6 +1399531,7 @@ zzzyk.com###Tinfo
 ||zeguhamyceleuptilts.cfd^
 ||zehnporn.com/img/12221.gifimg/12221.gif
 ||zehrs.tt-qe5.omtrdc.net^
+||zehsirysefasm.space^
 ||zei.myavlive.com^
 ||zeidler.info^$all
 ||zeigraim.com^
@@ -1404040,6 +1404053,7 @@ zzzyk.com###Tinfo
 ||ztruckinggneo8d5vrfayus.net.daraz.com^
 ||ztrynpo.cn^
 ||ztsfl.blnklebl.com^
+||ztsfxujjez.com^
 ||ztsgftfoxqhqz.site^
 ||ztsjdthngoeln.space^
 ||ztsrv.com^
