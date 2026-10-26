@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-26 09:25:39 (UTC+8)
-! Total rules: 1669363
+! Generated: 2026-10-26 10:19:53 (UTC+8)
+! Total rules: 1669374
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -422937,7 +422937,6 @@ health.clevelandclinic.org##div[data-identity="billboard-ad"]
 health.clevelandclinic.org##div[data-identity="billboard-ad-with-description"]
 health.clevelandclinic.org##div[data-identity="leaderboard-ad"]
 health.com##.social-newsletter
-health.com,eurogamer.net,beincrypto.com,yahoo.com,explainx.ai,apk.dog,eweek.com,m.economictimes.com,economictimes.indiatimes.com,apple.news,betanews.com,cars.com,soranews24.com,rocketnews24.com,khelnow.com,homeandsmart.de,drive.com.au,carscoops.com,bankadunyasi.com,outsideonline.com,klix.ba,investopedia.com,s.response.jp,danas.rs,bankier.pl,dermoeczanem.com,golem.de,ittefaq.com.bd,my-best.com,ytechb.com,infomercado.pe,tomarnarede.pt,baseballchannel.jp,kyivindependent.com,timesofisrael.com,android.com.pl,gamestar.de,discovermagazine.com,epe.es,cmjornal.pt,theguardian.com,sourceforge.net,cybernews.com,igeeksblog.com,resinet.pl,topgearitalia.com,topgeargreece.gr,yorozoonews.jp,qz.com,ladepeche.fr,lifehacker.jp,lifehacker.com,click-or-die.ru,sammyguru.com,moviepilot.de,umatoku.hochi.co.jp,teltarif.de,haberler.com,spaziogames.it,sondakika.com,itc.ua,fxmag.pl,stimme.de,oloygeia.gr,berliner-zeitung.de,sueddeutsche.de,eurosport.de,itmedia.co.jp,ndtv.in,femmeactuelle.fr,from-ua.org,nikkansports.com,meteoweb.eu,businessinsider.jp,enikos.gr,ostdeutscheallgemeine.com,falstaff.com,ad.nl,real.gr,motor-fan.jp,ign.com,dw.com,alfavita.gr,actualidadiphone.com,jprime.jp,laviola.it,fanipogody.pl,yna.co.kr,pchocasi.com.tr,spidersweb.pl,empireonline.com,jiji.com,fictionhorizon.com,beebom.com,techwiser.com,12punto.com.tr,infobae.com,fitbook.de,tsn.ua,haberx.com,timeturk.com,saopaulosecreto.com,urfanatik.com,stadt-bremerhaven.de,ekonomim.com,omgubuntu.co.uk,winfuture.de,movilforum.com,sponichi.co.jp,gamingbible.com,ladbible.com,sportbible.com,thecontentbible.com,tyla.com,unilad.com,clubic.com,sugarfreelondoner.com,fotomac.com.tr,dengarden.com,mako.co.il,ajansspor.com,gazetadopovo.com.br,onejailbreak.com,progameguides.com,aydinlik.com.tr,euronews.com,rtl.be,dogruhaber.com.tr,daily.co.jp,autoblog.com,haberturk.com,kp.ua,rotaborsa.com,mid-day.com,betaprofiles.com,news.tv-asahi.co.jp,zakzak.co.jp,donanimhaber.com,tokyo-sports.co.jp,searchengineland.com,jornaldenegocios.pt,gigazine.net,football24.ua,47news.jp,stuff.co.nz,eleconomista.es,lance.com.br,skateboarding.com,ua.tribuna.com,bloomberght.com,thestreet.com,redmas.com.co,record.pt,zamin.uz,thesun.co.uk,footballtransfers.com,gamingbible.com,yenisafak.com,sportsdunia.com,bsc.news,movilzona.es,isinolsa.com,gendai.media,clutchpoints.com,newstime.joyn.de,hisse.net,gazetegercek.com.tr,focus.ua,polygon.com,autoevolution.com,onedio.co,sn-jp.com,games.gg,hongkongfp.com,computerbase.de,gzt.com,crash.net,foxsports.com.mx,theguardian.com,star.com.tr,halktv.com.tr,zaxid.net,ballotpedia.org,timesofmalta.com,24tv.ua,thepost.co.nz,sportbible.com,washingtonpost.com,expert.in.ua,turkiyegazetesi.com.tr,aksam.com.tr,trhaber.com.tr,droidwin.com,onedio.com,cheezburger.com,tastesbetterfromscratch.com,techgear.gr,glavcom.ua,noticias.yahoo.com,hurriyet.com.tr,dexerto.com,saltandbaker.com,bbc.com,decrypt.co,uniladtech.com,mothership.sg,pcmag.com,coindesk.com,sammyfans.com,m9.news,crankers.com,asiaone.com,cbr.com,thedailyjagran.com,digitaltrends.com,hardwaretimes.com,www.yahoo.com,interestingengineering.com##a[href^="https://www.google.com/preferences/source?q="]
 health.com,instyle.com,peopleenespanol.com,realsimple.com,southernliving.com#$#aside.menu-homepage-row { position: relative !important; }
 health.com,lifewire.com##.newsletter-dialog-header-link
 health.com,travelandleisure.com##.newsletter-link-wrapper
@@ -435808,6 +435807,7 @@ iranintl.com##.URLShareDialog-module-scss-module__vBXZPq__share
 iranintl.com##button[aria-label="common.share"]
 iranintl.com##div[class^="ArticleSidebar-"][class$="_item"]:has(> div[class^="shared-module-"] > a[href="https://iranintl.com/newsletter"])
 iranintl.com##div[class^="URLShareDialog-"]
+iranintl.com,tarifaluzhora.es,stopkillinggames.com##div[aria-labelledby="cookie-banner-title"]
 iranmilitary.info##.fhn-newsletter
 iranwire.com##.header-top
 iranwire.com##.iw-ad-slider
@@ -502085,6 +502085,7 @@ proex2000.cz##+js(set-cookie, cookie-bar, hidden)
 proex2000.cz#%#//scriptlet('ubo-set-cookie', 'cookie-bar', 'hidden')
 proezas.diazpabon.info
 profbez.pro##.awz_cookies_sett__message
+profesjonalnyrolnik.pl##.cookie_notice_custom
 profesor10demates.com###elementor-popup-modal-5929
 professional-polygon-973382.framer.app
 professional-toggle-637485.framer.app
@@ -577084,6 +577085,7 @@ yucebasmakine.com.tr##.fadeInUp
 yucne.com#%#//scriptlet('prevent-setTimeout', 'showed_system_notice')
 yucral.co
 yuden.co.jp##[id^="yuden_gdpr"]
+yudey.com.ua###yudey-consent-banner
 yuengling.com##+js(set-cookie, age-gate, 1)
 yuengling.com#%#//scriptlet('ubo-set-cookie', 'age-gate', '1')
 yueyh.com
@@ -799880,6 +799882,7 @@ zzzyk.com###Tinfo
 ||bevylabs.com/js/02aefb6816385712ef8f224555e6ea355a187bf2/main.bundle.js$all
 ||bewailindigestionunhappy.com^
 ||bewaredsainte.cyou^
+||bewashgloater.qpon^
 ||bewaslac.com^
 ||bewaslac.com^$third-party
 ||bewhidare.com^
@@ -830461,6 +830464,7 @@ zzzyk.com###Tinfo
 ||charm-whatsapp.com^$doc
 ||charm-whatsapp.com^$document
 ||charmedstipel.cfd^
+||charmedwater.com^
 ||charming-choose-822057.framer.app^
 ||charming-choose-822057.framer.app^$all
 ||charming-performance-605769.framer.app^
@@ -1264343,6 +1264347,7 @@ zzzyk.com###Tinfo
 ||iadvize.com/livechat/5.33.1/registerRecordTransaction.chunk.js$all
 ||iadvize.com/livechat/5.33.1/vendors-node_modules_sentry_core_esm_exports_js-node_modules_sentry_core_esm_tracing_dynamicS-cf8fdd.chunk.js$all
 ||iadvize.com^$third-party
+||iadwauzhjsjba.site^
 ||iadwebappns.emailvision.net.daraz.com^
 ||iadwinter.loadbalancer.net.daraz.com^
 ||iadwinter.net.daraz.com^
@@ -1398987,6 +1398992,7 @@ zzzyk.com###Tinfo
 ||ozelmedikal.com^$third-party
 ||ozfejflhimwls.online^
 ||ozfisiodlybdi.site^
+||ozfwjkgeismsk.online^
 ||ozfxwlyarvwzy.site^
 ||ozhbccs.cn^
 ||ozihlzpeabppp.online^
@@ -1430031,6 +1430037,7 @@ zzzyk.com###Tinfo
 ||qahxwy.goosecreekcandle.com^
 ||qaieoyureybre.weebly.com^
 ||qaieoyureybre.weebly.com^$all
+||qaiithevrvdip.online^
 ||qaili.kennyflowers.com^
 ||qaixhtzsjyipb.store^
 ||qajkvcdzxcqvn.space^
@@ -1430043,6 +1430050,7 @@ zzzyk.com###Tinfo
 ||qaldatrxnjssm.site^
 ||qalizyiehylan.space^
 ||qamnyl.bever.nl^
+||qamnyzjjnfybo.online^
 ||qamrajywditki.online^
 ||qamurtajzovce.site^
 ||qanbzrgbcafeo.online^
@@ -1600646,6 +1600654,7 @@ zzzyk.com###Tinfo
 ||uivylgraexanl.site^
 ||uiwibff.production.ippen.space/api/metrics
 ||uiwock.epantofi.ro^
+||uiwxobfcvxrki.online^
 ||uiwyirmq.kids-world.com^
 ||uiwyirmq.kids-world.dk^
 ||uixbwmrkfrvmc.space^
@@ -1600698,6 +1600707,7 @@ zzzyk.com###Tinfo
 ||ujmlxnnzybfvh.online^
 ||ujndb.moventashop.com^
 ||ujnsh.discovericl.com^
+||ujosjyaidtlgb.online^
 ||ujpcgbe9.xyz^
 ||ujpqiykehtfry.online^
 ||ujq1.destinia.is^
@@ -1602847,6 +1602857,7 @@ zzzyk.com###Tinfo
 ||unproudcneorum.qpon^
 ||unputexorate.cyou^
 ||unpydqpidsfb.cdnvideo3.com^
+||unqm8c9dfk.com^
 ||unqsnzyrsdkuz.website^
 ||unquodbubaupfly.qpon^
 ||unqvaof.xyz^
