@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-27 22:22:23 (UTC+8)
-! Total rules: 1406004
+! Generated: 2026-10-27 22:57:21 (UTC+8)
+! Total rules: 1406010
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -139680,7 +139680,6 @@ dukechronicle.com##.flytead
 dukehealth.org#$##desktop-header { position: absolute !important; }
 dulcisevents.ro##.header-notice
 dulo.cx,dulo.gd,dulo.*##.fixed:has(> div.p-4 > div.items-start > button[aria-label="Dismiss notice"])
-dulo.gd###root > div[class] > .fixed.inset-x-3:has(h2:contains(ads))
 dulo.gd#?##root > div[class] > .fixed.inset-x-3:has(h2:contains(ads))
 dulo.tv#%#//scriptlet('set-local-storage-item', 'amri-discord-popup-dismissed', '1')
 duluthtrading.com#$#._1fkhros1dc._1fkhros3fq { position: relative !important; top: 0 !important; }
@@ -483557,6 +483556,11 @@ streamlivenow.me##center > [style^="background:white;"][style*="max-width:"]
 streamo.pro##a[aria-label="Download Android app"]
 streamo.pro##div[style^="opacity:"]:has(> section > div > div[data-ad-format])
 streamo.pro#%#//scriptlet('set-cookie', 'join_modal_dismissed', '1')
+streamo.st,streamo.*##.fixed:has(> div.glass-popover)
+streamo.st,streamo.*##.glass-overlay
+streamo.st,streamo.*##a[aria-label="Download Android app"]
+streamo.st,streamo.*##div[class]:has(> div[data-ad-format])
+streamo.st,streamo.*#%#//scriptlet('set-cookie', 'join_modal_dismissed', '1')
 streamonsport.to##.events img[alt="adblock"]
 streamparty.com,trynoice.com##.chakra-collapse
 streams.tv###flowerInGarden
@@ -486326,6 +486330,7 @@ tanp.jp##.productMainSocial
 tanp.jp##app-download-coupon-popup
 tansajp.org##.banner_donation_request
 tanstack.com##.flex > div.md\:block.sticky.top-0
+tanstack.com##.flex.group\/rail
 tanstack.com##.px-4:has(> div.rounded-md > form > div.grid > input[name="email_address"])
 tanstack.com##aside[class="mx-auto w-full max-w-\[1200px\] p-8 -mt-32 flex justify-between items-center"]
 tanstack.com#%#//scriptlet('trusted-set-local-storage-item', 'showBytes', '{"value":false,"ttl":null}')
@@ -576103,6 +576108,7 @@ zzzyk.com###Tinfo
 ||analytics.dsyqt.com^
 ||analytics.dugou.best^
 ||analytics.dugun.com^
+||analytics.dulo.
 ||analytics.dumoulinbricks.be^
 ||analytics.dunlio.com^
 ||analytics.dunro.com^
