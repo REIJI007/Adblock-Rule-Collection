@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-27 16:01:34 (UTC+8)
-! Total rules: 1405955
+! Generated: 2026-10-27 16:24:15 (UTC+8)
+! Total rules: 1405957
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -501039,6 +501039,8 @@ ua-football.com,log.com.tr##.google-news-subscribe
 ua-magazine.com#$#.move.sticky.menu_container { position: relative !important; top: 0 !important; }
 ua-region.com.ua#?#.cart-company-full > div.d-flex:has(> div.main-info-sharing)
 ua-voyeur.org#@#.adsbar
+ua.mfa.lt##div.one_widget > div.sub-block:has(> form#subscription_form)
+ua.mfa.lt,phhgroup.eu,cheese-cake.ru,urm.lt,m.emsc.eu,eto-razvod.ru,everylang.net,memeburn.com,supplementler.com,vitaminler.com##.cookie_container
 ua.news###social__modal__container
 ua.news##.content-socials
 ua.news##.read-us-text
