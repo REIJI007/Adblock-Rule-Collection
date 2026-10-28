@@ -471,43 +471,88 @@ def find_regex_rule_end(body: str) -> int | None:
     return None
 
 def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> str | None:
-    """将受限的主机名正则包装为 HTTP(S) URL 匹配规则。"""
-    if not (regex_body.startswith("^") and regex_body.endswith("$")):
+    """Translate a DNS hostname regex into URL-authority syntax conservatively."""
+    if not regex_body or "/" in regex_body:
         return None
-    inner = regex_body[1:-1]
-    if not inner or "/" in inner or any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
+    if any(token in regex_body for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
         return None
-    # 仅转换可证明兼容的正则子集；不支持的特殊分组会被拒绝。
+    if re.search(r"\\[sSDW]", regex_body) or re.search(r"\(\?(?!:)", regex_body):
+        return None
 
-    if re.search(r"\(\?(?!:)", inner):
-        return None
-    check_inner = inner.replace("(?:", "")
     allowed = set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         "._*+?()|\\[]{}^-"
     )
-    if any(char not in allowed for char in check_inner):
+    if any(char not in allowed for char in regex_body):
         return None
     try:
-        re.compile(inner)
+        re.compile(regex_body)
     except re.error:
         return None
+
+    starts_anchored = regex_body.startswith("^")
+    ends_anchored = regex_body.endswith("$") and not regex_body.endswith(r"\$")
+    core = regex_body[1:] if starts_anchored else regex_body
+    if ends_anchored:
+        core = core[:-1]
+
+    escaped = False
+    in_class = False
+    class_content = ""
+    rewritten: list[str] = []
+    for char in core:
+        if escaped:
+            rewritten.append("\\" + char)
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if char == "[" and not in_class:
+            in_class = True
+            class_content = ""
+            rewritten.append(char)
+            continue
+        if char == "]" and in_class:
+            if class_content.startswith("^"):
+                return None
+            in_class = False
+            rewritten.append(char)
+            continue
+        if in_class:
+            class_content += char
+            rewritten.append(char)
+            continue
+        if char in "^$":
+            return None
+        if char == ".":
+            # DNS regex wildcards must never match URL paths or query strings.
+            rewritten.append(r"[A-Za-z0-9._-]")
+        else:
+            rewritten.append(char)
+    if escaped or in_class:
+        return None
+
+    host_chars = r"[A-Za-z0-9._-]*"
+    host_pattern = (
+        ("" if starts_anchored else host_chars)
+        + "".join(rewritten)
+        + ("" if ends_anchored else host_chars)
+    )
     url_pattern = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?(?:"
-        + inner
-        + r")(?::[0-9]+)?(?:[\/?#]|$)"
+        r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
+        + host_pattern
+        + r"(?::[0-9]+)?(?:[\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + url_pattern + "/"
-
 def compile_dns_rule(line: str) -> str:
-    """只转换能明确证明浏览器匹配语义的 DNS 规则。"""
+    """Translate AdGuard DNS rules to URL rules without changing the match subject."""
     exception = line.startswith("@@")
     body = line[2:] if exception else line
     if body.startswith("@@"):
         raise CompilationError("misplaced DNS exception marker")
 
-    # 先识别正则的结束位置，再解析 `$` 修饰符，避免混淆正则锚点。
-
+    # Parse slash-delimited expressions before looking for modifier separators.
     if body.startswith("/"):
         closing = find_regex_rule_end(body)
         if closing is None:
@@ -524,53 +569,24 @@ def compile_dns_rule(line: str) -> str:
         for token in regex_modifiers:
             key, separator, value = token.partition("=")
             key = key.strip().lower()
-            if key in {"important", "badfilter"} and not separator:
+            if key in {"important", "badfilter", "match-case"} and not separator:
                 normalized_regex_modifiers.append(key)
             else:
                 raise CompilationError(
                     f"DNS-only or unsupported modifier on regex rule: {token}"
                 )
 
-        # 已包含 HTTP(S) 作用域的正则保持原样，不再按主机名正则改写。
-
-        has_url_scope = (
-            "https?:" in regex_body.lower()
-            or "http?:" in regex_body.lower()
-            or re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
-        )
+        # If the regex explicitly targets a URL, keep it as a URL regex. Otherwise
+        # compile it against the hostname only and enforce authority boundaries.
+        has_url_scope = re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
         if has_url_scope:
             translated = ("@@" if exception else "") + "/" + regex_body + "/"
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
-                if regex_body.startswith("^"):
-                    # DNS hostname/IP expressions are not URL-scoped. Wrap anchored
-                    # patterns in an HTTP(S) authority matcher; preserve their regex
-                    # expression, adding URL authority boundaries when the source
-                    # regex is anchored to the end of the hostname.
-                    if regex_body.endswith("$"):
-                        inner = regex_body[1:-1]
-                        boundary = (
-                            r"(?:[\/?#]|$)"
-                            if ":" in inner
-                            else r"(?::[0-9]+)?(?:[\/?#]|$)"
-                        )
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + inner
-                            + boundary
-                        )
-                    else:
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + regex_body[1:]
-                        )
-                    translated = (("@@" if exception else "") + "/" + url_scoped_body + "/")
-                else:
-                    raise CompilationError(
-                        "DNS regex cannot be proven equivalent as a network-filter URL regex"
-                    )
-
+                raise CompilationError(
+                    "DNS hostname regex cannot be safely scoped to URL authority"
+                )
         if normalized_regex_modifiers:
             translated += "$" + ",".join(normalized_regex_modifiers)
         return translated
@@ -578,15 +594,14 @@ def compile_dns_rule(line: str) -> str:
     parts = body.split("$", 1)
     pattern = parts[0]
     modifier_text = parts[1] if len(parts) == 2 else None
-
     modifiers: list[str] = []
     if modifier_text is not None:
-        modifiers = split_modifiers(modifier_text)
+        parsed_modifiers = split_modifiers(modifier_text)
         normalized_modifiers: list[str] = []
-        for token in modifiers:
+        for token in parsed_modifiers:
             key, separator, value = token.partition("=")
             key_lower = key.strip().lower()
-            if key_lower in ("important", "badfilter"):
+            if key_lower in ("important", "badfilter", "match-case"):
                 if separator:
                     raise CompilationError(f"{key_lower} modifier must not have a value")
                 normalized_modifiers.append(key_lower)
@@ -609,11 +624,16 @@ def compile_dns_rule(line: str) -> str:
                 )
         modifiers = normalized_modifiers
 
-    # 纯域名列表中的裸域名只匹配该主机，不应扩展到子域。
+    case_sensitive = "match-case" in modifiers
 
+    def append_modifiers(rule: str) -> str:
+        return rule + ("$" + ",".join(modifiers) if modifiers else "")
+
+    # A bare hostname in DNS syntax matches that host only, not its subdomains.
     if (
         not pattern.startswith(("||", "|", "."))
         and not any(ch in pattern for ch in "*^/")
+        and not pattern.startswith("://")
     ):
         try:
             ipaddress.ip_address(pattern)
@@ -621,22 +641,68 @@ def compile_dns_rule(line: str) -> str:
             pass
         else:
             raise CompilationError(
-                "bare IP in AdGuard DNS syntax matches CNAME targets resolving to that IP; "
+                "bare IP in AdGuard DNS syntax can match CNAME targets; "
                 "an AdGuard network filter cannot preserve DNS-resolution semantics"
             )
         hostname = canonical_hostname(pattern, allow_single_label=False)
         if hostname:
-            translated = exact_hostname_regex_rule(hostname, exception=exception)
-            return translated + ("$" + ",".join(modifiers) if modifiers else "")
+            output_hostname = pattern.rstrip(".") if case_sensitive and pattern.isascii() else hostname
+            return append_modifiers(exact_hostname_regex_rule(
+                output_hostname, exception=exception, match_case=case_sensitive
+            ))
         raise CompilationError(f"unsupported DNS domain or address rule: {pattern}")
 
-    # 主机名结束锚点与整个 URL 的结束锚点含义不同。
-    exact_pipe = re.fullmatch(
-        r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|",
-        pattern,
-    )
+    # Wildcard-TLD shorthand is DNS-specific: example.TLD denotes all TLDs.
+    tld_match = re.fullmatch(r"\|\|(?P<prefix>[A-Za-z0-9.-]+)\.TLD\^", pattern, re.IGNORECASE)
+    if tld_match:
+        prefix = tld_match.group("prefix")
+        normalized_prefix = canonical_hostname(prefix, allow_single_label=False)
+        if not normalized_prefix:
+            raise CompilationError(f"invalid wildcard-TLD hostname: {pattern}")
+        output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
+        return append_modifiers(("@@" if exception else "") + "||" + output_prefix + ".*^")
+
+    # DNS scheme-prefix syntax: ://example. matches hostnames beginning example.
+    scheme_prefix = re.fullmatch(r"://([A-Za-z0-9.-]+)\.", pattern)
+    if scheme_prefix:
+        prefix = scheme_prefix.group(1)
+        normalized_prefix = canonical_hostname(prefix, allow_single_label=False)
+        if not normalized_prefix:
+            raise CompilationError(f"invalid DNS scheme-prefix pattern: {pattern}")
+        output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
+        return append_modifiers(("@@" if exception else "") + "||" + output_prefix + ".*^")
+
+    # A leading dot matches subdomains only, not the root host.
+    leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^?", pattern)
+    if leading_dot:
+        hostname = canonical_hostname(leading_dot.group(1), allow_single_label=False)
+        if not hostname:
+            raise CompilationError(f"invalid leading-dot DNS hostname mask: {pattern}")
+        output_hostname = leading_dot.group(1) if case_sensitive and leading_dot.group(1).isascii() else hostname
+        return append_modifiers(("@@" if exception else "") + "||*." + output_hostname + "^")
+
+    # Prefix masks without an end marker retain their prefix semantics.
+    if re.fullmatch(r"\|\|[A-Za-z0-9*.-]+", pattern):
+        output = pattern if case_sensitive else pattern.lower()
+        return append_modifiers(("@@" if exception else "") + output)
+
+    # A hostname ending with a pipe is an exact-host match in DNS syntax, not
+    # an end-of-URL anchor.
+    exact_pipe = re.fullmatch(r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|", pattern)
     if exact_pipe:
         raw_hostname = exact_pipe.group("host")
+        if re.search(r"\.TLD$", raw_hostname, re.IGNORECASE):
+            base = raw_hostname[:-4]
+            normalized_base = canonical_hostname(base, allow_single_label=False)
+            if not normalized_base:
+                raise CompilationError(f"invalid exact wildcard-TLD hostname: {pattern}")
+            output_base = base if case_sensitive and base.isascii() else normalized_base
+            url_pattern = (
+                r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
+                + re.escape(output_base)
+                + r"\.[A-Za-z0-9-]+(?::[0-9]+)?(?:[\/?#]|$)"
+            )
+            return append_modifiers(("@@" if exception else "") + "/" + url_pattern + "/")
         try:
             ipaddress.ip_address(raw_hostname)
         except ValueError:
@@ -648,42 +714,24 @@ def compile_dns_rule(line: str) -> str:
         hostname = canonical_hostname(raw_hostname, allow_single_label=False)
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
-        translated = exact_hostname_regex_rule(hostname, exception=exception)
-        return translated + ("$" + ",".join(modifiers) if modifiers else "")
+        output_hostname = raw_hostname if case_sensitive and raw_hostname.isascii() else hostname
+        return append_modifiers(exact_hostname_regex_rule(
+            output_hostname, exception=exception, match_case=case_sensitive
+        ))
 
-    # `.example.com` 只匹配子域，不匹配根域。
-
-    leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^?", pattern)
-    if leading_dot:
-        hostname = canonical_hostname(
-            leading_dot.group(1), allow_single_label=False
-        )
-        if not hostname:
-            raise CompilationError(f"invalid leading-dot DNS hostname mask: {pattern}")
-        translated = (
-            ("@@" if exception else "") + "||*." + hostname + "^"
-        )
-        return translated + ("$" + ",".join(modifiers) if modifiers else "")
-
-    # 保留主机前缀规则的原有语义，包括末标签前缀匹配。
-
-    if re.fullmatch(r"\|\|[A-Za-z0-9*.-]+", pattern):
-        translated = ("@@" if exception else "") + pattern.lower()
-        return translated + ("$" + ",".join(modifiers) if modifiers else "")
-
-    # 单竖线加 `^` 表示精确主机锚点，不能改成 URL 起始锚点。
-
+    # Single pipe before the hostname anchors the host itself, not the full URL.
     exact_match = re.fullmatch(r"\|([^|^*/$]+)\^", pattern)
     if exact_match:
-        hostname = canonical_host_or_ipv4(
-            exact_match.group(1), allow_single_label=False
-        )
+        raw_hostname = exact_match.group(1)
+        hostname = canonical_host_or_ipv4(raw_hostname, allow_single_label=False)
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
-        translated = exact_hostname_regex_rule(hostname, exception=exception)
-        return translated + ("$" + ",".join(modifiers) if modifiers else "")
+        output_hostname = raw_hostname if case_sensitive and raw_hostname.isascii() else hostname
+        return append_modifiers(exact_hostname_regex_rule(
+            output_hostname, exception=exception, match_case=case_sensitive
+        ))
 
-    # 处理标准子域规则和简单主机名通配规则。
+    # Standard subtree and wildcard host masks.
     subtree_match = re.fullmatch(r"\|\|([^|^/$]+)\^", pattern)
     if subtree_match:
         raw_mask = subtree_match.group(1)
@@ -691,26 +739,30 @@ def compile_dns_rule(line: str) -> str:
             hostname_mask = canonical_wildcard_hostname_mask(raw_mask)
             if not hostname_mask:
                 raise CompilationError(f"invalid DNS wildcard hostname mask: {pattern}")
-            translated = ("@@" if exception else "") + "||" + hostname_mask + "^"
-        else:
-            if re.fullmatch(r"(?:[0-9]{1,3}\.){1,3}[0-9]{0,3}\.?|(?:[0-9]{1,3}\.){3}[0-9]{1,3}", raw_mask):
-                raise CompilationError(
-                    "IP-like DNS masks can refer to CNAME/IP semantics and cannot be "
-                    "safely translated into browser URL-host rules"
-                )
-            hostname = canonical_hostname(raw_mask, allow_single_label=False)
-            if hostname:
-                translated = ("@@" if exception else "") + "||" + hostname + "^"
-            elif re.fullmatch(r"[A-Za-z0-9_.-]+", raw_mask):
-                # 对严格 IDNA 校验不接受的上游标签，保留原样且不扩大匹配范围。
+            output_mask = raw_mask if case_sensitive and raw_mask.isascii() else hostname_mask
+            return append_modifiers(("@@" if exception else "") + "||" + output_mask + "^")
 
-                translated = ("@@" if exception else "") + "||" + raw_mask.lower() + "^"
-            else:
-                raise CompilationError(f"invalid DNS hostname mask: {pattern}")
-        return translated + ("$" + ",".join(modifiers) if modifiers else "")
+        if re.fullmatch(r"(?:[0-9]{1,3}\.){1,3}[0-9]{0,3}\.?|(?:[0-9]{1,3}\.){3}[0-9]{1,3}", raw_mask):
+            raise CompilationError(
+                "IP-like DNS masks can refer to CNAME/IP semantics and cannot be safely translated"
+            )
+
+        hostname = canonical_hostname(raw_mask, allow_single_label=False)
+        if not hostname and "." not in raw_mask and re.fullmatch(r"[A-Za-z0-9-]{1,63}", raw_mask):
+            # In DNS syntax, ||com^ means the .com TLD and its descendants.
+            tld = raw_mask if case_sensitive else raw_mask.lower()
+            return append_modifiers(("@@" if exception else "") + "||*." + tld + "^")
+        if hostname:
+            output_hostname = raw_mask if case_sensitive and raw_mask.isascii() else hostname
+            return append_modifiers(("@@" if exception else "") + "||" + output_hostname + "^")
+        if re.fullmatch(r"[A-Za-z0-9_.-]+", raw_mask):
+            # Preserve an upstream label that this validator cannot canonicalize;
+            # strict mode and reports still surface any downstream incompatibility.
+            output_mask = raw_mask if case_sensitive else raw_mask.lower()
+            return append_modifiers(("@@" if exception else "") + "||" + output_mask + "^")
+        raise CompilationError(f"invalid DNS hostname mask: {pattern}")
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
-
 def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str], str]:
     body = line.split("#", 1)[0].strip()
     if not body:
@@ -787,6 +839,8 @@ def looks_like_native_network_filter_rule(
                 return False
             regex_body = candidate[1:closing]
             return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+        if candidate.startswith(("-", "*")) and re.fullmatch(r"\S*[\^|*]\S*", candidate):
+            return True
         return False
 
     if candidate.startswith("/"):
