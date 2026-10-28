@@ -1130,8 +1130,6 @@ def parse_badfilter_rule(line: str) -> tuple[tuple[str, tuple[str, ...]], bool] 
     ]
     if any("=" in token for token in badfilter_tokens):
         return None
-    if not pattern and not badfilter_tokens:
-        return None
 
     normalized_modifiers: list[str] = []
     for token in modifiers:
