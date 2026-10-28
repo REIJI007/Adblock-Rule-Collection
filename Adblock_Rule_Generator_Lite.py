@@ -384,6 +384,16 @@ def detect_nonportable_native_rule(
         return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
     if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
         return "AdGuard application-only $network modifier is not supported by this target"
+    if source_url:
+        try:
+            source_kind = classify_source(source_url)
+        except CompilationError:
+            source_kind = None
+        if source_kind in {"dns", "cname"} and re.fullmatch(
+            r"(?:@@)?(?:\|\||\|)(?:[0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}\^?",
+            line.strip(),
+        ):
+            return "IP CIDR mask cannot be represented by a URL-host filtering rule"
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
@@ -492,6 +502,32 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
     """Translate a DNS hostname regex into URL-authority syntax conservatively."""
     if not regex_body or "/" in regex_body:
         return None
+
+    if regex_body.startswith("^") and regex_body.endswith(":"):
+        inner = regex_body[1:-1]
+        # In DNS host syntax ':' is impossible; these few mixed-source entries
+        # describe a URL authority whose host is an IP-pattern followed by a port.
+        # Keep this exception narrow: reject unescaped dots and non-host tokens.
+        if not inner or "/" in inner or re.search(r"(?<!\\)\.", inner):
+            return None
+        if any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
+            return None
+        allowed_authority = set(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+            "._-+?()|\\[]{}^"
+        )
+        if any(char not in allowed_authority for char in inner):
+            return None
+        try:
+            re.compile(inner)
+        except re.error:
+            return None
+        url_pattern = (
+            r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
+            + inner
+            + ":"
+        )
+        return ("@@" if exception else "") + "/" + url_pattern + "/"
     if any(token in regex_body for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
         return None
     if re.search(r"\\[sSDW]", regex_body) or re.search(r"\(\?(?!:)", regex_body):
@@ -658,10 +694,10 @@ def compile_dns_rule(line: str) -> str:
         except ValueError:
             pass
         else:
-            raise CompilationError(
-                "bare IP in AdGuard DNS syntax can match CNAME targets; "
-                "an AdGuard network filter cannot preserve DNS-resolution semantics"
-            )
+            # DNS filtering patterns operate on the requested hostname. A numeric
+            # host literal can be represented as an exact URL-host match; it does
+            # not mean "match every domain that resolves to this IP".
+            return append_modifiers(exact_hostname_regex_rule(pattern, exception=exception))
         hostname = canonical_hostname(pattern, allow_single_label=False)
         if hostname:
             output_hostname = pattern.rstrip(".") if case_sensitive and pattern.isascii() else hostname
@@ -738,9 +774,9 @@ def compile_dns_rule(line: str) -> str:
         except ValueError:
             pass
         else:
-            raise CompilationError(
-                "IP-based DNS rules may match CNAME resolution results, not browser URL hosts"
-            )
+            return append_modifiers(exact_hostname_regex_rule(
+                raw_hostname, exception=exception, match_case=case_sensitive
+            ))
         hostname = canonical_hostname(raw_hostname, allow_single_label=False)
         if not hostname:
             raise CompilationError(f"invalid exact DNS hostname: {pattern}")
@@ -771,11 +807,6 @@ def compile_dns_rule(line: str) -> str:
                 raise CompilationError(f"invalid DNS wildcard hostname mask: {pattern}")
             output_mask = raw_mask if case_sensitive and raw_mask.isascii() else hostname_mask
             return append_modifiers(("@@" if exception else "") + "||" + output_mask + "^")
-
-        if re.fullmatch(r"(?:[0-9]{1,3}\.){1,3}[0-9]{0,3}\.?|(?:[0-9]{1,3}\.){3}[0-9]{1,3}", raw_mask):
-            raise CompilationError(
-                "IP-like DNS masks can refer to CNAME/IP semantics and cannot be safely translated"
-            )
 
         hostname = canonical_hostname(raw_mask, allow_single_label=False)
         if not hostname and "." not in raw_mask and re.fullmatch(r"[A-Za-z0-9-]{1,63}", raw_mask):
@@ -906,7 +937,14 @@ def looks_like_native_network_filter_rule(
                 return False
             regex_body = candidate[1:closing]
             return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
-        if candidate.startswith(("-", "*")) and re.fullmatch(r"\S*[\^|*]\S*", candidate):
+        network_pattern = candidate[2:] if candidate.startswith("@@") else candidate
+        if network_pattern.startswith(("-", "*")) and re.fullmatch(r"\S*[\^|*]\S*", network_pattern):
+            return True
+        if "://" in network_pattern:
+            return True
+        # A slash after an anchored hostname is a URL-path pattern. DNS host
+        # masks cannot contain paths, so preserve this mixed network-filter rule.
+        if network_pattern.startswith(("||", "|")) and "/" in network_pattern:
             return True
         return False
 
