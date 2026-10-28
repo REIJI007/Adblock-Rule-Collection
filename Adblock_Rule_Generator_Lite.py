@@ -558,7 +558,7 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
 
     allowed = set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        "._*+?()|\\[]{}^-"
+        "._,*+?()|\\[]{}^-"
     )
     hostname_char = r"[^\/:?#@]"
     safe_parts: list[str] = []
@@ -816,6 +816,13 @@ def compile_dns_rule(line: str) -> str:
         if hostname:
             translated = exact_hostname_regex_rule(hostname, exception=exception)
             return translated + ("$" + ",".join(modifiers) if modifiers else "")
+
+        # DNS feeds may also contain unanchored hostname masks such as "-ad123-".
+        # These are not FQDNs, so they must be hostname-scoped rather than discarded.
+        translated = compile_dns_hostname_mask_rule(pattern, exception=exception)
+        if translated is not None:
+            return translated + ("$" + ",".join(modifiers) if modifiers else "")
+
         raise CompilationError(f"unsupported DNS domain or address rule: {pattern}")
 
     # 主机名结束锚点与整个 URL 的结束锚点含义不同。
@@ -2005,6 +2012,18 @@ def run_regression_tests() -> None:
     check("DNS inline comment is ignored",
           compile_line("dns", "example.com # source note")[0],
           [exact_hostname_regex_rule("example.com")])
+
+    dns_bare_mask = compile_line("dns", "-ad123-")[0][0]
+    check("unanchored DNS hostname mask is compiled in hostname scope",
+          dns_bare_mask.startswith("/") and "ad123" in dns_bare_mask, True)
+    check("unanchored DNS hostname mask does not match path-only text",
+          bool(re.search(dns_bare_mask[1:-1], "https://safe-site.test/path/-ad123-")), False)
+
+    dns_quantified_regex = compile_line("dns", r"/^tracker[0-9]{1,3}/")[0][0]
+    check("DNS regex with bounded quantifier is translated",
+          dns_quantified_regex.startswith("/") and "[0-9]{1,3}" in dns_quantified_regex, True)
+    check("bounded DNS regex does not match path-only text",
+          bool(re.search(dns_quantified_regex[1:-1], "https://safe-site.test/path/tracker123")), False)
     check("DNS end-anchor exception is translated to an exact-host URL exception",
           compile_line("dns", "@@||example.com^|")[0],
           [exact_hostname_regex_rule("example.com", exception=True)])
