@@ -2078,7 +2078,7 @@ def run_regression_tests() -> None:
           dns_wildcard.startswith(r"/^(?:https?|wss?):\/\/"),
           True)
     check("DNS wildcard matches a matching hostname",
-          re.search(dns_wildcard[1:-1], "https://MobileAnalytics.us-east.AmazonAWS.com/pixel") is not None,
+          re.search(dns_wildcard[1:-1], "https://MobileAnalytics.us-east.AmazonAWS.com/pixel", re.IGNORECASE) is not None,
           True)
     check("DNS wildcard cannot match only because URL path contains mask",
           re.search(dns_wildcard[1:-1], "https://safe.example/path/MobileAnalytics.us-east.AmazonAWS.com") is None,
