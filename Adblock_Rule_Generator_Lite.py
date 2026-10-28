@@ -1877,9 +1877,9 @@ def run_regression_tests() -> None:
     check("CNAME network-filter syntax is preserved verbatim",
           compile_line("cname", "||tracker.Example.com^")[0],
           ["||tracker.Example.com^"])
-    check("DNS network-filter syntax is preserved verbatim",
+    check("DNS hostname rule preserves its network-filter match scope",
           compile_line("dns", "||Ads.Example.com^")[0],
-          ["||Ads.Example.com^"])
+          ["||ads.example.com^"])
     check("DNS plain host entries are converted to exact-host URL rules",
           compile_line("dns", "tracker.example.com")[0],
           [exact_hostname_regex_rule("tracker.example.com")])
