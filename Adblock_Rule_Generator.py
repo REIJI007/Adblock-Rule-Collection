@@ -153,6 +153,9 @@ class CompileState:
     issues: list[dict[str, object]] = field(default_factory=list)
     target_exclusions: list[dict[str, object]] = field(default_factory=list)
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
+    badfilter_directives_consumed: int = 0
+    badfilter_rules_disabled: int = 0
+    unmatched_badfilter_directives: int = 0
 
 def classify_source(url: str) -> str:
     """按显式清单识别上游格式；未知来源默认拒绝。"""
@@ -1020,6 +1023,133 @@ class ExpandedLine:
     source: Source
     line_number: int
     text: str
+    root_source_url: str | None = None
+
+def parse_badfilter_rule(line: str) -> tuple[tuple[str, tuple[str, ...]], bool] | None:
+    """Return a normalized rule key and whether the line is a $badfilter directive."""
+    candidate = line.strip()
+    if not candidate or is_comment_or_header(candidate):
+        return None
+    # Cosmetic rules have their own rule semantics; do not parse them as URL filters.
+    if any(marker in candidate for marker in VALID_HASH_RULE_PREFIXES):
+        return None
+
+    exception = ""
+    body = candidate
+    if body.startswith("@@"):
+        exception = "@@"
+        body = body[2:]
+
+    if body.startswith("/"):
+        closing = find_regex_rule_end(body)
+        if closing is None:
+            return None
+        pattern = body[:closing + 1]
+        tail = body[closing + 1:]
+        if tail and not tail.startswith("$"):
+            return None
+        modifier_text = tail[1:] if tail else ""
+    else:
+        escaped = False
+        modifier_pos: int | None = None
+        for index, char in enumerate(body):
+            if escaped:
+                escaped = False
+                continue
+            if char == "\\":
+                escaped = True
+                continue
+            if char == "$":
+                modifier_pos = index
+                break
+        if modifier_pos is None:
+            pattern = body
+            modifier_text = ""
+        else:
+            pattern = body[:modifier_pos]
+            modifier_text = body[modifier_pos + 1:]
+
+    if not pattern:
+        return None
+    try:
+        modifiers = split_modifiers(modifier_text) if modifier_text else []
+    except CompilationError:
+        return None
+
+    badfilter_tokens = [
+        token for token in modifiers
+        if token.partition("=")[0].strip().lower() == "badfilter"
+    ]
+    if any("=" in token for token in badfilter_tokens):
+        return None
+
+    normalized_modifiers: list[str] = []
+    for token in modifiers:
+        if token.strip().lower() == "badfilter":
+            continue
+        key, separator, value = token.partition("=")
+        normalized_modifiers.append(
+            key.strip().lower() + ("=" + value.strip() if separator else "")
+        )
+    return (exception + pattern, tuple(sorted(normalized_modifiers))), bool(badfilter_tokens)
+
+def apply_source_scoped_badfilters(
+    expanded_lines: list[ExpandedLine],
+    state: CompileState,
+) -> list[ExpandedLine]:
+    """Apply $badfilter only within one logical upstream filter, including its includes."""
+    candidates: list[tuple[ExpandedLine, tuple[str, tuple[str, tuple[str, ...]]] | None, str]] = []
+    badfilter_keys: set[tuple[str, tuple[str, tuple[str, ...]]]] = set()
+    base_keys: set[tuple[str, tuple[str, tuple[str, ...]]]] = set()
+    directives: list[tuple[str, tuple[str, tuple[str, ...]]]] = []
+
+    for entry in expanded_lines:
+        if entry.source.kind not in {"adblock", "dns"}:
+            candidates.append((entry, None, "keep"))
+            continue
+        line = entry.text.strip()
+        parsed = parse_badfilter_rule(line)
+        if parsed is None:
+            if re.search(r"(?:\$|,)badfilter(?:=|,|$)", line, re.IGNORECASE) and not any(
+                marker in line for marker in VALID_HASH_RULE_PREFIXES
+            ):
+                add_issue(
+                    state,
+                    state.summaries[entry.source.url],
+                    entry.line_number,
+                    line,
+                    "unable to parse $badfilter directive safely",
+                )
+                candidates.append((entry, None, "drop"))
+            else:
+                candidates.append((entry, None, "keep"))
+            continue
+
+        rule_key, is_badfilter = parsed
+        scope = entry.root_source_url or entry.source.url
+        scoped_key = (scope, rule_key)
+        if is_badfilter:
+            badfilter_keys.add(scoped_key)
+            directives.append(scoped_key)
+            state.badfilter_directives_consumed += 1
+            candidates.append((entry, scoped_key, "directive"))
+        else:
+            base_keys.add(scoped_key)
+            candidates.append((entry, scoped_key, "base"))
+
+    result: list[ExpandedLine] = []
+    for entry, scoped_key, role in candidates:
+        if role in {"drop", "directive"}:
+            continue
+        if role == "base" and scoped_key in badfilter_keys:
+            state.badfilter_rules_disabled += 1
+            continue
+        result.append(entry)
+
+    state.unmatched_badfilter_directives += sum(
+        1 for scoped_key in directives if scoped_key not in base_keys
+    )
+    return result
 
 def target_condition_flags(target: str) -> dict[str, bool]:
     if target not in TARGET_PROFILES:
@@ -1129,6 +1259,7 @@ def expand_filter_preprocessor(
     target: str,
     cache: dict[str, tuple[Source, str]],
     stack: tuple[str, ...] = (),
+    root_source_url: str | None = None,
 ) -> list[ExpandedLine]:
     """展开 include 指令，并按目标平台计算条件。"""
     if len(stack) >= MAX_INCLUDE_DEPTH:
@@ -1232,6 +1363,7 @@ def expand_filter_preprocessor(
                     target,
                     cache,
                     (*stack, source.url),
+                    root_source_url or source.url,
                 )
             )
             continue
@@ -1244,7 +1376,7 @@ def expand_filter_preprocessor(
             continue
 
         if active:
-            output.append(ExpandedLine(source, line_number, raw_line))
+            output.append(ExpandedLine(source, line_number, raw_line, root_source_url or source.url))
 
     if frames:
         raise CompilationError(f"{source.url}: unterminated !#if block")
@@ -1447,6 +1579,9 @@ def compile_fetched_sources(
                 input_lines=len(text.splitlines()),
             )
 
+    # Resolve $badfilter before global deduplication, scoped to each root upstream filter.
+    expanded_lines = apply_source_scoped_badfilters(expanded_lines, state)
+
     # 排除规则只应用于 AdGuard 配置明确关联的来源。
 
     for source, _ in fetched:
@@ -1572,6 +1707,9 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             summary.input_lines_skipped_by_target
             for summary in state.summaries.values()
         ),
+        "badfilter_directives_consumed": state.badfilter_directives_consumed,
+        "badfilter_rules_disabled_within_source": state.badfilter_rules_disabled,
+        "unmatched_badfilter_directives": state.unmatched_badfilter_directives,
         "target_excluded_rule_count": len(state.target_exclusions),
         "target_exclusions": state.target_exclusions,
         "unsupported_count": len(state.issues),
@@ -1846,6 +1984,40 @@ def run_regression_tests() -> None:
     check("CNAME source omission is not misreported as a translation success",
           len(cname_state.issues), 0)
 
+
+    badfilter_source_a = Source("https://example.invalid/list-a.txt", "adblock")
+    badfilter_source_b = Source("https://example.invalid/list-b.txt", "adblock")
+    badfilter_fragment = Source("https://example.invalid/list-a-fragment.txt", "adblock")
+    badfilter_lines = [
+        ExpandedLine(badfilter_source_a, 1, "||shared.example^", badfilter_source_a.url),
+        ExpandedLine(badfilter_fragment, 1, "||included.example^", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 2, "||shared.example^$badfilter", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 3, "||included.example^$badfilter", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_b, 1, "||shared.example^", badfilter_source_b.url),
+        ExpandedLine(badfilter_source_a, 4, "||ordered.example^$script,third-party", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 5, "||ordered.example^$third-party,script,badfilter", badfilter_source_a.url),
+    ]
+    badfilter_state = CompileState()
+    badfilter_remaining = apply_source_scoped_badfilters(badfilter_lines, badfilter_state)
+    check("badfilter removes only matching rules from its own upstream list",
+          [(item.root_source_url, item.text.strip()) for item in badfilter_remaining],
+          [(badfilter_source_b.url, "||shared.example^")])
+    check("badfilter scope includes fragments of the same root filter",
+          badfilter_state.badfilter_rules_disabled, 3)
+    check("badfilter directives are consumed rather than emitted as active rules",
+          badfilter_state.badfilter_directives_consumed, 3)
+
+    partial_badfilter_lines = [
+        ExpandedLine(badfilter_source_a, 1, "||partial.example^$domain=site-a.example", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 2, "||partial.example^$badfilter", badfilter_source_a.url),
+    ]
+    partial_badfilter_state = CompileState()
+    partial_remaining = apply_source_scoped_badfilters(partial_badfilter_lines, partial_badfilter_state)
+    check("badfilter does not cancel a rule with a different modifier",
+          [item.text.strip() for item in partial_remaining],
+          ["||partial.example^$domain=site-a.example"])
+    check("unmatched badfilter directives are visible in the report",
+          partial_badfilter_state.unmatched_badfilter_directives, 1)
 
     mixed_sources = [
         (Source("https://example.invalid/hosts.txt", "hosts"), f"{zero_ipv4} Ads.Example.com\n"),
