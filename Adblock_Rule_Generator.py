@@ -758,7 +758,10 @@ def compile_dns_rule(line: str) -> str:
             return append_modifiers(exact_hostname_regex_rule(
                 output_hostname, exception=exception, match_case=case_sensitive
             ))
-        raise CompilationError(f"unsupported DNS domain or address rule: {pattern}")
+        # Some upstream DNS feeds use valid hostname masks that are not valid DNS
+        # labels themselves (e.g. "-ads1."). Let the conservative mask adapter
+        # handle these below; it will reject characters outside hostname syntax.
+
 
     # Wildcard-TLD shorthand is DNS-specific: example.TLD denotes all TLDs.
     tld_match = re.fullmatch(r"\|\|(?P<prefix>[A-Za-z0-9.-]+)\.TLD\^", pattern, re.IGNORECASE)
