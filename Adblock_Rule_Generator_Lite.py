@@ -2153,9 +2153,12 @@ def run_regression_tests() -> None:
         tests.append(("network modifier rejected for browser target", True, True))
     else:
         raise AssertionError("the app-only $network modifier must not be published to a browser filter")
-    check("network-filter syntax for an IP host rule is passed through verbatim",
-          compile_line("dns", ip_host_rule)[0],
-          [ip_host_rule])
+    try:
+        compile_line("dns", ip_host_rule)
+    except CompilationError:
+        tests.append(("DNS IP host rule is rejected when URL-host semantics cannot be proven", True, True))
+    else:
+        raise AssertionError("DNS IP host rules must not be assumed equivalent to URL-host rules")
     try:
         compile_line("dns", test_ipv4)
     except CompilationError:
