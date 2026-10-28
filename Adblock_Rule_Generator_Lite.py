@@ -404,7 +404,7 @@ def detect_dns_target_incompatible_rule(line: str) -> str | None:
             return None  # Let the parser report a malformed regex.
         regex_body = pattern_candidate[1:closing]
         has_url_scope = (
-            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
+            re.search(r"(?:https|http)\??:(?:/|\\/){2}", regex_body, re.IGNORECASE) is not None
         )
         if not has_url_scope and ":" in regex_body:
             return (
@@ -748,7 +748,7 @@ def compile_dns_rule(line: str) -> str:
         # 已包含 HTTP(S) 作用域的正则保持原样，不再按主机名正则改写。
 
         has_url_scope = (
-            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
+            re.search(r"(?:https|http)\??:(?:/|\\/){2}", regex_body, re.IGNORECASE) is not None
         )
         if has_url_scope:
             translated = ("@@" if exception else "") + "/" + regex_body + "/"
@@ -982,7 +982,7 @@ def looks_like_native_network_filter_rule(
             return False
         regex_body = pattern_candidate[1:closing]
         has_url_scope = (
-            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
+            re.search(r"(?:https|http)\??:(?:/|\\/){2}", regex_body, re.IGNORECASE) is not None
         )
         if dns_semantics and not has_url_scope:
             return False
