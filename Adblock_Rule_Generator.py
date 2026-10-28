@@ -840,10 +840,18 @@ def compile_dns_rule(line: str) -> str:
             raise CompilationError(
                 "IP-based DNS rules may match CNAME resolution results, not browser URL hosts"
             )
-        hostname = canonical_hostname(raw_hostname, allow_single_label=False)
-        if not hostname:
-            raise CompilationError(f"invalid exact DNS hostname: {pattern}")
-        translated = exact_hostname_regex_rule(hostname, exception=exception)
+        if exact_pipe.group("anchor") == "||":
+            # || anchors at a hostname label boundary, so an exact-end marker still
+            # matches subdomains ending in this hostname (e.g. www.example.com).
+            translated = compile_dns_hostname_mask_rule(pattern, exception=exception)
+            if translated is None:
+                raise CompilationError(f"DNS domain suffix/end-anchor rule cannot be scoped safely: {pattern}")
+        else:
+            # A single leading pipe is an exact hostname-start anchor.
+            hostname = canonical_hostname(raw_hostname, allow_single_label=False)
+            if not hostname:
+                raise CompilationError(f"invalid exact DNS hostname: {pattern}")
+            translated = exact_hostname_regex_rule(hostname, exception=exception)
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
     # `.example.com` 只匹配子域，不匹配根域。
@@ -2023,9 +2031,13 @@ def run_regression_tests() -> None:
           dns_quantified_regex.startswith("/") and "[0-9]{1,3}" in dns_quantified_regex, True)
     check("bounded DNS regex does not match path-only text",
           bool(re.search(dns_quantified_regex[1:-1], "https://safe-site.test/path/tracker123")), False)
-    check("DNS end-anchor exception is translated to an exact-host URL exception",
-          compile_line("dns", "@@||example.com^|")[0],
-          [exact_hostname_regex_rule("example.com", exception=True)])
+    dns_end_anchor_exception = compile_line("dns", "@@||example.com^|")[0][0]
+    check("DNS end-anchor exception preserves label-boundary suffix matching",
+          dns_end_anchor_exception.startswith("@@/") and "example\\.com" in dns_end_anchor_exception, True)
+    check("DNS end-anchor exception matches a subdomain ending in the target hostname",
+          bool(re.search(dns_end_anchor_exception[3:-1], "https://www.example.com/path")), True)
+    check("DNS end-anchor exception does not match a longer hostname suffix",
+          bool(re.search(dns_end_anchor_exception[3:-1], "https://example.com.evil.test/path")), False)
     dns_prefix_mask = compile_line("dns", "||advertising.civitai.")[0][0]
     check("DNS prefix mask is scoped to URL hostname",
           dns_prefix_mask.startswith("/") and "advertising" in dns_prefix_mask, True)
