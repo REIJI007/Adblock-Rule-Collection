@@ -474,7 +474,7 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
     check_inner = inner.replace("(?:", "")
     allowed = set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        "._*+?()|\\[]{}^-"
+        ".,_*+?()|\\[]{}^-"
     )
     if any(char not in allowed for char in check_inner):
         return None
@@ -1874,7 +1874,7 @@ def run_regression_tests() -> None:
           [r"/https?:\/\/example\.com\/path#frag/"])
     check("DNS hostname regex with nested groups is URL-scoped",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
-          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(?:(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
