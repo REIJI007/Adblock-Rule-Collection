@@ -1884,9 +1884,11 @@ def run_regression_tests() -> None:
     check("DNS exception preserves its hostname matcher",
           compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||ads.example.com^"])
-    check("DNS wildcard exact-host exception uses existing filter syntax",
-          compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
-          ["@@||cdn.us*.exponea.com^|"])
+    dns_wildcard_exception = compile_line("dns", "@@||cdn.us*.exponea.com^|")[0]
+    check("DNS wildcard exact-host exception is converted to hostname-scoped regex",
+          dns_wildcard_exception.startswith("/") and "exponea" in dns_wildcard_exception, True)
+    check("DNS wildcard exception cannot match path-only hostname text",
+          bool(re.search(dns_wildcard_exception[1:-1], "https://safe-site.test/path/cdn.us123.exponea.com")), False)
     dns_mask_rule = compile_line("dns", "-adx-*.rayjump.com^")[0]
     check("DNS wildcard mask becomes hostname-scoped regex",
           dns_mask_rule.startswith("/") and "rayjump" in dns_mask_rule, True)
@@ -1933,7 +1935,7 @@ def run_regression_tests() -> None:
           [r"/https?:\/\/example\.com\/path#frag/"])
     check("DNS hostname regex with nested groups is URL-scoped",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(?:(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
