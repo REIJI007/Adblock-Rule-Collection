@@ -2086,9 +2086,19 @@ def run_regression_tests() -> None:
           True)
     check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||Ads.Example.com^"])
-    check("DNS single-pipe exact-host exception is translated, not passed through",
-          compile_line("dns", "@@|cdn.taboola.com^|")[0],
-          [exact_hostname_regex_rule("cdn.taboola.com", exception=True)])
+    dns_single_pipe_exception = compile_line("dns", "@@|cdn.taboola.com^|")[0][0]
+    check("DNS single-pipe exception becomes a scoped URL regex",
+          dns_single_pipe_exception.startswith(r"@@/^(?:https?|wss?):\/\/"),
+          True)
+    check("DNS single-pipe exception matches the exact hostname",
+          re.search(dns_single_pipe_exception[3:-1], "https://cdn.taboola.com/pixel") is not None,
+          True)
+    check("DNS single-pipe exception does not match a subdomain",
+          re.search(dns_single_pipe_exception[3:-1], "https://sub.cdn.taboola.com/pixel") is None,
+          True)
+    check("DNS single-pipe exception cannot match hostname text in path",
+          re.search(dns_single_pipe_exception[3:-1], "https://safe.example/path/cdn.taboola.com") is None,
+          True)
     dns_wildcard_exception = compile_line("dns", "@@||cdn.us*.exponea.com^|")[0][0]
     check("DNS wildcard end-anchor exception is converted to a URL-host regex",
           dns_wildcard_exception.startswith(r"@@/^(?:https?|wss?):\/\/"),
