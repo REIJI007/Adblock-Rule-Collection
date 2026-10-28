@@ -1874,9 +1874,9 @@ def run_regression_tests() -> None:
           ["||*.3.n.2.1.l50.js^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
           [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("Adblock-compatible DNS exception end-anchor rule is preserved verbatim",
+    check("DNS end-anchor exception becomes an exact-host URL rule",
           compile_line("dns", "@@||example.com^|")[0],
-          ["@@||example.com^|"])
+          [r"@@/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("DNS partial domain anchor keeps prefix semantics", compile_line("dns", "||advertising.civitai.")[0],
           ["||advertising.civitai."])
     check("DNS leading-dot rule blocks subdomains but not root domain",
