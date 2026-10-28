@@ -1989,12 +1989,12 @@ def run_regression_tests() -> None:
     check("DNS exception preserves its hostname matcher",
           compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||ads.example.com^"])
-    dns_wildcard_exception = compile_line("dns", "@@||cdn.us*.exponea.com^|")[0]
+    dns_wildcard_exception = compile_line("dns", "@@||cdn.us*.exponea.com^|")[0][0]
     check("DNS wildcard exact-host exception is converted to hostname-scoped regex",
           dns_wildcard_exception.startswith("/") and "exponea" in dns_wildcard_exception, True)
     check("DNS wildcard exception cannot match path-only hostname text",
           bool(re.search(dns_wildcard_exception[1:-1], "https://safe-site.test/path/cdn.us123.exponea.com")), False)
-    dns_mask_rule = compile_line("dns", "-adx-*.rayjump.com^")[0]
+    dns_mask_rule = compile_line("dns", "-adx-*.rayjump.com^")[0][0]
     check("DNS wildcard mask becomes hostname-scoped regex",
           dns_mask_rule.startswith("/") and "rayjump" in dns_mask_rule, True)
     check("DNS wildcard mask does not match when text occurs only in URL path",
@@ -2008,7 +2008,7 @@ def run_regression_tests() -> None:
     check("DNS end-anchor exception is translated to an exact-host URL exception",
           compile_line("dns", "@@||example.com^|")[0],
           [exact_hostname_regex_rule("example.com", exception=True)])
-    dns_prefix_mask = compile_line("dns", "||advertising.civitai.")[0]
+    dns_prefix_mask = compile_line("dns", "||advertising.civitai.")[0][0]
     check("DNS prefix mask is scoped to URL hostname",
           dns_prefix_mask.startswith("/") and "advertising" in dns_prefix_mask, True)
     check("DNS prefix mask does not match a path-only occurrence",
@@ -2030,7 +2030,7 @@ def run_regression_tests() -> None:
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
           [url_scoped_test_regex])
     unanchored_dns_regex = "/" + test_ipv4_regex + "/"
-    unanchored_dns_output = compile_line("dns", unanchored_dns_regex)[0]
+    unanchored_dns_output = compile_line("dns", unanchored_dns_regex)[0][0]
     check("unanchored DNS regex is limited to URL hostname",
           unanchored_dns_output.startswith("/") and "[^\/:?#@]*" in unanchored_dns_output, True)
     check("DNS regex cannot match a path-only occurrence",
