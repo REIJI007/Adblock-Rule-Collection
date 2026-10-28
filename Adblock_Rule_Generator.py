@@ -674,7 +674,7 @@ def compile_dns_rule(line: str) -> str:
     tld_match = re.fullmatch(r"\|\|(?P<prefix>[A-Za-z0-9.-]+)\.TLD\^", pattern, re.IGNORECASE)
     if tld_match:
         prefix = tld_match.group("prefix")
-        normalized_prefix = canonical_hostname(prefix, allow_single_label=False)
+        normalized_prefix = canonical_hostname(prefix, allow_single_label=True)
         if not normalized_prefix:
             raise CompilationError(f"invalid wildcard-TLD hostname: {pattern}")
         output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
@@ -684,7 +684,7 @@ def compile_dns_rule(line: str) -> str:
     scheme_prefix = re.fullmatch(r"://([A-Za-z0-9.-]+)\.", pattern)
     if scheme_prefix:
         prefix = scheme_prefix.group(1)
-        normalized_prefix = canonical_hostname(prefix, allow_single_label=False)
+        normalized_prefix = canonical_hostname(prefix, allow_single_label=True)
         if not normalized_prefix:
             raise CompilationError(f"invalid DNS scheme-prefix pattern: {pattern}")
         output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
