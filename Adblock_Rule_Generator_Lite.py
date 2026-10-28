@@ -109,10 +109,10 @@ ADGUARD_SDNS_CONFIGURATION_URL = (
 # 已知与目标引擎不兼容的 uBlock Origin 操作不能直接透传。
 
 NON_PORTABLE_NATIVE_PATTERNS = (
-    # AdGuard 与 uBlock Origin 的脚本规则语法不同，不能视为等价。
-
+    # uBO procedural operators without a verified AdGuard equivalent must not pass through.
     (re.compile(r":matches-path\s*\(", re.IGNORECASE), "uBlock procedural operator :matches-path() has no verified AdGuard equivalent"),
-    (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock procedural DOM-removal operator has no verified AdGuard equivalent"),
+    (re.compile(r":remove-(?:attr|class)\s*\(", re.IGNORECASE), "uBlock DOM-mutation operators :remove-attr()/:remove-class() have no verified AdGuard equivalent"),
+    (re.compile(r":(?:matches-prop|min-text-length|matches-media|others|watch-attr)\s*\(", re.IGNORECASE), "uBlock procedural operator has no verified AdGuard equivalent"),
 )
 DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag)(?:=|,|$)", re.IGNORECASE)
 NETWORK_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)network(?:=|,|$)", re.IGNORECASE)
@@ -322,52 +322,44 @@ def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> s
         return canonical_hostname(value, allow_single_label=allow_single_label)
 
 def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
-    """生成仅匹配指定 HTTP(S) 主机名的 AdGuard 正则规则，不扩展到子域。"""
+    """生成仅匹配指定 HTTP(S)/WebSocket 主机名的 AdGuard 正则规则，不扩展到子域。"""
     domain = canonical_host_or_ipv4(hostname)
     if not domain:
         raise CompilationError(f"invalid exact hostname: {hostname!r}")
     escaped = re.escape(domain)
     # AdGuard 正则以斜杠分隔，规则正文中的斜杠需转义。
     body = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?"
+        r"^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?"
         + escaped
         + r"(?::[0-9]+)?(?:[\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + body + "/"
 
 def normalize_native_domain_rule(line: str) -> str:
-    """仅规范化简单域名锚定规则，其余语法保持原样。"""
-    # 原生浏览器规则中的裸 IPv4 规范化为主机锚定规则。
-    # DNS 来源由专用适配器处理，避免误按浏览器语义转换。
-
-    bare_ipv4 = re.fullmatch(
-        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
+    """只规范化明确锚定的域名规则；保留未锚定模式和 IP 字面量的原语义。"""
+    match = re.fullmatch(
+        r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?",
         line,
     )
-    if bare_ipv4:
-        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
-        if any(octet > 255 for octet in octets):
-            raise CompilationError(
-                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
-            )
-        # 将带前导零的 IPv4 八位组按十进制规范化，便于等价去重。
-        ip_literal = ".".join(str(octet) for octet in octets)
-        return (
-            (bare_ipv4.group("exception") or "")
-            + "||"
-            + ip_literal
-            + "^"
-            + (bare_ipv4.group("tail") or "")
-        )
-
-    match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
+        # 未锚定的裸 IPv4/域名规则是 URL 模式，不能改写成主机锚定规则。
         return line
-    hostname = canonical_host_or_ipv4(match.group("host"), allow_single_label=False)
-    if not hostname:
-        # 遇到无法按主机名规范化但可能合法的上游语法时，保留原规则，避免改变匹配范围。
 
+    raw_host = match.group("host")
+    if raw_host.endswith("."):
         return line
+
+    hostname = canonical_host_or_ipv4(raw_host, allow_single_label=False)
+    if not hostname:
+        return line
+
+    # IP 字面量不做文本规范化，避免改变上游 URL 匹配行为。
+    try:
+        ipaddress.ip_address(raw_host)
+        return line
+    except ValueError:
+        pass
+
     return (
         (match.group("exception") or "")
         + match.group("anchor")
@@ -454,31 +446,181 @@ def find_regex_rule_end(body: str) -> int | None:
     return None
 
 def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> str | None:
-    """将受限的主机名正则包装为 HTTP(S) URL 匹配规则。"""
-    if not (regex_body.startswith("^") and regex_body.endswith("$")):
+    """将 DNS 正则约束到 URL hostname 区域，避免正则命中 path/query/fragment。"""
+    if not regex_body:
         return None
-    inner = regex_body[1:-1]
-    if not inner or "/" in inner or any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
-        return None
-    # 仅转换可证明兼容的正则子集；不支持的特殊分组会被拒绝。
 
-    if re.search(r"\(\?(?!:)", inner):
-        return None
-    check_inner = inner.replace("(?:", "")
-    allowed = set(
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        "._*+?()|\\[]{}^-"
+    def is_escaped(value: str, index: int) -> bool:
+        count = 0
+        cursor = index - 1
+        while cursor >= 0 and value[cursor] == "\\":
+            count += 1
+            cursor -= 1
+        return count % 2 == 1
+
+    anchored_start = regex_body.startswith("^")
+    anchored_end = regex_body.endswith("$") and not is_escaped(
+        regex_body, len(regex_body) - 1
     )
-    if any(char not in allowed for char in check_inner):
+    start = 1 if anchored_start else 0
+    end = len(regex_body) - 1 if anchored_end else len(regex_body)
+    inner = regex_body[start:end]
+    if not inner:
+        return None
+
+    # Do not guess semantics for lookarounds, named groups, inline flags or backreferences.
+    if any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<", "\\g<")):
+        return None
+    if re.search(r"\(\?(?!:)", inner) or re.search(r"\\[1-9]", inner):
         return None
     try:
         re.compile(inner)
     except re.error:
         return None
+
+    allowed = set(
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        "._*+?()|\\[]{}^-"
+    )
+    hostname_char = r"[^\/:?#@]"
+    safe_parts: list[str] = []
+    index = 0
+
+    while index < len(inner):
+        char = inner[index]
+
+        if inner.startswith("(?:", index):
+            safe_parts.append("(?:")
+            index += 3
+            continue
+
+        if char == "\\":
+            if index + 1 >= len(inner):
+                return None
+            escaped = inner[index + 1]
+            # These escapes can match URL separators or depend on context outside hostname.
+            if escaped in "DWSbB" or escaped in "/:?#@" or escaped.isdigit():
+                return None
+            if escaped not in allowed:
+                return None
+            safe_parts.append("\\" + escaped)
+            index += 2
+            continue
+
+        if char == "[":
+            cursor = index + 1
+            if cursor < len(inner) and inner[cursor] == "^":
+                return None
+            if cursor < len(inner) and inner[cursor] == "]":
+                cursor += 1
+            escaped_in_class = False
+            while cursor < len(inner):
+                current = inner[cursor]
+                if escaped_in_class:
+                    escaped_in_class = False
+                elif current == "\\":
+                    escaped_in_class = True
+                elif current == "]":
+                    break
+                cursor += 1
+            if cursor >= len(inner) or inner[cursor] != "]":
+                return None
+            char_class = inner[index:cursor + 1]
+            try:
+                if any(re.fullmatch(char_class, delimiter) for delimiter in "/:?#@"):
+                    return None
+            except re.error:
+                return None
+            if any(c not in allowed for c in char_class.replace("[", "").replace("]", "")):
+                return None
+            safe_parts.append(char_class)
+            index = cursor + 1
+            continue
+
+        if char == ".":
+            # In a DNS regex, dot means any hostname character; it must not match URL separators.
+            safe_parts.append(hostname_char)
+            index += 1
+            continue
+
+        if char in "^$":
+            return None
+
+        if char not in allowed:
+            return None
+
+        safe_parts.append(char)
+        index += 1
+
+    safe_inner = "".join(safe_parts)
+    host_prefix = "" if anchored_start else hostname_char + "*"
+    host_suffix = "" if anchored_end else hostname_char + "*"
     url_pattern = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?(?:"
-        + inner
-        + r")(?::[0-9]+)?(?:[\/?#]|$)"
+        r"^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?"
+        + host_prefix
+        + "(?:"
+        + safe_inner
+        + ")"
+        + host_suffix
+        + r"(?::[0-9]+)?(?:[\/?#]|$)"
+    )
+    return ("@@" if exception else "") + "/" + url_pattern + "/"
+
+
+def compile_dns_hostname_mask_rule(pattern: str, *, exception: bool = False) -> str | None:
+    """将 DNS hostname mask 转换成只作用于 URL hostname 的规则。"""
+    if not pattern:
+        return None
+
+    domain_anchor = pattern.startswith("||")
+    host_start_anchor = pattern.startswith("|") and not domain_anchor
+    mask = pattern[2:] if domain_anchor else pattern[1:] if host_start_anchor else pattern
+
+    host_end_anchor = False
+    if mask.endswith("|"):
+        host_end_anchor = True
+        mask = mask[:-1]
+    if mask.endswith("^"):
+        host_end_anchor = True
+        mask = mask[:-1]
+
+    if not mask or any(char in mask for char in "|^"):
+        return None
+    if re.fullmatch(r"[A-Za-z0-9*_.-]+", mask) is None:
+        return None
+
+    try:
+        ipaddress.ip_address(mask)
+    except ValueError:
+        pass
+    else:
+        raise CompilationError(
+            "DNS IP-address masks may match DNS/CNAME semantics and cannot be "
+            "represented faithfully as URL-host rules"
+        )
+
+    hostname_char = r"[^\/:?#@]"
+    if domain_anchor:
+        # || anchors at a label boundary on the hostname, including subdomains.
+        host_prefix = r"(?:[^.\/:?#@]+\.)*"
+    elif host_start_anchor:
+        host_prefix = ""
+    else:
+        host_prefix = hostname_char + "*"
+
+    mask_parts = [
+        hostname_char + "*" if char == "*" else re.escape(char)
+        for char in mask
+    ]
+    host_suffix = "" if host_end_anchor else hostname_char + "*"
+    url_pattern = (
+        r"^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?"
+        + host_prefix
+        + "(?:"
+        + "".join(mask_parts)
+        + ")"
+        + host_suffix
+        + r"(?::[0-9]+)?(?:[\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + url_pattern + "/"
 
@@ -517,42 +659,16 @@ def compile_dns_rule(line: str) -> str:
         # 已包含 HTTP(S) 作用域的正则保持原样，不再按主机名正则改写。
 
         has_url_scope = (
-            "https?:" in regex_body.lower()
-            or "http?:" in regex_body.lower()
-            or re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
         )
         if has_url_scope:
             translated = ("@@" if exception else "") + "/" + regex_body + "/"
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
-                if regex_body.startswith("^"):
-                    # DNS hostname/IP expressions are not URL-scoped. Wrap anchored
-                    # patterns in an HTTP(S) authority matcher; preserve their regex
-                    # expression, adding URL authority boundaries when the source
-                    # regex is anchored to the end of the hostname.
-                    if regex_body.endswith("$"):
-                        inner = regex_body[1:-1]
-                        boundary = (
-                            r"(?:[\/?#]|$)"
-                            if ":" in inner
-                            else r"(?::[0-9]+)?(?:[\/?#]|$)"
-                        )
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + inner
-                            + boundary
-                        )
-                    else:
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + regex_body[1:]
-                        )
-                    translated = (("@@" if exception else "") + "/" + url_scoped_body + "/")
-                else:
-                    raise CompilationError(
-                        "DNS regex cannot be proven equivalent as a network-filter URL regex"
-                    )
+                raise CompilationError(
+                    "DNS regex cannot be proven equivalent when scoped to URL hostname"
+                )
 
         if normalized_regex_modifiers:
             translated += "$" + ",".join(normalized_regex_modifiers)
@@ -651,7 +767,9 @@ def compile_dns_rule(line: str) -> str:
     # 保留主机前缀规则的原有语义，包括末标签前缀匹配。
 
     if re.fullmatch(r"\|\|[A-Za-z0-9*.-]+", pattern):
-        translated = ("@@" if exception else "") + pattern.lower()
+        translated = compile_dns_hostname_mask_rule(pattern, exception=exception)
+        if translated is None:
+            raise CompilationError(f"DNS hostname prefix mask cannot be scoped safely: {pattern}")
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
     # 单竖线加 `^` 表示精确主机锚点，不能改成 URL 起始锚点。
@@ -690,6 +808,10 @@ def compile_dns_rule(line: str) -> str:
                 translated = ("@@" if exception else "") + "||" + raw_mask.lower() + "^"
             else:
                 raise CompilationError(f"invalid DNS hostname mask: {pattern}")
+        return translated + ("$" + ",".join(modifiers) if modifiers else "")
+
+    translated = compile_dns_hostname_mask_rule(pattern, exception=exception)
+    if translated is not None:
         return translated + ("$" + ",".join(modifiers) if modifiers else "")
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
@@ -747,33 +869,42 @@ def compile_domain_exact_line(line: str) -> str:
         raise CompilationError(f"not a valid exact-host domains entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
 
-def looks_like_native_network_filter_rule(line: str) -> bool:
-    """Recognize entries that already use AdGuard network-filter syntax.
-
-    Valid native filter patterns are passed through verbatim. Bare domain names
-    and leading-dot DNS suffix masks are handled by the conservative DNS adapter.
-    """
+def looks_like_native_network_filter_rule(
+    line: str,
+    *,
+    dns_semantics: bool = False,
+) -> bool:
+    """判断规则能否原样透传；DNS 来源先按来源语义分类，避免把 hostname 当 URL。"""
     candidate = line.strip()
     if not candidate:
         return False
 
-    if candidate.startswith("/"):
-        closing = find_regex_rule_end(candidate)
+    pattern_candidate = candidate[2:] if candidate.startswith("@@") else candidate
+    if pattern_candidate.startswith("/"):
+        closing = find_regex_rule_end(pattern_candidate)
         if closing is None:
             return False
-        regex_body = candidate[1:closing]
-        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None:
+        regex_body = pattern_candidate[1:closing]
+        has_url_scope = (
+            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
+        )
+        if dns_semantics and not has_url_scope:
+            return False
+        if has_url_scope:
             return True
-        # Unanchored regexes already operate on arbitrary URL text. Host-anchored
-        # DNS regexes need URL scoping before they can be used for requests.
         return not regex_body.startswith("^")
 
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
 
-    # Anchored filters and common Adblock wildcard/separator patterns are
-    # already valid network-filter syntax. Do not rewrite them merely because
-    # the source was classified as DNS or CNAME.
+    if dns_semantics:
+        # Raw DNS hostname masks, single-pipe anchors, and unscoped patterns must be adapted.
+        if "://" in pattern_candidate:
+            return True
+        if "/" in pattern_candidate:
+            return True
+        return False
+
     if candidate.startswith(("||", "@@||", "|", "@@|")):
         return True
     if "://" in candidate:
@@ -781,17 +912,11 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
     if re.fullmatch(r"\S*[\^|*]\S*", candidate):
         return True
     if candidate.startswith("."):
-        # DNS suffix notation is not a plain URL substring and is adapted below.
         return False
 
-    # Valid unanchored hostnames are treated as DNS host expressions and converted
-    # to exact-host URL rules. Other one-token patterns are already valid generic
-    # URL-substring filters and should remain unchanged.
     if re.fullmatch(r"\S+", candidate):
         try:
             ipaddress.ip_address(candidate)
-            # A bare DNS IP entry can match CNAME resolution results, which a
-            # URL-substring rule cannot faithfully represent.
             return False
         except ValueError:
             return canonical_hostname(candidate, allow_single_label=False) is None
@@ -830,7 +955,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, dns_semantics=(kind == "dns")):
             return [line], "native-cname"
         # 非原生条目只在能够保守转换时才纳入；无法证明等价时交给严格审计阻止发布。
         return [compile_dns_rule(line)], "cname-converted"
@@ -844,7 +969,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
     if kind == "dns":
         # Preserve a complete rule first: '#' can be part of a regex or a cosmetic
         # operator, so only strip inline comments from non-native DNS entries.
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, dns_semantics=(kind == "dns")):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
@@ -867,7 +992,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
             return compile_hosts_line(line, category="hosts-in-dns")
         # 已经是网络过滤规则语法的 DNS 来源条目保持原文；非原生 DNS 表达式
         # 才尝试转换为网络过滤语法。DNS 专用修饰符不在此处被静默丢弃。
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, dns_semantics=(kind == "dns")):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
@@ -1743,50 +1868,67 @@ def run_regression_tests() -> None:
     check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{zero_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
           compile_line("hosts", f"{zero_ipv4} localhost ads.example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [exact_hostname_regex_rule("ads.example.com")])
+    check("host record preserves exact-host scope",
+          compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
+          [exact_hostname_regex_rule("ads.example.com")])
+    check("exact-host regex matches WebSocket URLs",
+          bool(re.search(exact_hostname_regex_rule("ads.example.com")[1:-1], "wss://ads.example.com/socket")), True)
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
-    check("DNS subtree rule is preserved verbatim", compile_line("dns", "||Ads.Example.com^")[0],
-          ["||Ads.Example.com^"])
-    check("DNS wildcard rule is preserved verbatim", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
-          ["||MobileAnalytics.*.AmazonAWS.com^"])
-    check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
-          ["@@||Ads.Example.com^"])
+    check("DNS subtree rule is normalized without widening its host scope",
+          compile_line("dns", "||Ads.Example.com^")[0],
+          ["||ads.example.com^"])
+    check("DNS wildcard rule preserves its hostname matcher",
+          compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
+          ["||mobileanalytics.*.amazonaws.com^"])
+    check("DNS exception preserves its hostname matcher",
+          compile_line("dns", "@@||Ads.Example.com^")[0],
+          ["@@||ads.example.com^"])
     check("DNS wildcard exact-host exception uses existing filter syntax",
           compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
           ["@@||cdn.us*.exponea.com^|"])
-    check("unanchored separator and wildcard filters remain unchanged",
-          compile_line("dns", "-adx-*.rayjump.com^")[0],
-          ["-adx-*.rayjump.com^"])
+    dns_mask_rule = compile_line("dns", "-adx-*.rayjump.com^")[0]
+    check("DNS wildcard mask becomes hostname-scoped regex",
+          dns_mask_rule.startswith("/") and "rayjump" in dns_mask_rule, True)
+    check("DNS wildcard mask does not match when text occurs only in URL path",
+          bool(re.search(dns_mask_rule[1:-1], "https://safe-site.test/path/-adx-abc.rayjump.com")), False)
     check("DNS leading-dot mask without caret is converted safely",
           compile_line("dns", ".3.n.2.1.l50.js")[0],
           ["||*.3.n.2.1.l50.js^"])
-    check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("Adblock-compatible DNS exception end-anchor rule is preserved verbatim",
+    check("DNS inline comment is ignored",
+          compile_line("dns", "example.com # source note")[0],
+          [exact_hostname_regex_rule("example.com")])
+    check("DNS end-anchor exception is translated to an exact-host URL exception",
           compile_line("dns", "@@||example.com^|")[0],
-          ["@@||example.com^|"])
-    check("DNS partial domain anchor keeps prefix semantics", compile_line("dns", "||advertising.civitai.")[0],
-          ["||advertising.civitai."])
-    check("DNS leading-dot rule is preserved when already valid network syntax",
+          [exact_hostname_regex_rule("example.com", exception=True)])
+    dns_prefix_mask = compile_line("dns", "||advertising.civitai.")[0]
+    check("DNS prefix mask is scoped to URL hostname",
+          dns_prefix_mask.startswith("/") and "advertising" in dns_prefix_mask, True)
+    check("DNS prefix mask does not match a path-only occurrence",
+          bool(re.search(dns_prefix_mask[1:-1], "https://safe-site.test/path/advertising.civitai.example")), False)
+    check("DNS leading-dot rule retains subdomain-only semantics",
           compile_line("dns", ".example.com^")[0],
-          [".example.com^"])
-    check("anchored DNS hostname regex compiles to URL authority regex",
+          ["||*.example.com^"])
+    check("anchored DNS hostname regex compiles within the URL hostname",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("DNS IPv4 address regex is URL-scoped",
-          compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
+    try:
+        compile_line("dns", f"/^{test_ipv4_regex}:/")
+    except CompilationError:
+        tests.append(("DNS hostname regex cannot be reinterpreted as a URL port", True, True))
+    else:
+        raise AssertionError("DNS hostname regex must not be widened to URL-port semantics")
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
           [url_scoped_test_regex])
     unanchored_dns_regex = "/" + test_ipv4_regex + "/"
-    check("unanchored DNS regex already valid for URL matching is preserved",
-          compile_line("dns", unanchored_dns_regex)[0],
-          [unanchored_dns_regex])
+    unanchored_dns_output = compile_line("dns", unanchored_dns_regex)[0]
+    check("unanchored DNS regex is limited to URL hostname",
+          unanchored_dns_output.startswith("/") and "[^\/:?#@]*" in unanchored_dns_output, True)
+    check("DNS regex cannot match a path-only occurrence",
+          bool(re.search(unanchored_dns_output[1:-1], "https://safe-site.test/path/" + test_ipv4)), False)
     check("hash character inside native URL regex is preserved",
           compile_line("dns", r"/https?:\/\/example\.com\/path#frag/")[0],
           [r"/https?:\/\/example\.com\/path#frag/"])
@@ -1820,31 +1962,36 @@ def run_regression_tests() -> None:
           ["example.com#?#div:has-text(ad)"])
     check("AdGuard Extended CSS :matches-css is preserved", compile_line("adblock", "example.com#?#div:matches-css(width: 1px)")[0],
           ["example.com#?#div:matches-css(width: 1px)"])
+    try:
+        compile_line("adblock", "example.com##div:matches-prop(foo)")
+    except CompilationError:
+        tests.append(("uBO-only :matches-prop is rejected for AdGuard target", True, True))
+    else:
+        raise AssertionError("uBO-only :matches-prop must not be passed through to AdGuard")
     check("AdGuard accepts uBO-compatible +js syntax", compile_line("adblock", "example.com##+js(no-such-scriptlet)")[0],
           ["example.com##+js(no-such-scriptlet)"])
     check("native IPv4 host rules are preserved", compile_line("adblock", ip_host_rule)[0],
           [ip_host_rule])
-    check("bare IPv4 browser rule is normalized to a host-anchored rule",
+    check("bare IPv4 browser pattern keeps URL-substring semantics",
           compile_line("adblock", test_ipv4)[0],
-          [ip_host_rule])
-    check("bare IPv4 browser exception is normalized and remains an exception",
+          [test_ipv4])
+    check("bare IPv4 exception keeps its original match scope",
           compile_line("adblock", f"@@{test_ipv4}")[0],
-          [f"@@{ip_host_rule}"])
-    check("bare IPv4 host normalization preserves important modifier",
+          [f"@@{test_ipv4}"])
+    check("bare IPv4 pattern with modifier keeps its original match scope",
           compile_line("adblock", f"{test_ipv4}$important")[0],
-          [f"{ip_host_rule}$important"])
-    check("leading-zero IPv4 octets normalize to canonical decimal form",
+          [f"{test_ipv4}$important"])
+    check("leading-zero IPv4-looking patterns are not rewritten",
           compile_line("adblock", test_ipv4_leading_zero)[0],
-          [ip_host_rule])
+          [test_ipv4_leading_zero])
     multi_zero_octets = tuple(range(4, 8))
     multi_zero_ipv4 = ".".join(
         f"{octet:03d}" if index == 0 else str(octet)
         for index, octet in enumerate(multi_zero_octets)
     )
-    multi_zero_expected = "||" + ".".join(str(octet) for octet in multi_zero_octets) + "^"
-    check("multiple leading zeroes in an IPv4 octet normalize to canonical decimal form",
+    check("multiple leading zeroes in IPv4-looking patterns are not rewritten",
           compile_line("adblock", multi_zero_ipv4)[0],
-          [multi_zero_expected])
+          [multi_zero_ipv4])
     try:
         compile_line("adblock", invalid_test_ipv4)
     except CompilationError:
