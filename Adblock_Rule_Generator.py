@@ -365,7 +365,7 @@ def normalize_native_domain_rule(line: str) -> str:
 
         return line
     tail = match.group("tail") or ""
-    match_case = re.search(r"(?:^|,)\s*match-case(?:,|$)", tail, re.IGNORECASE) is not None
+    match_case = re.search(r"(?:^|[$,])\s*match-case(?:,|$)", tail, re.IGNORECASE) is not None
     output_hostname = match.group("host") if match_case and match.group("host").isascii() else hostname
     return (
         (match.group("exception") or "")
