@@ -322,16 +322,16 @@ def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> s
         return canonical_hostname(value, allow_single_label=allow_single_label)
 
 def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
-    """生成仅匹配指定 HTTP(S) 主机名的 AdGuard 正则规则，不扩展到子域。"""
+    """生成仅匹配指定 HTTP(S)/WebSocket 主机名的 AdGuard 正则规则，不扩展到子域。"""
     domain = canonical_host_or_ipv4(hostname)
     if not domain:
         raise CompilationError(f"invalid exact hostname: {hostname!r}")
     escaped = re.escape(domain)
-    # AdGuard 正则以斜杠分隔，规则正文中的斜杠需转义。
+    # 同时覆盖 HTTP(S) 与 WebSocket，并保留 URL authority 与端口边界。
     body = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?"
+        r"^(?:https?|wss?):\\/\\/(?:[^\\/?#@]+@)?"
         + escaped
-        + r"(?::[0-9]+)?(?:[\/?#]|$)"
+        + r"(?::[0-9]+)?(?:[\\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + body + "/"
 
@@ -454,16 +454,23 @@ def find_regex_rule_end(body: str) -> int | None:
     return None
 
 def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> str | None:
-    """将受限的主机名正则包装为 HTTP(S) URL 匹配规则。"""
-    if not (regex_body.startswith("^") and regex_body.endswith("$")):
+    """把可证明安全的 DNS hostname regex 约束到 URL authority 的主机名部分。"""
+    if not regex_body:
         return None
-    inner = regex_body[1:-1]
-    if not inner or "/" in inner or any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
-        return None
-    # 仅转换可证明兼容的正则子集；不支持的特殊分组会被拒绝。
 
+    anchored_start = regex_body.startswith("^")
+    anchored_end = regex_body.endswith("$")
+    start = 1 if anchored_start else 0
+    end = len(regex_body) - (1 if anchored_end else 0)
+    inner = regex_body[start:end]
+    if not inner or "/" in inner:
+        return None
+    if any(token in inner for token in ("(?=", "(?!", "(?<=", "(?<!", "(?P", "\\k<")):
+        return None
     if re.search(r"\(\?(?!:)", inner):
         return None
+
+    # 非捕获分组是允许的；其余字符集必须位于保守的 hostname-regex 子集内。
     check_inner = inner.replace("(?:", "")
     allowed = set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -475,10 +482,62 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
         re.compile(inner)
     except re.error:
         return None
+
+    # 裸点号改写为 hostname 字符类，避免 .* 越过 hostname 边界匹配路径/查询。
+    # 否定字符类、URL 分隔符和无法证明安全的转义一律拒绝转换。
+    safe: list[str] = []
+    escaped = False
+    in_class = False
+    class_first = False
+    for char in inner:
+        if escaped:
+            if char in {"w", "d"}:
+                safe.append("\\\\" + char)
+            elif char in r".*+?()[]{}|\\^-":
+                safe.append("\\\\" + char)
+            else:
+                return None
+            escaped = False
+            continue
+        if char == "\\\\":
+            escaped = True
+            continue
+        if in_class:
+            if class_first and char == "^":
+                return None
+            if char in "/:?#@" or char.isspace():
+                return None
+            safe.append(char)
+            if char == "]":
+                in_class = False
+            class_first = False
+            continue
+        if char == "[":
+            in_class = True
+            class_first = True
+            safe.append(char)
+        elif char == ".":
+            safe.append(r"[A-Za-z0-9._-]")
+        elif char in "^$":
+            # 只有最外层首尾锚点才能安全映射到 hostname 边界。
+            return None
+        else:
+            safe.append(char)
+
+    if escaped or in_class:
+        return None
+
+    host_char = r"[A-Za-z0-9._-]"
+    host_prefix = "" if anchored_start else host_char + "*"
+    host_suffix = "" if anchored_end else host_char + "*"
     url_pattern = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?(?:"
-        + inner
-        + r")(?::[0-9]+)?(?:[\/?#]|$)"
+        r"^(?:https?|wss?):\\/\\/(?:[^\\/?#@]+@)?"
+        + host_prefix
+        + "(?:"
+        + "".join(safe)
+        + ")"
+        + host_suffix
+        + r"(?::[0-9]+)?(?:[\\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + url_pattern + "/"
 
@@ -526,33 +585,9 @@ def compile_dns_rule(line: str) -> str:
         else:
             translated = compile_dns_hostname_regex(regex_body, exception=exception)
             if translated is None:
-                if regex_body.startswith("^"):
-                    # DNS hostname/IP expressions are not URL-scoped. Wrap anchored
-                    # patterns in an HTTP(S) authority matcher; preserve their regex
-                    # expression, adding URL authority boundaries when the source
-                    # regex is anchored to the end of the hostname.
-                    if regex_body.endswith("$"):
-                        inner = regex_body[1:-1]
-                        boundary = (
-                            r"(?:[\/?#]|$)"
-                            if ":" in inner
-                            else r"(?::[0-9]+)?(?:[\/?#]|$)"
-                        )
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + inner
-                            + boundary
-                        )
-                    else:
-                        url_scoped_body = (
-                            r"^https?:\/\/(?:[^\/?#@]+@)?"
-                            + regex_body[1:]
-                        )
-                    translated = (("@@" if exception else "") + "/" + url_scoped_body + "/")
-                else:
-                    raise CompilationError(
-                        "DNS regex cannot be proven equivalent as a network-filter URL regex"
-                    )
+                raise CompilationError(
+                    "DNS hostname regex cannot be represented safely as a URL regex"
+                )
 
         if normalized_regex_modifiers:
             translated += "$" + ",".join(normalized_regex_modifiers)
@@ -747,12 +782,10 @@ def compile_domain_exact_line(line: str) -> str:
         raise CompilationError(f"not a valid exact-host domains entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
 
-def looks_like_native_network_filter_rule(line: str) -> bool:
-    """Recognize entries that already use AdGuard network-filter syntax.
-
-    Valid native filter patterns are passed through verbatim. Bare domain names
-    and leading-dot DNS suffix masks are handled by the conservative DNS adapter.
-    """
+def looks_like_native_network_filter_rule(
+    line: str, *, source_kind: str | None = None
+) -> bool:
+    """识别原生网络过滤规则，避免把 DNS hostname 语义误判为 URL 语义。"""
     candidate = line.strip()
     if not candidate:
         return False
@@ -762,36 +795,36 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
         if closing is None:
             return False
         regex_body = candidate[1:closing]
-        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None:
+        explicit_url_scope = re.search(
+            r"https?\\s*:", regex_body, re.IGNORECASE
+        ) is not None
+        if source_kind == "dns":
+            # DNS regex 默认匹配 hostname；只有明确描述 URL 的才允许透传。
+            return explicit_url_scope
+        if explicit_url_scope:
             return True
-        # Unanchored regexes already operate on arbitrary URL text. Host-anchored
-        # DNS regexes need URL scoping before they can be used for requests.
         return not regex_body.startswith("^")
+
+    if source_kind == "dns":
+        no_exception = candidate[2:] if candidate.startswith("@@") else candidate
+        # DNS 单竖线是 hostname 锚定，需要进入 DNS adapter 转换。
+        if no_exception.startswith("|") and not no_exception.startswith("||"):
+            return False
 
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
-
-    # Anchored filters and common Adblock wildcard/separator patterns are
-    # already valid network-filter syntax. Do not rewrite them merely because
-    # the source was classified as DNS or CNAME.
     if candidate.startswith(("||", "@@||", "|", "@@|")):
         return True
     if "://" in candidate:
         return True
-    if re.fullmatch(r"\S*[\^|*]\S*", candidate):
+    if re.fullmatch(r"\\S*[\\^|*]\\S*", candidate):
         return True
     if candidate.startswith("."):
-        # DNS suffix notation is not a plain URL substring and is adapted below.
         return False
 
-    # Valid unanchored hostnames are treated as DNS host expressions and converted
-    # to exact-host URL rules. Other one-token patterns are already valid generic
-    # URL-substring filters and should remain unchanged.
-    if re.fullmatch(r"\S+", candidate):
+    if re.fullmatch(r"\\S+", candidate):
         try:
             ipaddress.ip_address(candidate)
-            # A bare DNS IP entry can match CNAME resolution results, which a
-            # URL-substring rule cannot faithfully represent.
             return False
         except ValueError:
             return canonical_hostname(candidate, allow_single_label=False) is None
@@ -811,8 +844,6 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        # 原生规则保留目标语法；规范化简单域名锚点和裸 IPv4。
-
         return [normalize_native_domain_rule(line)], "native"
 
     if kind == "hosts":
@@ -825,36 +856,30 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         return [compile_domain_exact_line(line)], "domains-exact"
 
     if kind == "cname":
-        # CNAME 来源的常规规则本身通常就是标准 AdGuard 网络过滤语法。
-        # 原样纳入可增加直接匹配覆盖，但不能因此声称已实现 DNS CNAME 链检查。
-        reason = detect_nonportable_native_rule(line, target)
-        if reason:
-            raise CompilationError(reason)
-        if looks_like_native_network_filter_rule(line):
-            return [line], "native-cname"
-        # 非原生条目只在能够保守转换时才纳入；无法证明等价时交给严格审计阻止发布。
-        return [compile_dns_rule(line)], "cname-converted"
+        raise CompilationError(
+            "DNS CNAME-aware source semantics cannot be represented by a flat network-filter rule; "
+            "skip this source for network-filter targets rather than publish a semantically weaker rule"
+        )
 
     if kind == "exclusions":
         raise CompilationError(
-            "this is an exclusion selector file, not an active blocklist; it must be "
+            "this is an exclusion selector file, not an active filter list; it must be "
             "applied to its designated source group rather than emitted as rules"
         )
 
     if kind == "dns":
-        # Preserve a complete rule first: '#' can be part of a regex or a cosmetic
-        # operator, so only strip inline comments from non-native DNS entries.
-        if looks_like_native_network_filter_rule(line):
+        # 必须先按来源语法判断；不能先用 URL 规则的字符形态决定直接透传。
+        if looks_like_native_network_filter_rule(line, source_kind=kind):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
             return [line], "native-dns"
 
-        # Plain DNS entries may contain trailing source comments.
-        line = line.split("#", 1)[0].strip()
+        # 行内注释从空白 + '#' 开始；保留正则/URL 中作为内容的 '#'.
+        line = re.split(r"\\s+#", line, maxsplit=1)[0].strip()
         if not line:
             return [], "comment"
-        # DNS 列表可能混有 Adblock 规则或 Hosts 映射，分别处理。
+
         fields = line.split()
         looks_like_hosts = False
         if len(fields) >= 2:
@@ -865,9 +890,8 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
                 pass
         if looks_like_hosts:
             return compile_hosts_line(line, category="hosts-in-dns")
-        # 已经是网络过滤规则语法的 DNS 来源条目保持原文；非原生 DNS 表达式
-        # 才尝试转换为网络过滤语法。DNS 专用修饰符不在此处被静默丢弃。
-        if looks_like_native_network_filter_rule(line):
+
+        if looks_like_native_network_filter_rule(line, source_kind=kind):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
@@ -1301,6 +1325,14 @@ def compile_fetched_sources(
             )
             continue
 
+        if source.kind == "cname":
+            summary.status = "skipped-target-mismatch"
+            summary.target_skip_reason = (
+                "DNS CNAME-chain semantics require a DNS-aware engine; this output is a flat network filter."
+            )
+            summary.input_lines_skipped_by_target = summary.input_lines
+            continue
+
         try:
             expanded_lines.extend(
                 expand_filter_preprocessor(source, text, target, cache)
@@ -1354,6 +1386,14 @@ def compile_fetched_sources(
                 "This file contains upstream exclusion metadata, not active filter rules."
             )
             continue
+        if source.kind == "cname":
+            summary.status = "skipped-target-mismatch"
+            summary.target_skip_reason = (
+                "DNS CNAME-chain semantics require a DNS-aware engine; this output is a flat network filter."
+            )
+            summary.input_lines_skipped_by_target += 1
+            continue
+
         if not is_comment_or_header(line):
             matched_exclusions = source_exclusions.get(source.url, [])
             if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
@@ -1429,6 +1469,16 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             1 for summary in state.summaries.values()
             if summary.status == "skipped-target-mismatch"
         ),
+        "target_sources_skipped": [
+            {
+                "url": summary.url,
+                "format": summary.kind,
+                "reason": summary.target_skip_reason,
+                "input_lines_skipped": summary.input_lines_skipped_by_target,
+            }
+            for summary in state.summaries.values()
+            if summary.status == "skipped-target-mismatch"
+        ],
         "input_lines_skipped_by_target": sum(
             summary.input_lines_skipped_by_target
             for summary in state.summaries.values()
@@ -1655,9 +1705,13 @@ def run_regression_tests() -> None:
     check("CNAME tracker list is classified by its source semantics",
           classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"),
           "cname")
-    check("CNAME network-filter syntax is preserved verbatim",
-          compile_line("cname", "||tracker.Example.com^")[0],
-          ["||tracker.Example.com^"])
+    try:
+        compile_line("cname", "||tracker.Example.com^")
+    except CompilationError:
+        tests.append(("CNAME-aware source cannot be silently treated as a network-filter rule", True, True))
+    else:
+        raise AssertionError("CNAME-aware sources must not be silently published as ordinary URL rules")
+
     check("DNS network-filter syntax is preserved verbatim",
           compile_line("dns", "||Ads.Example.com^")[0],
           ["||Ads.Example.com^"])
@@ -1695,10 +1749,15 @@ def run_regression_tests() -> None:
         [(cname_source, "||tracker.example.com^\n")],
         "chromium-mv3",
     )
-    check("CNAME source is not skipped wholesale",
-          "||tracker.example.com^" in cname_state.records, True)
-    check("CNAME source syntax does not cause conversion errors",
+    check("CNAME-aware source is omitted from non-DNS network-filter output",
+          len(cname_state.records), 0)
+    check("CNAME-aware source is marked as a target mismatch",
+          cname_state.summaries[cname_source.url].status, "skipped-target-mismatch")
+    check("CNAME source lines are explicitly counted as target-skipped",
+          cname_state.summaries[cname_source.url].input_lines_skipped_by_target, 1)
+    check("CNAME source omission is not misreported as a translation success",
           len(cname_state.issues), 0)
+
 
     mixed_sources = [
         (Source("https://example.invalid/hosts.txt", "hosts"), f"{zero_ipv4} Ads.Example.com\n"),
@@ -1743,9 +1802,13 @@ def run_regression_tests() -> None:
     check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{zero_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
           compile_line("hosts", f"{zero_ipv4} localhost ads.example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+    websocket_host_rule = exact_hostname_regex_rule("ads.example.com")
+    check("exact-host conversion preserves WebSocket scope",
+          re.search(websocket_host_rule[1:-1], "wss://ads.example.com/socket") is not None,
+          True)
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
     check("DNS subtree rule is preserved verbatim", compile_line("dns", "||Ads.Example.com^")[0],
@@ -1754,6 +1817,9 @@ def run_regression_tests() -> None:
           ["||MobileAnalytics.*.AmazonAWS.com^"])
     check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
           ["@@||Ads.Example.com^"])
+    check("DNS single-pipe exact-host exception is translated, not passed through",
+          compile_line("dns", "@@|cdn.taboola.com^|")[0],
+          [exact_hostname_regex_rule("cdn.taboola.com", exception=True)])
     check("DNS wildcard exact-host exception uses existing filter syntax",
           compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
           ["@@||cdn.us*.exponea.com^|"])
@@ -1764,7 +1830,7 @@ def run_regression_tests() -> None:
           compile_line("dns", ".3.n.2.1.l50.js")[0],
           ["||*.3.n.2.1.l50.js^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock-compatible DNS exception end-anchor rule is preserved verbatim",
           compile_line("dns", "@@||example.com^|")[0],
           ["@@||example.com^|"])
@@ -1775,24 +1841,40 @@ def run_regression_tests() -> None:
           [".example.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("DNS IPv4 address regex is URL-scoped",
-          compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
+    try:
+        compile_line("dns", f"/^{test_ipv4_regex}:/")
+    except CompilationError:
+        tests.append(("DNS regex that is not a hostname regex is rejected", True, True))
+    else:
+        raise AssertionError("a DNS hostname regex must not be reinterpreted as an arbitrary URL regex")
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
           [url_scoped_test_regex])
     unanchored_dns_regex = "/" + test_ipv4_regex + "/"
-    check("unanchored DNS regex already valid for URL matching is preserved",
-          compile_line("dns", unanchored_dns_regex)[0],
-          [unanchored_dns_regex])
+    unanchored_dns_compiled = compile_line("dns", unanchored_dns_regex)[0][0]
+    check("unanchored DNS regex is scoped to URL hostname",
+          unanchored_dns_compiled.startswith(r"/^(?:https?|wss?):\\/\\/"),
+          True)
+    check("unanchored DNS regex cannot match only because the URL path contains the pattern",
+          re.search(unanchored_dns_compiled[1:-1], "https://safe.example/path/" + test_ipv4 + "/pixel") is None,
+          True)
+    check("unanchored DNS regex still matches a hostname containing the pattern",
+          re.search(unanchored_dns_compiled[1:-1], "https://" + test_ipv4 + ".example/pixel") is not None,
+          True)
+    try:
+        compile_line("dns", r"/^foo[^a]+$/")
+    except CompilationError:
+        tests.append(("DNS regex with a negated character class is rejected rather than widened to URL scope", True, True))
+    else:
+        raise AssertionError("unsafe DNS hostname regex must fail closed")
     check("hash character inside native URL regex is preserved",
           compile_line("dns", r"/https?:\/\/example\.com\/path#frag/")[0],
           [r"/https?:\/\/example\.com\/path#frag/"])
     check("DNS hostname regex with nested groups is URL-scoped",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
