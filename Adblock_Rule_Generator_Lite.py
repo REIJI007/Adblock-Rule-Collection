@@ -131,6 +131,8 @@ class SourceSummary:
     kind: str
     status: str = "pending"
     input_lines: int = 0
+    candidate_rule_lines: int = 0
+    accounted_rule_lines: int = 0
     emitted_rules: int = 0
     duplicate_rules: int = 0
     ignored_comments: int = 0
@@ -1547,9 +1549,11 @@ def compile_fetched_sources(
             )
             continue
         if not is_comment_or_header(line):
+            summary.candidate_rule_lines += 1
             matched_exclusions = source_exclusions.get(source.url, [])
             if any(pattern.matches(raw_rule) for pattern in matched_exclusions):
                 summary.excluded_by_metadata += 1
+                summary.accounted_rule_lines += 1
                 continue
         # 已知不兼容规则逐条记录并排除；未知转换错误仍由严格模式阻止发布。
 
@@ -1577,6 +1581,8 @@ def compile_fetched_sources(
             add_issue(state, summary, expanded.line_number, line, str(error))
             continue
 
+        if not is_comment_or_header(line):
+            summary.accounted_rule_lines += 1
         if category == "comment":
             summary.ignored_comments += 1
         if category == "system-host-mapping" or category.endswith("-with-system-alias"):
@@ -1592,6 +1598,11 @@ def compile_fetched_sources(
     return state
 
 def build_report(state: CompileState, *, source_failures: list[dict[str, str]], output_path: str, target: str) -> dict[str, object]:
+    candidate_rule_lines = sum(summary.candidate_rule_lines for summary in state.summaries.values())
+    accounted_rule_lines = sum(summary.accounted_rule_lines for summary in state.summaries.values())
+    compiled_line_coverage = (
+        accounted_rule_lines / candidate_rule_lines if candidate_rule_lines else 1.0
+    )
     source_summaries = []
     for summary in state.summaries.values():
         source_summaries.append({
@@ -1599,6 +1610,8 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "format": summary.kind,
             "status": summary.status,
             "input_lines": summary.input_lines,
+            "candidate_rule_lines": summary.candidate_rule_lines,
+            "accounted_rule_lines": summary.accounted_rule_lines,
             "unique_rules_emitted": summary.emitted_rules,
             "duplicates": summary.duplicate_rules,
             "comments_or_headers": summary.ignored_comments,
@@ -1616,6 +1629,17 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         "target": f"AdGuard network filter syntax ({target})",
         "output": output_path,
         "unique_rule_count": len(state.records),
+        "rule_line_accounting": {
+            "active_candidate_lines": candidate_rule_lines,
+            "accounted_lines": accounted_rule_lines,
+            "target_incompatible_lines_excluded": len(state.target_exclusions),
+            "unsupported_lines": len(state.issues),
+            "compiled_line_coverage": compiled_line_coverage,
+            "note": (
+                "Accounting coverage is not proof of target-engine semantic equivalence. "
+                "Known target-incompatible lines are not counted as accounted."
+            ),
+        },
         "source_count": len(source_summaries) + len(source_failures),
         "source_summaries": source_summaries,
         "source_failures": source_failures,
@@ -1884,6 +1908,16 @@ def run_regression_tests() -> None:
           dns_state.summaries[dns_source.url].status, "ok")
     check("unsupported syntax was not silently discarded",
           len(dns_state.issues), 0)
+    dns_accounting_report = build_report(
+        dns_state, source_failures=[], output_path="test.txt", target="chromium-mv3"
+    )["rule_line_accounting"]
+    check("line accounting excludes target-incompatible DNS-only rule",
+          (
+              dns_accounting_report["active_candidate_lines"],
+              dns_accounting_report["accounted_lines"],
+              dns_accounting_report["target_incompatible_lines_excluded"],
+          ),
+          (2, 1, 1))
 
     native_source = Source("https://example.invalid/native-rules.txt", "adblock")
     native_state = compile_fetched_sources(
@@ -1901,9 +1935,11 @@ def run_regression_tests() -> None:
         [(cname_source, "||tracker.example.com^\n")],
         "chromium-mv3",
     )
-    check("CNAME source is not skipped wholesale",
-          "||tracker.example.com^" in cname_state.records, True)
-    check("CNAME source syntax does not cause conversion errors",
+    check("CNAME-dependent source is not falsely published as a URL-only equivalent",
+          "||tracker.example.com^" in cname_state.records, False)
+    check("CNAME source is audited as target-incompatible",
+          len(cname_state.target_exclusions), 1)
+    check("CNAME source syntax does not masquerade as a parser failure",
           len(cname_state.issues), 0)
 
     mixed_sources = [
@@ -2134,6 +2170,12 @@ def main() -> int:
     parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default=DEFAULT_TARGET, help=f"AdGuard target profile (default: {DEFAULT_TARGET})")
     parser.add_argument("--output", default=OUTPUT_DEFAULT, help=f"compiled filter path (default: {OUTPUT_DEFAULT})")
     parser.add_argument("--report", default=REPORT_DEFAULT, help=f"JSON compilation report (default: {REPORT_DEFAULT})")
+    parser.add_argument(
+        "--min-compiled-line-coverage",
+        type=float,
+        default=0.99,
+        help="minimum fraction of active input rule lines accounted for (default: 0.99); not a semantic-equivalence proof",
+    )
     parser.add_argument("--allow-lossy", action="store_true", help="explicitly publish only translatable rules; report all omitted rules")
     parser.add_argument("--allow-source-failures", action="store_true", help="explicitly allow publishing without sources that failed to download")
     parser.add_argument("--self-test", action="store_true", help="run built-in regression tests without downloading upstreams")
@@ -2225,6 +2267,19 @@ def main() -> int:
                 f"  {issue['source']}:{issue['line']}: {issue['reason']} :: {issue['rule']}",
                 file=sys.stderr,
             )
+        return 2
+
+    coverage = report["rule_line_accounting"]["compiled_line_coverage"]
+    if not 0.0 <= args.min_compiled_line_coverage <= 1.0:
+        print("--min-compiled-line-coverage must be between 0 and 1.", file=sys.stderr)
+        return 2
+    if coverage < args.min_compiled_line_coverage and not args.allow_lossy:
+        print(
+            f"ABORTED: compiled line coverage {coverage:.3%} is below the required "
+            f"{args.min_compiled_line_coverage:.3%}. Existing output was not changed. "
+            f"Review {report_path}.",
+            file=sys.stderr,
+        )
         return 2
 
     rules = sorted(state.records)
