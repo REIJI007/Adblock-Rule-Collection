@@ -350,6 +350,18 @@ def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
 
 def normalize_native_domain_rule(line: str) -> str:
     """只规范化明确锚定的域名规则；保留未锚定模式和 IP 字面量的原语义。"""
+    # Reject malformed dotted-quad literals without rewriting valid bare IP URL patterns.
+    bare_ipv4 = re.fullmatch(
+        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
+        line,
+    )
+    if bare_ipv4:
+        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
+        if any(octet > 255 for octet in octets):
+            raise CompilationError(
+                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
+            )
+
     match = re.fullmatch(
         r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?",
         line,
