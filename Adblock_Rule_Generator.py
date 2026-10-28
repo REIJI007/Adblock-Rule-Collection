@@ -846,6 +846,38 @@ def compile_domain_exact_line(line: str) -> str:
         raise CompilationError(f"not a valid exact-host domains entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
 
+NATIVE_NETWORK_MODIFIERS = {
+    "script", "image", "stylesheet", "css", "object", "xmlhttprequest", "xhr",
+    "subdocument", "document", "popup", "popunder", "third-party", "thirdparty",
+    "first-party", "media", "font", "other", "ping", "websocket", "webrtc",
+    "redirect", "redirect-rule", "removeparam", "replace", "csp", "permissions",
+    "urltransform", "domain", "from",
+}
+
+
+def has_native_network_modifiers(line: str) -> bool:
+    """Detect browser request-type/context modifiers in mixed DNS feeds."""
+    candidate = line.strip()
+    if candidate.startswith("/"):
+        closing = find_regex_rule_end(candidate)
+        if closing is None:
+            return False
+        tail = candidate[closing + 1:]
+        if not tail.startswith("$"):
+            return False
+        modifier_text = tail[1:]
+    else:
+        _, separator, modifier_text = candidate.partition("$")
+        if not separator:
+            return False
+    try:
+        tokens = split_modifiers(modifier_text)
+    except CompilationError:
+        return False
+    keys = {token.partition("=")[0].strip().lower() for token in tokens}
+    return bool(keys & NATIVE_NETWORK_MODIFIERS)
+
+
 def looks_like_native_network_filter_rule(
     line: str,
     source_kind: str = "adblock",
@@ -861,6 +893,11 @@ def looks_like_native_network_filter_rule(
         return False
 
     if source_kind in {"dns", "cname"}:
+        # Mixed feeds can contain ordinary browser rules alongside DNS rules.
+        # A request-type/context modifier is evidence of network-filter semantics,
+        # so do not reinterpret the hostname portion as a DNS rule.
+        if has_native_network_modifiers(candidate):
+            return True
         if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
             return True
         if candidate.startswith("/"):
