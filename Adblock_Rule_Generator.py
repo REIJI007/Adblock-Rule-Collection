@@ -1797,6 +1797,12 @@ def run_regression_tests() -> None:
     check("DNS hostname rules normalize without changing subtree scope",
           compile_line("dns", "||Ads.Example.com^")[0],
           ["||ads.example.com^"])
+    check("mixed DNS feed preserves browser request-type modifiers",
+          compile_line("dns", "||Ads.Example.com^$script")[0],
+          ["||Ads.Example.com^$script"])
+    check("mixed CNAME feed preserves third-party network context",
+          compile_line("cname", "||tracker.example.com^$third-party")[0],
+          ["||tracker.example.com^$third-party"])
     check("DNS match-case modifier preserves source host casing",
           compile_line("dns", "||Ads.Example.com^$match-case")[0],
           ["||Ads.Example.com^$match-case"])
@@ -1902,6 +1908,9 @@ def run_regression_tests() -> None:
     check("DNS wildcard exact-host exception is converted to URL authority scope",
           compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
           [r"@@/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?cdn\.us[A-Za-z0-9._-]*\.exponea\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("real DNS exception host anchors are translated to URL authority scope",
+          compile_line("dns", "@@|cdn.taboola.com^|")[0],
+          [r"@@/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?cdn\.taboola\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("unanchored separator and wildcard filters remain unchanged",
           compile_line("dns", "-adx-*.rayjump.com^")[0],
           ["-adx-*.rayjump.com^"])
