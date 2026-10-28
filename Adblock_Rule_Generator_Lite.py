@@ -568,7 +568,7 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
 
 
 def compile_dns_hostname_mask_rule(pattern: str, *, exception: bool = False) -> str | None:
-    """将 DNS hostname mask 转换成只作用于 URL hostname 的规则。"""
+    """将 DNS hostname mask 转换成只作用于 URL hostname 的正则。"""
     if not pattern:
         return None
 
@@ -576,12 +576,16 @@ def compile_dns_hostname_mask_rule(pattern: str, *, exception: bool = False) -> 
     host_start_anchor = pattern.startswith("|") and not domain_anchor
     mask = pattern[2:] if domain_anchor else pattern[1:] if host_start_anchor else pattern
 
-    host_end_anchor = False
+    # DNS '|' means the hostname must end here; DNS '^' means a hostname separator
+    # or hostname end. If both occur as '^|', the exact-end marker takes precedence.
+    end_mode = "none"
     if mask.endswith("|"):
-        host_end_anchor = True
+        end_mode = "exact"
         mask = mask[:-1]
-    if mask.endswith("^"):
-        host_end_anchor = True
+        if mask.endswith("^"):
+            mask = mask[:-1]
+    elif mask.endswith("^"):
+        end_mode = "separator"
         mask = mask[:-1]
 
     if not mask or any(char in mask for char in "|^"):
@@ -595,13 +599,12 @@ def compile_dns_hostname_mask_rule(pattern: str, *, exception: bool = False) -> 
         pass
     else:
         raise CompilationError(
-            "DNS IP-address masks may match DNS/CNAME semantics and cannot be "
-            "represented faithfully as URL-host rules"
+            "DNS IP-address masks may match DNS/CNAME semantics and cannot "
+            "be represented faithfully as URL-host rules"
         )
 
     hostname_char = r"[^\/:?#@]"
     if domain_anchor:
-        # || anchors at a label boundary on the hostname, including subdomains.
         host_prefix = r"(?:[^.\/:?#@]+\.)*"
     elif host_start_anchor:
         host_prefix = ""
@@ -612,7 +615,15 @@ def compile_dns_hostname_mask_rule(pattern: str, *, exception: bool = False) -> 
         hostname_char + "*" if char == "*" else re.escape(char)
         for char in mask
     ]
-    host_suffix = "" if host_end_anchor else hostname_char + "*"
+    if end_mode == "exact":
+        host_suffix = ""
+    elif end_mode == "separator":
+        # A separator in a hostname is normally a dot or the end of the hostname.
+        # Allow the rest of a suffix after the dot, but never consume URL path/query.
+        host_suffix = r"(?:\.[^\/:?#@]*|)"
+    else:
+        host_suffix = hostname_char + "*"
+
     url_pattern = (
         r"^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?"
         + host_prefix
