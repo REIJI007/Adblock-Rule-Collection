@@ -322,43 +322,24 @@ def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> s
         return canonical_hostname(value, allow_single_label=allow_single_label)
 
 def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
-    """生成仅匹配指定 HTTP(S) 主机名的 AdGuard 正则规则，不扩展到子域。"""
+    """Generate an exact-host URL regex, scoped to the authority of any hierarchical URL."""
     domain = canonical_host_or_ipv4(hostname)
     if not domain:
         raise CompilationError(f"invalid exact hostname: {hostname!r}")
     escaped = re.escape(domain)
-    # AdGuard 正则以斜杠分隔，规则正文中的斜杠需转义。
     body = (
-        r"^https?:\/\/(?:[^\/?#@]+@)?"
+        r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
         + escaped
         + r"(?::[0-9]+)?(?:[\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + body + "/"
-
 def normalize_native_domain_rule(line: str) -> str:
     """仅规范化简单域名锚定规则，其余语法保持原样。"""
     # 原生浏览器规则中的裸 IPv4 规范化为主机锚定规则。
     # DNS 来源由专用适配器处理，避免误按浏览器语义转换。
 
-    bare_ipv4 = re.fullmatch(
-        r"(?P<exception>@@)?(?P<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3})(?P<tail>\$.*)?",
-        line,
-    )
-    if bare_ipv4:
-        octets = [int(part, 10) for part in bare_ipv4.group("ip").split(".")]
-        if any(octet > 255 for octet in octets):
-            raise CompilationError(
-                f"invalid IPv4 address in native browser rule: {bare_ipv4.group('ip')}"
-            )
-        # 将带前导零的 IPv4 八位组按十进制规范化，便于等价去重。
-        ip_literal = ".".join(str(octet) for octet in octets)
-        return (
-            (bare_ipv4.group("exception") or "")
-            + "||"
-            + ip_literal
-            + "^"
-            + (bare_ipv4.group("tail") or "")
-        )
+    # A bare IPv4-looking string is still an unanchored URL-pattern rule.
+    # Do not infer hostname anchoring from its textual shape.
 
     match = re.fullmatch(r"(?P<exception>@@)?(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^(?P<tail>\$.*)?", line)
     if not match:
@@ -376,7 +357,11 @@ def normalize_native_domain_rule(line: str) -> str:
         + (match.group("tail") or "")
     )
 
-def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | None:
+def detect_nonportable_native_rule(
+    line: str,
+    target: str = "generic",
+    source_url: str | None = None,
+) -> str | None:
     if DNS_ONLY_MODIFIER_RE.search(line):
         return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
     if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
@@ -384,8 +369,40 @@ def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | 
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
-    return None
 
+    # AdGuard documents some extended CSS operators also used by uBO. Reject
+    # only operators whose semantics have no verified AdGuard equivalent.
+    if source_url:
+        parsed = urllib.parse.urlparse(source_url)
+        path = parsed.path.lower()
+        is_ublock_core = (
+            (parsed.hostname or "").lower() == "raw.githubusercontent.com"
+            and path.startswith("/ublockorigin/uassets/")
+            and "/filters/" in path
+        )
+        if is_ublock_core:
+            ublock_only_patterns = (
+                (re.compile(r":has-text\s*\(", re.IGNORECASE),
+                 "uBlock Origin :has-text() has no verified AdGuard equivalent"),
+                (re.compile(r":matches-prop\s*\(", re.IGNORECASE),
+                 "uBlock Origin :matches-prop() is not the AdGuard :matches-property() operator"),
+                (re.compile(r":matches-media\s*\(", re.IGNORECASE),
+                 "uBlock Origin :matches-media() has no verified AdGuard equivalent"),
+                (re.compile(r":min-text-length\s*\(", re.IGNORECASE),
+                 "uBlock Origin :min-text-length() has no verified AdGuard equivalent"),
+                (re.compile(r":others\s*\(", re.IGNORECASE),
+                 "uBlock Origin :others() has no verified AdGuard equivalent"),
+                (re.compile(r":watch-attr\s*\(", re.IGNORECASE),
+                 "uBlock Origin :watch-attr() has no verified AdGuard equivalent"),
+                (re.compile(r"##\s*\+js\s*\(", re.IGNORECASE),
+                 "uBlock Origin scriptlet name/arguments are not assumed portable to AdGuard"),
+                (re.compile(r"\$cname(?:=|,|$)", re.IGNORECASE),
+                 "uBlock Origin $cname requires CNAME-aware request matching"),
+            )
+            for pattern, explanation in ublock_only_patterns:
+                if pattern.search(line):
+                    return explanation
+    return None
 def canonical_wildcard_hostname_mask(value: str) -> str | None:
     """校验并转为小写的 DNS 主机名通配模式。"""
     if not value or value != value.strip() or len(value) > 253:
@@ -747,33 +764,39 @@ def compile_domain_exact_line(line: str) -> str:
         raise CompilationError(f"not a valid exact-host domains entry: {candidate!r}")
     return exact_hostname_regex_rule(hostname)
 
-def looks_like_native_network_filter_rule(line: str) -> bool:
-    """Recognize entries that already use AdGuard network-filter syntax.
+def looks_like_native_network_filter_rule(
+    line: str,
+    source_kind: str = "adblock",
+) -> bool:
+    """Recognize rules safe to pass through as browser network-filter syntax.
 
-    Valid native filter patterns are passed through verbatim. Bare domain names
-    and leading-dot DNS suffix masks are handled by the conservative DNS adapter.
+    DNS/CNAME lists use hostname matching, not URL matching. Host patterns in
+    those sources must use the DNS adapter; only explicit cosmetic rules and
+    explicit URL-scoped regexes are passed through.
     """
     candidate = line.strip()
     if not candidate:
+        return False
+
+    if source_kind in {"dns", "cname"}:
+        if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
+            return True
+        if candidate.startswith("/"):
+            closing = find_regex_rule_end(candidate)
+            if closing is None:
+                return False
+            regex_body = candidate[1:closing]
+            return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
         return False
 
     if candidate.startswith("/"):
         closing = find_regex_rule_end(candidate)
         if closing is None:
             return False
-        regex_body = candidate[1:closing]
-        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None:
-            return True
-        # Unanchored regexes already operate on arbitrary URL text. Host-anchored
-        # DNS regexes need URL scoping before they can be used for requests.
-        return not regex_body.startswith("^")
+        return True
 
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
-
-    # Anchored filters and common Adblock wildcard/separator patterns are
-    # already valid network-filter syntax. Do not rewrite them merely because
-    # the source was classified as DNS or CNAME.
     if candidate.startswith(("||", "@@||", "|", "@@|")):
         return True
     if "://" in candidate:
@@ -781,22 +804,15 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
     if re.fullmatch(r"\S*[\^|*]\S*", candidate):
         return True
     if candidate.startswith("."):
-        # DNS suffix notation is not a plain URL substring and is adapted below.
         return False
 
-    # Valid unanchored hostnames are treated as DNS host expressions and converted
-    # to exact-host URL rules. Other one-token patterns are already valid generic
-    # URL-substring filters and should remain unchanged.
     if re.fullmatch(r"\S+", candidate):
         try:
             ipaddress.ip_address(candidate)
-            # A bare DNS IP entry can match CNAME resolution results, which a
-            # URL-substring rule cannot faithfully represent.
             return False
         except ValueError:
             return canonical_hostname(candidate, allow_single_label=False) is None
     return False
-
 def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[list[str], str]:
     line = raw_line.strip()
     if FILTER_DIRECTIVE_RE.match(line):
@@ -830,7 +846,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, source_kind=kind):
             return [line], "native-cname"
         # 非原生条目只在能够保守转换时才纳入；无法证明等价时交给严格审计阻止发布。
         return [compile_dns_rule(line)], "cname-converted"
@@ -844,7 +860,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
     if kind == "dns":
         # Preserve a complete rule first: '#' can be part of a regex or a cosmetic
         # operator, so only strip inline comments from non-native DNS entries.
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, source_kind=kind):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
@@ -867,7 +883,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
             return compile_hosts_line(line, category="hosts-in-dns")
         # 已经是网络过滤规则语法的 DNS 来源条目保持原文；非原生 DNS 表达式
         # 才尝试转换为网络过滤语法。DNS 专用修饰符不在此处被静默丢弃。
-        if looks_like_native_network_filter_rule(line):
+        if looks_like_native_network_filter_rule(line, source_kind=kind):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
@@ -1362,7 +1378,7 @@ def compile_fetched_sources(
         # 已知不兼容规则逐条记录并排除；未知转换错误仍由严格模式阻止发布。
 
         target_exclusion_reason = (
-            detect_nonportable_native_rule(line, target)
+            detect_nonportable_native_rule(line, target, source_url=source.url)
             if source.kind in {"adblock", "dns", "cname"} and line and not is_comment_or_header(line)
             else None
         )
@@ -1743,9 +1759,9 @@ def run_regression_tests() -> None:
     check("localhost host entry is not emitted as an ad block", compile_line("hosts", f"{zero_ipv4} localhost")[0], [])
     check("mixed hosts mapping skips localhost but retains the block alias",
           compile_line("hosts", f"{zero_ipv4} localhost ads.example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("host record preserves exact-host scope", compile_line("hosts", f"{zero_ipv4} Ads.Example.com")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
     check("DNS subtree rule is preserved verbatim", compile_line("dns", "||Ads.Example.com^")[0],
@@ -1764,7 +1780,7 @@ def run_regression_tests() -> None:
           compile_line("dns", ".3.n.2.1.l50.js")[0],
           ["||*.3.n.2.1.l50.js^"])
     check("DNS inline comment is ignored", compile_line("dns", "example.com # source note")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock-compatible DNS exception end-anchor rule is preserved verbatim",
           compile_line("dns", "@@||example.com^|")[0],
           ["@@||example.com^|"])
@@ -1775,10 +1791,10 @@ def run_regression_tests() -> None:
           [".example.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("DNS IPv4 address regex is URL-scoped",
           compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
@@ -1792,7 +1808,7 @@ def run_regression_tests() -> None:
           [r"/https?:\/\/example\.com\/path#frag/"])
     check("DNS hostname regex with nested groups is URL-scoped",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
-          [r"/^https?:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
           ["||ads.example.com^$badfilter"])
     check("cosmetic rules are retained", compile_line("adblock", "example.com##.ad")[0],
