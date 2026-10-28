@@ -940,7 +940,7 @@ def looks_like_native_network_filter_rule(
         network_pattern = candidate[2:] if candidate.startswith("@@") else candidate
         if network_pattern.startswith(("-", "*")) and re.fullmatch(r"\S*[\^|*]\S*", network_pattern):
             return True
-        if "://" in network_pattern:
+        if re.match(r"^[a-z][a-z0-9+.-]*://", network_pattern, re.IGNORECASE):
             return True
         # A slash after an anchored hostname is a URL-path pattern. DNS host
         # masks cannot contain paths, so preserve this mixed network-filter rule.
