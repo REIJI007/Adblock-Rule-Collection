@@ -363,7 +363,45 @@ def normalize_native_domain_rule(line: str) -> str:
         + (match.group("tail") or "")
     )
 
+def parse_ubo_html_filter_rule(line: str) -> tuple[str, str, str] | None:
+    """Return (domain prefix, delimiter, simple html selector) for uBO ##^ HTML rules."""
+    markers = [
+        (line.find("##"), "##"),
+        (line.find("#@#"), "#@#"),
+    ]
+    markers = [(pos, token) for pos, token in markers if pos >= 0]
+    if not markers:
+        return None
+    pos, token = min(markers, key=lambda item: item[0])
+    selector = line[pos + len(token):]
+    if not selector.startswith("^"):
+        return None
+    return line[:pos], token, selector[1:]
+
+def is_ubo_html_filter_rule(line: str) -> bool:
+    parsed = parse_ubo_html_filter_rule(line)
+    return parsed is not None
+
+def translate_ubo_html_filter_rule(line: str, target: str) -> str | None:
+    """Translate the provably equivalent script/style :has-text subset to AdGuard HTML syntax."""
+    parsed = parse_ubo_html_filter_rule(line)
+    if parsed is None:
+        return None
+    domain_prefix, marker, selector = parsed
+    match = re.fullmatch(r"(script|style):has-text\((.*)\)", selector, re.IGNORECASE)
+    if not match:
+        return None
+    if not TARGET_PROFILES.get(target, {}).get("cap_html_filtering", False):
+        return None
+    element_kind = match.group(1).lower()
+    text_pattern = match.group(2)
+    # AdGuard HTML filtering uses $$; HTML exceptions use $@$.
+    delimiter = "$@$" if marker == "#@#" else "$$"
+    return domain_prefix + delimiter + f"{element_kind}:contains({text_pattern})"
+
 def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | None:
+    if is_ubo_html_filter_rule(line) and not TARGET_PROFILES.get(target, {}).get("cap_html_filtering", False):
+        return "uBlock HTML filtering rule requires an HTML-filtering-capable target"
     if DNS_ONLY_MODIFIER_RE.search(line):
         return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
     if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
@@ -934,6 +972,13 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
+        html_rule = translate_ubo_html_filter_rule(line, target)
+        if html_rule is not None:
+            return [html_rule], "html-filter-converted"
+        if is_ubo_html_filter_rule(line):
+            raise CompilationError(
+                "this uBlock HTML filtering selector is outside the safely translatable script/style :has-text subset"
+            )
         normalized = normalize_native_domain_rule(line)
         normalized = normalize_compatible_cosmetic_rule(normalized, target)
         return [normalized], "native"
@@ -1040,7 +1085,12 @@ def parse_badfilter_rule(line: str) -> tuple[tuple[str, tuple[str, ...]], bool] 
         exception = "@@"
         body = body[2:]
 
-    if body.startswith("/"):
+    if body.startswith("$"):
+        # AdGuard upstream lists use modifier-only $badfilter directives to disable
+        # the same modifier-only rule within that source's scope.
+        pattern = ""
+        modifier_text = body[1:]
+    elif body.startswith("/"):
         closing = find_regex_rule_end(body)
         if closing is None:
             return None
@@ -1069,8 +1119,6 @@ def parse_badfilter_rule(line: str) -> tuple[tuple[str, tuple[str, ...]], bool] 
             pattern = body[:modifier_pos]
             modifier_text = body[modifier_pos + 1:]
 
-    if not pattern:
-        return None
     try:
         modifiers = split_modifiers(modifier_text) if modifier_text else []
     except CompilationError:
@@ -1081,6 +1129,8 @@ def parse_badfilter_rule(line: str) -> tuple[tuple[str, tuple[str, ...]], bool] 
         if token.partition("=")[0].strip().lower() == "badfilter"
     ]
     if any("=" in token for token in badfilter_tokens):
+        return None
+    if not pattern and not badfilter_tokens:
         return None
 
     normalized_modifiers: list[str] = []
@@ -1108,6 +1158,10 @@ def apply_source_scoped_badfilters(
             candidates.append((entry, None, "keep"))
             continue
         line = entry.text.strip()
+        # A commented-out badfilter must stay a comment, not become an audit error.
+        if is_comment_or_header(line):
+            candidates.append((entry, None, "keep"))
+            continue
         parsed = parse_badfilter_rule(line)
         if parsed is None:
             if re.search(r"(?:\$|,)badfilter(?:=|,|$)", line, re.IGNORECASE) and not any(
@@ -2008,6 +2062,20 @@ def run_regression_tests() -> None:
     check("badfilter directives are consumed rather than emitted as active rules",
           badfilter_state.badfilter_directives_consumed, 3)
 
+    modifier_only_lines = [
+        ExpandedLine(badfilter_source_a, 1, "$script,third-party,domain=site.example,badfilter", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 2, "$script,third-party,domain=site.example", badfilter_source_a.url),
+        ExpandedLine(badfilter_source_a, 3, "! ||commented.example^$badfilter", badfilter_source_a.url),
+    ]
+    modifier_only_state = CompileState()
+    modifier_only_remaining = apply_source_scoped_badfilters(modifier_only_lines, modifier_only_state)
+    check("modifier-only badfilter cancels the matching modifier-only rule",
+          [item.text.strip() for item in modifier_only_remaining],
+          ["! ||commented.example^$badfilter"])
+    check("commented badfilter is not treated as a live directive",
+          modifier_only_state.badfilter_directives_consumed, 1)
+    check("modifier-only badfilter cancellation is counted",
+          modifier_only_state.badfilter_rules_disabled, 1)
     partial_badfilter_lines = [
         ExpandedLine(badfilter_source_a, 1, "||partial.example^$domain=site-a.example", badfilter_source_a.url),
         ExpandedLine(badfilter_source_a, 2, "||partial.example^$badfilter", badfilter_source_a.url),
@@ -2218,6 +2286,22 @@ def run_regression_tests() -> None:
           ["example.com#?#div:has-text(ad)"])
     check("AdGuard Extended CSS :matches-css is preserved", compile_line("adblock", "example.com#?#div:matches-css(width: 1px)")[0],
           ["example.com#?#div:matches-css(width: 1px)"])
+    check("uBO script HTML filter is translated to AdGuard HTML-filter syntax",
+          compile_line("adblock", "example.com##^script:has-text(ad)", target="adguard-windows")[0],
+          ["example.com$script:contains(ad)"])
+    check("uBO style HTML exception is translated to AdGuard HTML exception syntax",
+          compile_line("adblock", "example.com#@#^style:has-text(/ad|promo/i)", target="adguard-windows")[0],
+          ["example.com$@$style:contains(/ad|promo/i)"])
+    check("unsupported HTML-filter targets are identified before compilation",
+          detect_nonportable_native_rule("example.com##^script:has-text(ad)", "chromium") is not None,
+          True)
+    try:
+        compile_line("adblock", "example.com##^script:has-text(ad):remove()", target="adguard-windows")
+    except CompilationError:
+        tests.append(("complex uBO HTML filtering syntax outside the safe subset is rejected", True, True))
+    else:
+        raise AssertionError("complex uBO HTML rule must not pass through as a cosmetic selector")
+
     for unsupported_selector in (
         "example.com##.ad:watch-attr(data-id)",
         "example.com##:others()",
