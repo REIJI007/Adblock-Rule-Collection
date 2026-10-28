@@ -706,9 +706,21 @@ def compile_dns_rule(line: str) -> str:
 
     # A hostname ending with a pipe is an exact-host match in DNS syntax, not
     # an end-of-URL anchor.
-    exact_pipe = re.fullmatch(r"(?P<anchor>\|\||\|)(?P<host>[^|^*/$]+)\^?\|", pattern)
+    exact_pipe = re.fullmatch(r"(?P<anchor>\|\||\|)(?P<host>[^|^/$]+)\^?\|", pattern)
     if exact_pipe:
         raw_hostname = exact_pipe.group("host")
+        if "*" in raw_hostname:
+            wildcard_mask = canonical_wildcard_hostname_mask(raw_hostname)
+            if not wildcard_mask:
+                raise CompilationError(f"invalid exact wildcard DNS hostname: {pattern}")
+            output_mask = raw_hostname if case_sensitive and raw_hostname.isascii() else wildcard_mask
+            escaped_mask = re.escape(output_mask).replace(r"\*", r"[A-Za-z0-9._-]*")
+            url_pattern = (
+                r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
+                + escaped_mask
+                + r"(?::[0-9]+)?(?:[\/?#]|$)"
+            )
+            return append_modifiers(("@@" if exception else "") + "/" + url_pattern + "/")
         if re.search(r"\.TLD$", raw_hostname, re.IGNORECASE):
             base = raw_hostname[:-4]
             normalized_base = canonical_hostname(base, allow_single_label=False)
