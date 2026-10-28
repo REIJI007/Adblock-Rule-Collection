@@ -117,6 +117,19 @@ NON_PORTABLE_NATIVE_PATTERNS = (
 DNS_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)(?:client|dnstype|dnsrewrite|ctag)(?:=|,|$)", re.IGNORECASE)
 NETWORK_ONLY_MODIFIER_RE = re.compile(r"(?:\$|,)network(?:=|,|$)", re.IGNORECASE)
 
+# Adblock-compatible request modifiers that can be preserved when a DNS source embeds a native network rule.
+PORTABLE_NETWORK_MODIFIERS = {
+    "all", "document", "doc", "subdocument", "script", "stylesheet", "css",
+    "image", "imageset", "object", "object-subrequest", "font", "media",
+    "xhr", "xmlhttprequest", "ping", "websocket", "popup", "popunder", "other",
+    "third-party", "3p", "1p", "match-case", "important", "badfilter",
+    "domain", "denyallow", "redirect", "redirect-rule", "removeparam", "replace",
+    "csp", "generichide", "genericblock", "elemhide", "specifichide", "ehide",
+    "shide", "empty", "mp4", "rewrite", "from", "to", "urltransform",
+    "permissions", "method", "header", "requestheader", "responseheader",
+    "network", "stealth",
+}
+
 class CompilationError(RuntimeError):
     pass
 
@@ -1887,7 +1900,7 @@ def run_regression_tests() -> None:
 
     dns_address_source = Source("https://example.invalid/dns-addresses.txt", "dns")
     dns_address_state = compile_fetched_sources(
-        [(dns_address_source, f"||{test_ipv4}^\\n/^{test_ipv4_regex}:/\\n")],
+        [(dns_address_source, f"||{test_ipv4}^\n/^{test_ipv4_regex}:/\n")],
         "chromium-mv3",
     )
     check("DNS address/CNAME patterns are target-excluded rather than mistranslated",
