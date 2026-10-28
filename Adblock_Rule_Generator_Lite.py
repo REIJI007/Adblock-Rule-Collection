@@ -617,6 +617,42 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
         + r"(?::[0-9]+)?(?:[\/?#]|$)"
     )
     return ("@@" if exception else "") + "/" + url_pattern + "/"
+def compile_dns_hostname_mask_regex(
+    hostname_mask: str,
+    *,
+    start_anchored: bool = False,
+    end_anchored: bool = False,
+    exception: bool = False,
+) -> str | None:
+    """Translate a DNS hostname mask into URL-authority matching.
+
+    DNS wildcard '*' is constrained to hostname characters. URL paths, queries,
+    fragments, user-info, and ports are not part of the DNS hostname match.
+    """
+    if not hostname_mask or not re.fullmatch(r"[A-Za-z0-9._*-]+", hostname_mask):
+        return None
+
+    pieces: list[str] = []
+    for char in hostname_mask:
+        if char == "*":
+            pieces.append(r"[A-Za-z0-9._-]*")
+        else:
+            pieces.append(re.escape(char))
+
+    host_pattern = "".join(pieces)
+    if not start_anchored:
+        host_pattern = r"[A-Za-z0-9._-]*" + host_pattern
+    if not end_anchored:
+        host_pattern += r"[A-Za-z0-9._-]*"
+
+    url_pattern = (
+        r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
+        + host_pattern
+        + r"(?::[0-9]+)?(?:[\/?#]|$)"
+    )
+    return ("@@" if exception else "") + "/" + url_pattern + "/"
+
+
 def compile_dns_rule(line: str) -> str:
     """Translate AdGuard DNS rules to URL rules without changing the match subject."""
     exception = line.startswith("@@")
@@ -734,15 +770,31 @@ def compile_dns_rule(line: str) -> str:
         output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
         return append_modifiers(("@@" if exception else "") + "||" + output_prefix + ".*^")
 
-    # DNS scheme-prefix syntax: ://example. matches hostnames beginning example.
-    scheme_prefix = re.fullmatch(r"://([A-Za-z0-9.-]+)\.", pattern)
+    # DNS scheme-prefix shorthand constrains the beginning of the hostname,
+    # not any subdomain that happens to contain the same suffix.
+    scheme_prefix_exact = re.fullmatch(r"://([A-Za-z0-9.*_-]+)\^", pattern)
+    if scheme_prefix_exact:
+        mask = scheme_prefix_exact.group(1)
+        if not case_sensitive:
+            mask = mask.lower()
+        translated = compile_dns_hostname_mask_regex(
+            mask, start_anchored=True, end_anchored=True, exception=exception
+        )
+        if translated is None:
+            raise CompilationError(f"invalid exact DNS scheme-prefix pattern: {pattern}")
+        return append_modifiers(translated)
+
+    scheme_prefix = re.fullmatch(r"://([A-Za-z0-9.*_-]+)\.", pattern)
     if scheme_prefix:
-        prefix = scheme_prefix.group(1)
-        normalized_prefix = canonical_hostname(prefix, allow_single_label=True)
-        if not normalized_prefix:
+        mask = scheme_prefix.group(1) + "."
+        if not case_sensitive:
+            mask = mask.lower()
+        translated = compile_dns_hostname_mask_regex(
+            mask, start_anchored=True, end_anchored=False, exception=exception
+        )
+        if translated is None:
             raise CompilationError(f"invalid DNS scheme-prefix pattern: {pattern}")
-        output_prefix = prefix if case_sensitive and prefix.isascii() else normalized_prefix
-        return append_modifiers(("@@" if exception else "") + "||" + output_prefix + ".*^")
+        return append_modifiers(translated)
 
     # A leading dot matches subdomains only, not the root host.
     leading_dot = re.fullmatch(r"\.([A-Za-z0-9.-]+)\^?", pattern)
@@ -803,6 +855,17 @@ def compile_dns_rule(line: str) -> str:
             output_hostname, exception=exception, match_case=case_sensitive
         ))
 
+    # A leading single pipe without an end anchor means hostname-prefix matching.
+    prefix_match = re.fullmatch(r"\|([A-Za-z0-9.*_-]+)", pattern)
+    if prefix_match:
+        mask = prefix_match.group(1) if case_sensitive else prefix_match.group(1).lower()
+        translated = compile_dns_hostname_mask_regex(
+            mask, start_anchored=True, end_anchored=False, exception=exception
+        )
+        if translated is None:
+            raise CompilationError(f"invalid DNS hostname-prefix pattern: {pattern}")
+        return append_modifiers(translated)
+
     # Single pipe before the hostname anchors the host itself, not the full URL.
     exact_match = re.fullmatch(r"\|([^|^*/$]+)\^", pattern)
     if exact_match:
@@ -840,6 +903,25 @@ def compile_dns_rule(line: str) -> str:
             output_mask = raw_mask if case_sensitive else raw_mask.lower()
             return append_modifiers(("@@" if exception else "") + "||" + output_mask + "^")
         raise CompilationError(f"invalid DNS hostname mask: {pattern}")
+
+    host_suffix = re.fullmatch(r"([A-Za-z0-9._*-]+)\^", pattern)
+    if host_suffix:
+        mask = host_suffix.group(1) if case_sensitive else host_suffix.group(1).lower()
+        translated = compile_dns_hostname_mask_regex(
+            mask, start_anchored=False, end_anchored=True, exception=exception
+        )
+        if translated is None:
+            raise CompilationError(f"invalid DNS hostname suffix pattern: {pattern}")
+        return append_modifiers(translated)
+
+    if re.fullmatch(r"[A-Za-z0-9._*-]+", pattern):
+        mask = pattern if case_sensitive else pattern.lower()
+        translated = compile_dns_hostname_mask_regex(
+            mask, start_anchored=False, end_anchored=False, exception=exception
+        )
+        if translated is None:
+            raise CompilationError(f"invalid DNS hostname-substring pattern: {pattern}")
+        return append_modifiers(translated)
 
     raise CompilationError(f"DNS rule pattern cannot be translated losslessly: {pattern}")
 def compile_hosts_line(line: str, *, category: str = "hosts") -> tuple[list[str], str]:
@@ -949,12 +1031,18 @@ def looks_like_native_network_filter_rule(
             return True
         if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
             return True
-        if candidate.startswith("/"):
-            closing = find_regex_rule_end(candidate)
+        regex_candidate = candidate[2:] if candidate.startswith("@@") else candidate
+        if regex_candidate.startswith("/"):
+            closing = find_regex_rule_end(regex_candidate)
             if closing is None:
                 return False
-            regex_body = candidate[1:closing]
-            return re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+            regex_body = regex_candidate[1:closing]
+            explicit_url_regex = (
+                re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None
+                or r"\/" in regex_body
+                or "#" in regex_body
+            )
+            return explicit_url_regex
         network_pattern = candidate[2:] if candidate.startswith("@@") else candidate
         if network_pattern.startswith(("-", "*")) and re.fullmatch(r"\S*[\^|*]\S*", network_pattern):
             return True
@@ -2023,9 +2111,27 @@ def run_regression_tests() -> None:
     check("DNS wildcard TLD is not a literal hostname label",
           compile_line("dns", "||example.TLD^")[0],
           ["||example.*^"])
-    check("DNS scheme-prefix syntax keeps prefix scope",
+    check("DNS scheme-prefix syntax is anchored to the hostname start",
           compile_line("dns", "://example.")[0],
-          ["||example.*^"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?example\.[A-Za-z0-9._-]*(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("DNS scheme-prefix with end marker matches an exact host",
+          compile_line("dns", "://mine.torrent.pw^")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?mine\.torrent\.pw(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("DNS host suffix mask remains a suffix match",
+          compile_line("dns", "vkcdnservice.appspot.com^")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?[A-Za-z0-9._-]*vkcdnservice\.appspot\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("DNS start anchor matches host prefix only",
+          compile_line("dns", "|piwik.")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?piwik\.[A-Za-z0-9._-]*(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("DNS partial mask matches inside hostname only",
+          compile_line("dns", "-ad123-")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?[A-Za-z0-9._-]*-ad123-[A-Za-z0-9._-]*(?::[0-9]+)?(?:[\/?#]|$)/"])
+    check("URL-scoped regex with escaped slashes remains native",
+          compile_line("dns", r"/(https?:\/\/)213\.32\.115\..{100,}/")[0],
+          [r"/(https?:\/\/)213\.32\.115\..{100,}/"])
+    check("path regex in mixed DNS source remains native",
+          compile_line("dns", r"@@/\.(gif|jpe?g|png|webp)#(\/?.+)?(\/(ad)s?\/|\/ad-)/")[0],
+          [r"@@/\.(gif|jpe?g|png|webp)#(\/?.+)?(\/(ad)s?\/|\/ad-)/"])
     check("DNS root TLD syntax maps to the TLD subtree",
           compile_line("dns", "||com^")[0],
           ["||*.com^"])
