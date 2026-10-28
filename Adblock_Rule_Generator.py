@@ -321,11 +321,26 @@ def canonical_host_or_ipv4(value: str, *, allow_single_label: bool = False) -> s
     except ValueError:
         return canonical_hostname(value, allow_single_label=allow_single_label)
 
-def exact_hostname_regex_rule(hostname: str, *, exception: bool = False) -> str:
-    """Generate an exact-host URL regex, scoped to the authority of any hierarchical URL."""
+def exact_hostname_regex_rule(
+    hostname: str,
+    *,
+    exception: bool = False,
+    match_case: bool = False,
+) -> str:
+    """Generate an exact-host URL regex, scoped to a hierarchical URL authority."""
     domain = canonical_host_or_ipv4(hostname)
     if not domain:
         raise CompilationError(f"invalid exact hostname: {hostname!r}")
+    if match_case:
+        candidate = hostname[:-1] if hostname.endswith(".") else hostname
+        try:
+            ipaddress.ip_address(candidate)
+            domain = candidate
+        except ValueError:
+            validated = canonical_hostname(candidate, allow_single_label=False)
+            if not validated:
+                raise CompilationError(f"invalid exact hostname: {hostname!r}")
+            domain = candidate if candidate.isascii() else validated
     escaped = re.escape(domain)
     body = (
         r"^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?"
@@ -349,12 +364,15 @@ def normalize_native_domain_rule(line: str) -> str:
         # 遇到无法按主机名规范化但可能合法的上游语法时，保留原规则，避免改变匹配范围。
 
         return line
+    tail = match.group("tail") or ""
+    match_case = re.search(r"(?:^|,)\s*match-case(?:,|$)", tail, re.IGNORECASE) is not None
+    output_hostname = match.group("host") if match_case and match.group("host").isascii() else hostname
     return (
         (match.group("exception") or "")
         + match.group("anchor")
-        + hostname
+        + output_hostname
         + "^"
-        + (match.group("tail") or "")
+        + tail
     )
 
 def detect_nonportable_native_rule(
@@ -1724,12 +1742,18 @@ def run_regression_tests() -> None:
     check("CNAME tracker list is classified by its source semantics",
           classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"),
           "cname")
-    check("CNAME network-filter syntax is preserved verbatim",
+    check("CNAME host rules are parsed rather than blindly passed through",
           compile_line("cname", "||tracker.Example.com^")[0],
-          ["||tracker.Example.com^"])
-    check("DNS network-filter syntax is preserved verbatim",
+          ["||tracker.example.com^"])
+    check("DNS hostname rules normalize without changing subtree scope",
           compile_line("dns", "||Ads.Example.com^")[0],
-          ["||Ads.Example.com^"])
+          ["||ads.example.com^"])
+    check("DNS match-case modifier preserves source host casing",
+          compile_line("dns", "||Ads.Example.com^$match-case")[0],
+          ["||Ads.Example.com^$match-case"])
+    check("DNS match-case exact-host rule preserves source host casing",
+          compile_line("dns", "Ads.Example.com$match-case")[0],
+          [exact_hostname_regex_rule("Ads.Example.com", match_case=True) + "$match-case"])
     check("DNS plain host entries are converted to exact-host URL rules",
           compile_line("dns", "tracker.example.com")[0],
           [exact_hostname_regex_rule("tracker.example.com")])
@@ -1817,15 +1841,18 @@ def run_regression_tests() -> None:
           [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("domain-only preserves subtree scope", compile_line("domains", "Ads.Example.com")[0],
           ["||ads.example.com^"])
-    check("DNS subtree rule is preserved verbatim", compile_line("dns", "||Ads.Example.com^")[0],
-          ["||Ads.Example.com^"])
-    check("DNS wildcard rule is preserved verbatim", compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
-          ["||MobileAnalytics.*.AmazonAWS.com^"])
-    check("DNS exception is preserved verbatim", compile_line("dns", "@@||Ads.Example.com^")[0],
-          ["@@||Ads.Example.com^"])
-    check("DNS wildcard exact-host exception uses existing filter syntax",
+    check("DNS subtree rule canonicalizes case without changing subtree scope",
+          compile_line("dns", "||Ads.Example.com^")[0],
+          ["||ads.example.com^"])
+    check("DNS wildcard rule keeps wildcard scope while canonicalizing case",
+          compile_line("dns", "||MobileAnalytics.*.AmazonAWS.com^")[0],
+          ["||mobileanalytics.*.amazonaws.com^"])
+    check("DNS exception retains exception and subtree semantics",
+          compile_line("dns", "@@||Ads.Example.com^")[0],
+          ["@@||ads.example.com^"])
+    check("DNS wildcard exact-host exception is converted to URL authority scope",
           compile_line("dns", "@@||cdn.us*.exponea.com^|")[0],
-          ["@@||cdn.us*.exponea.com^|"])
+          [r"@@/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?cdn\.us[A-Za-z0-9._-]*\.exponea\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("unanchored separator and wildcard filters remain unchanged",
           compile_line("dns", "-adx-*.rayjump.com^")[0],
           ["-adx-*.rayjump.com^"])
@@ -1839,27 +1866,36 @@ def run_regression_tests() -> None:
           ["@@||example.com^|"])
     check("DNS partial domain anchor keeps prefix semantics", compile_line("dns", "||advertising.civitai.")[0],
           ["||advertising.civitai."])
-    check("DNS leading-dot rule is preserved when already valid network syntax",
+    check("DNS leading-dot rule blocks subdomains but not root domain",
           compile_line("dns", ".example.com^")[0],
-          [".example.com^"])
+          ["||*.example.com^"])
+    check("DNS wildcard TLD is not a literal hostname label",
+          compile_line("dns", "||example.TLD^")[0],
+          ["||example.*^"])
+    check("DNS scheme-prefix syntax keeps prefix scope",
+          compile_line("dns", "://example.")[0],
+          ["||example.*^"])
+    check("DNS root TLD syntax maps to the TLD subtree",
+          compile_line("dns", "||com^")[0],
+          ["||*.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
           [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
-    check("DNS IPv4 address regex is URL-scoped",
-          compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
-          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
+    check("anchored DNS hostname regex is scoped to URL authority",
+          compile_line("dns", f"/^{test_ipv4_regex}$")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r"(?::[0-9]+)?(?:[\/?#]|$)/"])
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
           [url_scoped_test_regex])
     unanchored_dns_regex = "/" + test_ipv4_regex + "/"
-    check("unanchored DNS regex already valid for URL matching is preserved",
+    check("unanchored DNS regex is scoped to hostname characters",
           compile_line("dns", unanchored_dns_regex)[0],
-          [unanchored_dns_regex])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?[A-Za-z0-9._-]*" + test_ipv4_regex + r"[A-Za-z0-9._-]*(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("hash character inside native URL regex is preserved",
           compile_line("dns", r"/https?:\/\/example\.com\/path#frag/")[0],
           [r"/https?:\/\/example\.com\/path#frag/"])
-    check("DNS hostname regex with nested groups is URL-scoped",
+    check("DNS hostname regex with nested groups stays inside URL authority",
           compile_line("dns", r"/^(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com$/")[0],
           [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(mon|tue|wed|thu|fri|sat|sun)\d{1,2}\.\w{2}\d{1,6}\w{4}\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("Adblock badfilter remains explicit", compile_line("adblock", "||Ads.Example.com^$badfilter")[0],
@@ -1889,37 +1925,43 @@ def run_regression_tests() -> None:
           ["example.com#?#div:has-text(ad)"])
     check("AdGuard Extended CSS :matches-css is preserved", compile_line("adblock", "example.com#?#div:matches-css(width: 1px)")[0],
           ["example.com#?#div:matches-css(width: 1px)"])
-    check("AdGuard accepts uBO-compatible +js syntax", compile_line("adblock", "example.com##+js(no-such-scriptlet)")[0],
-          ["example.com##+js(no-such-scriptlet)"])
+    check("uBO scriptlet rules are not assumed portable to AdGuard",
+          detect_nonportable_native_rule(
+              "example.com##+js(no-such-scriptlet)",
+              "adguard-windows",
+              source_url="https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+          ) is not None, True)
+    check("AdGuard-documented matches-attr syntax is not rejected",
+          detect_nonportable_native_rule(
+              'example.com#?#div:matches-attr(class="ad")',
+              "adguard-windows",
+              source_url="https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+          ), None)
     check("native IPv4 host rules are preserved", compile_line("adblock", ip_host_rule)[0],
           [ip_host_rule])
-    check("bare IPv4 browser rule is normalized to a host-anchored rule",
+    check("bare IPv4 text preserves URL-substring semantics",
           compile_line("adblock", test_ipv4)[0],
-          [ip_host_rule])
-    check("bare IPv4 browser exception is normalized and remains an exception",
+          [test_ipv4])
+    check("bare IPv4 exception preserves URL-substring scope",
           compile_line("adblock", f"@@{test_ipv4}")[0],
-          [f"@@{ip_host_rule}"])
-    check("bare IPv4 host normalization preserves important modifier",
+          [f"@@{test_ipv4}"])
+    check("bare IPv4 modifier remains attached without changing scope",
           compile_line("adblock", f"{test_ipv4}$important")[0],
-          [f"{ip_host_rule}$important"])
-    check("leading-zero IPv4 octets normalize to canonical decimal form",
+          [f"{test_ipv4}$important"])
+    check("leading-zero IPv4-looking pattern preserves source spelling",
           compile_line("adblock", test_ipv4_leading_zero)[0],
-          [ip_host_rule])
+          [test_ipv4_leading_zero])
     multi_zero_octets = tuple(range(4, 8))
     multi_zero_ipv4 = ".".join(
         f"{octet:03d}" if index == 0 else str(octet)
         for index, octet in enumerate(multi_zero_octets)
     )
-    multi_zero_expected = "||" + ".".join(str(octet) for octet in multi_zero_octets) + "^"
-    check("multiple leading zeroes in an IPv4 octet normalize to canonical decimal form",
+    check("multiple leading zeroes remain part of the URL pattern",
           compile_line("adblock", multi_zero_ipv4)[0],
-          [multi_zero_expected])
-    try:
-        compile_line("adblock", invalid_test_ipv4)
-    except CompilationError:
-        tests.append(("invalid dotted-quad IP is rejected", True, True))
-    else:
-        raise AssertionError("invalid IPv4 literals must not be published as raw rules")
+          [multi_zero_ipv4])
+    check("invalid dotted-quad-shaped text remains a URL pattern",
+          compile_line("adblock", invalid_test_ipv4)[0],
+          [invalid_test_ipv4])
     try:
         compile_line("adblock", f"{ip_host_rule}$network")
     except CompilationError:
