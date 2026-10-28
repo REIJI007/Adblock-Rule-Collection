@@ -2068,12 +2068,24 @@ def run_regression_tests() -> None:
     check("network-filter syntax for an IP host rule is passed through verbatim",
           compile_line("dns", ip_host_rule)[0],
           [ip_host_rule])
-    try:
-        compile_line("dns", test_ipv4)
-    except CompilationError:
-        tests.append(("bare DNS IP/CNAME rule rejected", True, True))
-    else:
-        raise AssertionError("bare DNS IP semantics must not be rewritten as URL-host semantics")
+    check("bare DNS IP becomes an exact URL-host rule",
+          compile_line("dns", test_ipv4)[0],
+          [exact_hostname_regex_rule(test_ipv4)])
+    check("mixed DNS source path rules stay in network-filter syntax",
+          compile_line("dns", "||analytics.omgpop.com/log")[0],
+          ["||analytics.omgpop.com/log"])
+    check("exception-prefixed generic host patterns are not parsed as DNS domains",
+          compile_line("dns", "@@-ds.metric.gstatic.com^|")[0],
+          ["@@-ds.metric.gstatic.com^|"])
+    check("DNS IP CIDR masks are audited as target-incompatible, not miscompiled",
+          detect_nonportable_native_rule(
+              "||" + test_ipv4 + "/24^",
+              "adguard-windows",
+              source_url="https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/Filters/rules.txt",
+          ) is not None, True)
+    check("DNS IP-and-port regex becomes an authority-scoped URL regex",
+          compile_line("dns", r"/^139\.45\.197\.2(4[0-9]|5[0-4]):/")[0],
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?139\.45\.197\.2(4[0-9]|5[0-4]):/"])
     try:
         compile_line("adblock", "||example.com^$dnstype=A")
     except CompilationError:
