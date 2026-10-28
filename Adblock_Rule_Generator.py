@@ -379,21 +379,38 @@ def detect_nonportable_native_rule(
     line: str,
     target: str = "generic",
     source_url: str | None = None,
+    source_kind: str | None = None,
 ) -> str | None:
     if DNS_ONLY_MODIFIER_RE.search(line):
         return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
     if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
         return "AdGuard application-only $network modifier is not supported by this target"
-    if source_url:
-        try:
-            source_kind = classify_source(source_url)
-        except CompilationError:
-            source_kind = None
-        if source_kind in {"dns", "cname"} and re.fullmatch(
+    if source_kind == "cname":
+        return (
+            "CNAME tracker source depends on DNS alias-chain inspection; "
+            "a network-filter URL rule cannot preserve this behavior"
+        )
+    if source_kind == "dns":
+        candidate = line.strip()
+        if re.fullmatch(
             r"(?:@@)?(?:\|\||\|)(?:[0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}\^?",
-            line.strip(),
+            candidate,
         ):
             return "IP CIDR mask cannot be represented by a URL-host filtering rule"
+        # A bare DNS IP matches domains whose CNAME response resolves to this IP,
+        # not only URLs whose hostname is the IP literal.
+        dns_body = candidate[2:] if candidate.startswith("@@") else candidate
+        dns_pattern, separator, modifier_text = dns_body.partition("$")
+        if not separator:
+            try:
+                ipaddress.ip_address(dns_pattern)
+            except ValueError:
+                pass
+            else:
+                return (
+                    "Bare DNS IP rule matches domains whose CNAME response returns "
+                    "this address; a network filter cannot preserve that behavior"
+                )
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
@@ -694,10 +711,10 @@ def compile_dns_rule(line: str) -> str:
         except ValueError:
             pass
         else:
-            # DNS filtering patterns operate on the requested hostname. A numeric
-            # host literal can be represented as an exact URL-host match; it does
-            # not mean "match every domain that resolves to this IP".
-            return append_modifiers(exact_hostname_regex_rule(pattern, exception=exception))
+            raise CompilationError(
+                "bare DNS IP targets domains resolving to this address; "
+                "this behavior cannot be represented by a network URL filter"
+            )
         hostname = canonical_hostname(pattern, allow_single_label=False)
         if hostname:
             output_hostname = pattern.rstrip(".") if case_sensitive and pattern.isascii() else hostname
@@ -1537,7 +1554,9 @@ def compile_fetched_sources(
         # 已知不兼容规则逐条记录并排除；未知转换错误仍由严格模式阻止发布。
 
         target_exclusion_reason = (
-            detect_nonportable_native_rule(line, target, source_url=source.url)
+            detect_nonportable_native_rule(
+                line, target, source_url=source.url, source_kind=source.kind
+            )
             if source.kind in {"adblock", "dns", "cname"} and line and not is_comment_or_header(line)
             else None
         )
@@ -1976,7 +1995,7 @@ def run_regression_tests() -> None:
           ["||*.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
-          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
+          [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?(?:\w+\.)*minepi\.com(?::[0-9]+)?(?:[\/?#]|$)/"])
     check("anchored DNS hostname regex is scoped to URL authority",
           compile_line("dns", f"/^{test_ipv4_regex}$")[0],
           [r"/^[a-z][a-z0-9+.-]*:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r"(?::[0-9]+)?(?:[\/?#]|$)/"])
@@ -2067,9 +2086,19 @@ def run_regression_tests() -> None:
     check("network-filter syntax for an IP host rule is passed through verbatim",
           compile_line("dns", ip_host_rule)[0],
           [ip_host_rule])
-    check("bare DNS IP becomes an exact URL-host rule",
-          compile_line("dns", test_ipv4)[0],
-          [exact_hostname_regex_rule(test_ipv4)])
+    try:
+        compile_line("dns", test_ipv4)
+    except CompilationError:
+        tests.append(("bare DNS IP is not rewritten as URL-host matching", True, True))
+    else:
+        raise AssertionError("bare DNS IP semantics must not be rewritten as URL-host semantics")
+    check("bare DNS IP is audited as target-incompatible",
+          detect_nonportable_native_rule(
+              test_ipv4,
+              "adguard-windows",
+              source_url="https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/Filters/rules.txt",
+              source_kind="dns",
+          ) is not None, True)
     check("mixed DNS source path rules stay in network-filter syntax",
           compile_line("dns", "||analytics.omgpop.com/log")[0],
           ["||analytics.omgpop.com/log"])
