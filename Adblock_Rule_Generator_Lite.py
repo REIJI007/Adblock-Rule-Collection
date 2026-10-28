@@ -2152,9 +2152,9 @@ def run_regression_tests() -> None:
     check("uBO property matcher is translated to AdGuard's equivalent syntax",
           compile_line("adblock", "example.com##div:matches-prop(foo.bar=1)")[0],
           ["example.com##div:matches-property(foo.bar=1)"])
-    check("DNS leading-dot rule is preserved when already valid network syntax",
+    check("DNS leading-dot rule preserves subdomain-only scope",
           compile_line("dns", ".example.com^")[0],
-          [".example.com^"])
+          ["||*.example.com^"])
     check("anchored DNS hostname regex compiles to URL authority regex",
           compile_line("dns", "/^(?:\\w+\\.)*minepi\\.com$/")[0],
           [r"/^(?:https?|wss?):\/\/(?:[^\/?#@]+@)?(?:(?:\w+\.)*minepi\.com)(?::[0-9]+)?(?:[\/?#]|$)/"])
