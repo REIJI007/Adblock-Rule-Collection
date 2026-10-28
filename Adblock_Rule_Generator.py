@@ -535,7 +535,7 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
 
     allowed = set(
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-        "._*+?()|\\[]{}^-"
+        "._*+?()|\\[]{}^-$:"
     )
     if any(char not in allowed for char in regex_body):
         return None
