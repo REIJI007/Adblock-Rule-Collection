@@ -403,16 +403,15 @@ def detect_nonportable_native_rule(
         # not only URLs whose hostname is the IP literal.
         dns_body = candidate[2:] if candidate.startswith("@@") else candidate
         dns_pattern, separator, modifier_text = dns_body.partition("$")
-        if not separator:
-            try:
-                ipaddress.ip_address(dns_pattern)
-            except ValueError:
-                pass
-            else:
-                return (
-                    "Bare DNS IP rule matches domains whose CNAME response returns "
-                    "this address; a network filter cannot preserve that behavior"
-                )
+        try:
+            ipaddress.ip_address(dns_pattern)
+        except ValueError:
+            pass
+        else:
+            return (
+                "Bare DNS IP rule matches domains whose CNAME response returns "
+                "this address; a network filter cannot preserve that behavior"
+            )
     for pattern, explanation in NON_PORTABLE_NATIVE_PATTERNS:
         if pattern.search(line):
             return explanation
