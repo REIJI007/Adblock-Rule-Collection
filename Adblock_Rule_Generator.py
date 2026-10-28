@@ -378,6 +378,71 @@ def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | 
             return explanation
     return None
 
+def detect_dns_target_incompatible_rule(line: str) -> str | None:
+    """Return a target-exclusion reason for DNS matching semantics a URL filter cannot express."""
+    candidate = line.strip()
+    if not candidate or is_comment_or_header(candidate):
+        return None
+
+    pattern_candidate = candidate[2:] if candidate.startswith("@@") else candidate
+    if pattern_candidate.startswith("/"):
+        closing = find_regex_rule_end(pattern_candidate)
+        if closing is None:
+            return None  # Let the parser report a malformed regex.
+        regex_body = pattern_candidate[1:closing]
+        has_url_scope = (
+            re.search(r"https?\s*:(?:\\?/){2}", regex_body, re.IGNORECASE) is not None
+        )
+        if not has_url_scope and ":" in regex_body:
+            return (
+                "DNS regex contains a colon/address-port pattern that cannot be "
+                "represented faithfully as a browser URL-host rule"
+            )
+        return None
+
+    base = pattern_candidate.split("$", 1)[0].strip()
+    host = base
+    if host.startswith("||"):
+        host = host[2:]
+    elif host.startswith("|"):
+        host = host[1:]
+    host = re.sub(r"[\^|]+$", "", host)
+
+    try:
+        ipaddress.ip_address(host)
+        return (
+            "DNS IP-address rules may match DNS/CNAME resolution results and cannot "
+            "be represented faithfully as URL-host rules"
+        )
+    except ValueError:
+        pass
+
+    if "." in host and re.fullmatch(r"[0-9.]+", host):
+        return (
+            "IP-like DNS address masks may match DNS/CNAME resolution results and cannot "
+            "be represented faithfully as URL-host rules"
+        )
+    return None
+
+
+def has_portable_network_modifier_syntax(line: str) -> bool:
+    """Recognize ordinary Adblock request modifiers inside a mixed DNS/network source."""
+    candidate = line.strip()
+    pattern_candidate = candidate[2:] if candidate.startswith("@@") else candidate
+    if not pattern_candidate.startswith("||") or "$" not in candidate:
+        return False
+    modifier_text = candidate.split("$", 1)[1]
+    try:
+        tokens = split_modifiers(modifier_text)
+    except CompilationError:
+        return False
+    if not tokens:
+        return False
+    return all(
+        token.partition("=")[0].strip().lower().lstrip("~") in PORTABLE_NETWORK_MODIFIERS
+        for token in tokens
+    )
+
 def canonical_wildcard_hostname_mask(value: str) -> str | None:
     """校验并转为小写的 DNS 主机名通配模式。"""
     if not value or value != value.strip() or len(value) > 253:
@@ -909,6 +974,9 @@ def looks_like_native_network_filter_rule(
         return True
 
     if dns_semantics:
+        # A DNS source may embed a complete network rule, including valid resource modifiers.
+        if has_portable_network_modifier_syntax(candidate):
+            return True
         # Raw DNS hostname masks, single-pipe anchors, and unscoped patterns must be adapted.
         if "://" in pattern_candidate:
             return True
@@ -1502,6 +1570,8 @@ def compile_fetched_sources(
             if source.kind in {"adblock", "dns", "cname"} and line and not is_comment_or_header(line)
             else None
         )
+        if not target_exclusion_reason and source.kind == "dns":
+            target_exclusion_reason = detect_dns_target_incompatible_rule(line)
         if target_exclusion_reason:
             summary.target_excluded_rules += 1
             state.target_exclusions.append({
@@ -1813,6 +1883,16 @@ def run_regression_tests() -> None:
           dns_state.summaries[dns_source.url].status, "ok")
     check("unsupported syntax was not silently discarded",
           len(dns_state.issues), 0)
+
+    dns_address_source = Source("https://example.invalid/dns-addresses.txt", "dns")
+    dns_address_state = compile_fetched_sources(
+        [(dns_address_source, f"||{test_ipv4}^\\n/^{test_ipv4_regex}:/\\n")],
+        "chromium-mv3",
+    )
+    check("DNS address/CNAME patterns are target-excluded rather than mistranslated",
+          len(dns_address_state.target_exclusions), 2)
+    check("known DNS address semantic losses are audited instead of parser errors",
+          len(dns_address_state.issues), 0)
 
     native_source = Source("https://example.invalid/native-rules.txt", "adblock")
     native_state = compile_fetched_sources(
