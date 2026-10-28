@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-28 10:38:32 (UTC+8)
-! Total rules: 1780118
+! Generated: 2026-10-28 11:44:38 (UTC+8)
+! Total rules: 1780134
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -153158,6 +153158,7 @@ cluvens.net##.gdpr
 clxgaming.com,noen.at###topButton
 clyp.it##.fixed-banner
 clyp.it#$#.fixed-header { position: relative !important; top: 0 !important; }
+clyro.pl#%#//scriptlet('trusted-click-element', '#clyro-cookie-overlay button[data-clyro-open-settings], #clyro-cookie-overlay button[data-clyro-consent="required"]', '!cookie:clyro_cookie_consent', '1500')
 cm-annulation-operation.com
 cm-fima.com###cookie
 cm.acces-verifcm.com
@@ -469446,6 +469447,7 @@ lte-anbieter.info###cookiedings
 lteitaly.it##.ucp-cookiebanner-wrapper
 ltesting.net##.ltad_1170
 ltesting.net##.ltad_580
+ltglink.lt##.gdpr__cookie-notice
 lth.se##.alert.fixed-bottom
 ltmhomes.org
 ltn.com.tw##.C3.boxTitle
@@ -521248,6 +521250,7 @@ qzzr.com##.QuizResult-text-description-sublabel
 qzzrm.rest
 r-bloggers.com#?#.sb-right > div.sb-widget:has(> div.textwidget input[value="Subscribe"])
 r-bloggers.com#?#.sb-right > div.sb-widget:has(> h4:contains(Sponsors))
+r-kontakt.cz###b4n-cookie-bar
 r-m.de##.privacy-container
 r-m.de##div[data-content="privacy-settings-layer"]
 r-studio.com###pp-info
@@ -529139,6 +529142,7 @@ saalesparkasse.de#$#body.eprivacy_initial_visible { border-top: none!important; 
 saamexe.com##+js(set-local-storage-item, viewedCookieBanner, true)
 saamexe.com#%#//scriptlet('ubo-set-local-storage-item', 'viewedCookieBanner', 'true')
 saarbruecker-zeitung.de#%#//scriptlet("abort-current-inline-script", "consentUrl", "OptanonConsent")
+saarbruecker-zeitung.de#?#div[data-cy="article-content"][data-article-content]:has(aside[data-cy="html-collection"] script:contains(/public/widget/newsletter.js))
 saarbruecker-zeitung.de,volksfreund.de,ga.de##.park-floating-bell
 saas.360.cn##.promotion-entry-logo
 saas.360.cn#$#.home-activity { display: none !important; }
@@ -791025,6 +791029,7 @@ zzzyk.com###Tinfo
 ||aldermore.co.uk/Scripts/Logic/CookieDisclaimer.js$script
 ||aldero.com^
 ||aldero.com^$all
+||aldersnowflake.com^
 ||aldi-whitelabelapp.links.rosieapp.com^
 ||aldinord.tt.omtrdc.net^
 ||aldisued.tt.omtrdc.net^
@@ -816700,6 +816705,7 @@ zzzyk.com###Tinfo
 ||axos-onlinebanking-eight.vercel.app^$all
 ||axotrade.com^
 ||axoxktmvnhtav.site^
+||axoxzlayfunsd.website^
 ||axp.2822news.com^
 ||axp.8newsnow.com^
 ||axp.abc27.com^
@@ -823465,6 +823471,7 @@ zzzyk.com###Tinfo
 ||bdxbtv.icu^
 ||bdxiguaimg.com^$domain=feisucn.net
 ||bdxjnlpkkdfok.site^
+||bdxjtsouxioiu.online^
 ||bdxnc.com^
 ||bdxoxo.libraccio.it^
 ||bdxwfvlszerxbi.com^
@@ -835554,6 +835561,7 @@ zzzyk.com###Tinfo
 ||bkfhvpacslvjh.site^
 ||bkflybitzrqic.site^
 ||bkgclwupffqez.site^
+||bkgwadxzovl.com^
 ||bkgzynoggdslv.website^
 ||bkhhmyjvmfgxg.online^
 ||bkhpdrblv.com^
@@ -1380749,6 +1380757,7 @@ zzzyk.com###Tinfo
 ||j694fx3bp.com^
 ||j6gi9jgjpb.com^
 ||j6ox2vwcgcsbnlzf.test.partner.net.daraz.com^
+||j6p16brvni61il8.rest^
 ||j6ql5.x4o1ifg2kpyb1zyvf9m9t.cfd^
 ||j6qwenoer2f6cilc.10-marketing.net.daraz.com^
 ||j6qwenoer2f6cilc.azure.net.daraz.com^
@@ -1402148,6 +1402157,7 @@ zzzyk.com###Tinfo
 ||kuqwennlogin.webflow.io^$all
 ||kurabbitmq-partner.net.daraz.com^
 ||kurakura21.space/js/baf.js
+||kurdiapygiitedder.qpon^
 ||kurepository-partner.net.daraz.com^
 ||kureshnameshindex.firebaseapp.com^
 ||kureshnameshindex.firebaseapp.com^$all
@@ -1411275,6 +1411285,7 @@ zzzyk.com###Tinfo
 ||leseffetdehihjq002sqf.web.app^$all
 ||leserservice-tracking.de^
 ||leserservice-tracking.de^$third-party
+||leserservice.saarbruecker-zeitung.de/public/widget/newsletter.js
 ||leseweb.dk/rawfiles/extern2.min.js$all
 ||leseweb.dk/rawfiles/extern3.min.js$all
 ||leseweb.dk/script/indi5gckx4v6uff54fky.js$all
@@ -1685877,6 +1685888,7 @@ zzzyk.com###Tinfo
 ||tgxpdr.icu^
 ||tgxutuzbtjlmq.space^
 ||tgxvdtsgyownn.space^
+||tgymblctvsdue.space^
 ||tgzbb.nixon.com^
 ||tgzkar.sawyertwain.com^
 ||th-go.experian.com^
@@ -1686027,6 +1686039,7 @@ zzzyk.com###Tinfo
 ||thdstatic.com/core/thd-customer/v6.12.1/thd-customer.js$all
 ||thdstatic.com/data-collection/v6.0.117/data-collection.min.js$all
 ||thdstatic.com/experiences/my-homepage/my-homepage.e95ede61f6eec3f57fad.js$all
+||thdzwuoqlqyvx.site^
 ||the-adult-company.com^
 ||the-adult-company.com^$third-party
 ||the-amazing-spider-man2.info^
@@ -1709940,6 +1709953,7 @@ zzzyk.com###Tinfo
 ||u7k6kx4i2ao6.dollargeneral.tt.omtrdc.net^
 ||u7kgr54jr7.ru^
 ||u7lb6db41.com^
+||u7ntvbrt43cw3k2j7je.cfd^
 ||u7u9.com^$third-party
 ||u7ugo0jr3.com^
 ||u7wtgdnqny4ok4uv.co.jp.ssl.sc.tt.omtrdc.net^
@@ -1731944,6 +1731958,7 @@ zzzyk.com###Tinfo
 ||vnyfsdmxmaugb.space^
 ||vnyqemhir.com^
 ||vnyqn.cn^
+||vnzcgvpuwjheo.site^
 ||vnzuedcokblpx.site^
 ||vnzwxk.e-bebek.com^
 ||vo.la/Mi8Uw1a^$all
@@ -1775675,6 +1775690,7 @@ zzzyk.com###Tinfo
 ||zmg15qfvi.com^
 ||zmgod.com^
 ||zmgzerfxzgkeq.online^
+||zmhewrefbyjce.site^
 ||zmhpphp.forum^
 ||zmhsxr.hometogo.com^
 ||zmiarjiioqzvm.site^
