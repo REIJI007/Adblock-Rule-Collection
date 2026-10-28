@@ -492,14 +492,14 @@ def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> s
     for char in inner:
         if escaped:
             if char in {"w", "d"}:
-                safe.append("\\\\" + char)
-            elif char in r".*+?()[]{}|\\^-":
-                safe.append("\\\\" + char)
+                safe.append("\\" + char)
+            elif char in r".*+?()[]{}|\^-":
+                safe.append("\\" + char)
             else:
                 return None
             escaped = False
             continue
-        if char == "\\\\":
+        if char == "\\":
             escaped = True
             continue
         if in_class:
@@ -796,7 +796,7 @@ def looks_like_native_network_filter_rule(
             return False
         regex_body = candidate[1:closing]
         explicit_url_scope = re.search(
-            r"https?\\s*:", regex_body, re.IGNORECASE
+            r"https?\s*:", regex_body, re.IGNORECASE
         ) is not None
         if source_kind == "dns":
             # DNS regex 默认匹配 hostname；只有明确描述 URL 的才允许透传。
@@ -822,7 +822,7 @@ def looks_like_native_network_filter_rule(
     if candidate.startswith("."):
         return False
 
-    if re.fullmatch(r"\\S+", candidate):
+    if re.fullmatch(r"\S+", candidate):
         try:
             ipaddress.ip_address(candidate)
             return False
@@ -876,7 +876,7 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
             return [line], "native-dns"
 
         # 行内注释从空白 + '#' 开始；保留正则/URL 中作为内容的 '#'.
-        line = re.split(r"\\s+#", line, maxsplit=1)[0].strip()
+        line = re.split(r"\s+#", line, maxsplit=1)[0].strip()
         if not line:
             return [], "comment"
 
