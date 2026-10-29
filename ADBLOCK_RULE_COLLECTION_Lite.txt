@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-30 07:36:13 (UTC+8)
-! Total rules: 1406140
+! Generated: 2026-10-30 07:39:02 (UTC+8)
+! Total rules: 1406141
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -475600,6 +475600,7 @@ shop.cosmed.com.tw##div:has(> div:first-child > p:first-child > a[href^="//shop.
 shop.deeper.network#%#//scriptlet('set-session-storage-item', 'ecomsend_pp_already_show250959', 'true')
 shop.driveplaza.com###plg_social_area
 shop.driveplaza.com##div[id$="BnrArea"]
+shop.dropticket.it,secretmag.ru,blog.okko.tv,ferra.ru,jetpacglobal.com,motor.ru#%#//scriptlet('set-local-storage-item', 'cookiesAccepted', 'true')
 shop.dyson.ru##.top-pop-message--cookie
 shop.elbers-hof.de#%#//scriptlet('ubo-set-cookie', 'cb_accepted', '1')
 shop.elbers-hof.de#%#//scriptlet('ubo-set-cookie', 'cb_validCookies', '1')
