@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-29 13:53:20 (UTC+8)
-! Total rules: 1779732
+! Generated: 2026-10-29 14:32:13 (UTC+8)
+! Total rules: 1779741
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -130424,6 +130424,7 @@ beaconstac.com,asics.com###privacy-policy-modal
 beaddiagrams.com##body > .big-wrapper + div[id][class*=" "]
 beaglesecurity.com,opensubtitles.com,eenewseurope.com###share-section
 beaglesecurity.com,uxcel.com##.cookie-banner-wrap
+beam.ai##body > div[style="display: contents;"]:has(.--framer-cookie-banner-container)
 beam.co.uk##+js(trusted-click-element, div#preferences_prompt_submit, , 750)
 beam.co.uk##+js(trusted-click-element, div.privacy-more-information, , 600)
 beamauthentic.com##.show.sticky-nav
@@ -422734,6 +422735,7 @@ freetutorials-us.com##.gad1
 freetutorials-us.com##.ultra-archive-grid
 freetutorialsdownload.online##.herald-sidebar > div[id^="ai_widget-"]
 freetutorialshub.com#?#.theiaStickySidebar > div[id^="custom_html-"]:has(.adsbygoogle)
+freetv.com###gdpr-footer
 freetvsports.xyz##+js(noeval-if, debugger)
 freeupscmaterials.org###ez-feature-top-container-wrap
 freeupscmaterials.org##nav + .gb-container .gb-inside-container:has(.code-block > center > a[target="_blank"] > img)
@@ -435145,7 +435147,6 @@ hakone-japan.com###SideSocial
 hakuto.co.jp###assist-cookie
 halara.*,thehalara.*###email-subscription-bar
 halara.*,thehalara.*###emailSubscriptionWarp
-halara.*,thehalara.*###set_cookies_module
 halara.*,thehalara.*##a[id^="observerImg"][href^="https://halara.onelink.me/"]
 halara.*,thehalara.*#%#//scriptlet('trusted-set-cookie', 'setting_cookies_data', '-1')
 halara.com###set_cookies_module
@@ -525075,6 +525076,7 @@ res-va.web.app
 res210.servconfig.com
 res23.pro
 res7108542.pro
+rescana.com,gamebook.pl,hessian.sh,walconmarine.com,carbongap.org,vaultimate.net,onebrand.company,artemislifemedicine.com,crusade.com.sg,nexusacademyuk.com,ampravda.ru,myownconference.com,amibeingpwned.com,paysend.com,formbyeats.co.uk,code.market,propelmusic.co.nz,lagless.gg,sotellus.com,abetterrouteplanner.com,eyou.social,getedumail.com,digiparser.com,gemini.com##div[aria-label="Cookie consent"]
 reschiastudios.com
 rescoeup.firebaseapp.com
 rescoeup.web.app
@@ -757180,6 +757182,7 @@ zzzyk.com###Tinfo
 ||8ndpoint.com/usermetrics.js$all
 ||8nkqg8j1iyn2vl63q2wbncx6x7b4m42f6p.cfd^
 ||8nqp2.ur5tyhny69q53nntcz.cyou^
+||8nqye9t119qtlmv8pc6ry8.rest^
 ||8nsjeojtibz84aa7.net.daraz.com^
 ||8nvavri5ptjk25w2.net.daraz.com^
 ||8o1-cil-p35-7ywss9-mwhnd.pages.dev^
@@ -791747,6 +791750,7 @@ zzzyk.com###Tinfo
 ||alpixtrack.com/alphpixel.js$all
 ||alpixtrack.com^
 ||alpixtrack.com^$third-party
+||alpjlqibxyerhb.com^
 ||alpyvupjggczt.space^
 ||alqbyte.com^
 ||alquiler.aldflex.es^
@@ -1396112,6 +1396116,7 @@ zzzyk.com###Tinfo
 ||kkhassociates.net.daraz.com^
 ||kkhq.actonservice.com^
 ||kkhydudga4ihy.adastria.tt.omtrdc.net^
+||kkiawwtir.in^
 ||kkjapan2.pepboys.tt.omtrdc.net^
 ||kkjdksdklkdslel.weebly.com^
 ||kkjdksdklkdslel.weebly.com^$all
@@ -1479272,6 +1479277,7 @@ zzzyk.com###Tinfo
 ||nadyascloset.us13.list-manage.com^$all
 ||nae2.emailviae2ion.uae2.net.daraz.com^
 ||naebodyeyes.com^
+||naedumqqunjyn.space^
 ||naeeo.zogics.com^
 ||naegaithumoreragau.qpon^
 ||naeietrjpjfng.space^
@@ -1491194,6 +1491200,7 @@ zzzyk.com###Tinfo
 ||nxnxnddjjk12323442.weebly.com^
 ||nxnxnddjjk12323442.weebly.com^$all
 ||nxovay.fo-online.jp^
+||nxpbhvgwxtpdw.site^
 ||nxprime.in/ads
 ||nxprqibx.seesubiaco.com.au^
 ||nxpuap.job-con.jp^
@@ -1687622,6 +1687629,7 @@ zzzyk.com###Tinfo
 ||tim.nextinpact.com^
 ||tim.webtim.si^
 ||timanigriped.qpon^
+||timbalschinookternar.qpon^
 ||timbresthump.qpon^
 ||timbuk2.com.de^$all
 ||timcard25.airmiles.ca^
@@ -1766330,6 +1766338,7 @@ zzzyk.com###Tinfo
 ||y216075.ppp.tt.omtrdc.net^
 ||y219038.ppp.tt.omtrdc.net^
 ||y220190.ppp.tt.omtrdc.net^
+||y22erxf4rvklk4o.cfd^
 ||y254191.ppp.tt.omtrdc.net^
 ||y255013.ppp.tt.omtrdc.net^
 ||y28pcxblct008.tt-qe2.omtrdc.net^
