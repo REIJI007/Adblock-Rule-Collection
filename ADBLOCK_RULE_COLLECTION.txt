@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-29 18:01:04 (UTC+8)
-! Total rules: 1779813
+! Generated: 2026-10-29 18:13:10 (UTC+8)
+! Total rules: 1779823
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -110778,6 +110778,7 @@ adbeat.com#$#body.modal-open { overflow: auto !important; padding-right: 0 !impo
 adblock-tester.com##embed[width="240"]
 adblock-tester.com##object[width="240"]
 adblock.turtlecute.org##.notice_stack > a[rel$="sponsored"]
+adblock.turtlecute.org##.notice_stack > button[data-umami-event*="banner"]
 adblockeronstape.*,adblockplustape.*,adblockstreamtape.*,adblockstrtape.*,adblockstrtech.*,adblocktape.*,advertape.net,advertisertape.com,antiadtape.*,gettapeads.com,noblocktape.*,stapadblockuser.*,stape.*,strcloud.*,streamadblocker.*,streamadblockplus.*,streamnoads.com,streamta.*,streamtape.*,streamtapeadblockuser.*,strtape.*,strtapeadblock.*,strtapeadblocker.*,strtpe.*,tapeadsenjoyer.com,tapeadvertisement.com,tapeantiads.com,tapeblocker.com,tapelovesads.org,tapenoads.com,tapepops.com,tapewithadblock.org,tpead.net,watchadsontape.com##^script:has-text(/WebAssembly|forceunder/)
 adblockeronstape.*,adblockplustape.*,adblockstreamtape.*,adblockstrtape.*,adblockstrtech.*,adblocktape.*,advertape.net,advertisertape.com,antiadtape.*,gettapeads.com,noblocktape.*,stapadblockuser.*,stape.*,strcloud.*,streamadblocker.*,streamadblockplus.*,streamnoads.com,streamta.*,streamtape.*,streamtapeadblockuser.*,strtape.*,strtapeadblock.*,strtapeadblocker.*,strtpe.*,tapeadsenjoyer.com,tapeadvertisement.com,tapeantiads.com,tapeblocker.com,tapelovesads.org,tapenoads.com,tapepops.com,tapewithadblock.org,watchadsontape.com##+js(nosiif, adblock)
 adblockeronstape.*,adblockplustape.*,adblockstreamtape.*,adblockstrtape.*,adblockstrtech.*,advertape.net,advertisertape.com,antiadtape.*,gettapeads.com,noblocktape.*,shavetape.*,stapadblockuser.*,stape.*,strcloud.*,streamadblocker.*,streamadblockplus.*,streamnoads.com,streamta.*,streamtape.*,streamtapeadblock.*,streamtapeadblockuser.*,strtape.*,strtapeadblock.*,strtapeadblocker.*,strtapewithadblock.*,strtpe.*,tapeadsenjoyer.com,tapeadvertisement.com,tapeantiads.com,tapeblocker.com,tapelovesads.org,tapenoads.com,tapepops.com,tapewithadblock.org,watchadsontape.com##+js(aopr, Adcash)
@@ -737622,6 +737623,7 @@ zzzyk.com###Tinfo
 ||60aaf9c6.salamanderprocessing.pages.dev^$all
 ||60ah.com^
 ||60cjstatic.wow-classic.com/assets/application-*.js
+||60cxjeiyq.com^
 ||60q206suzjw85ads.net.daraz.com^
 ||60sx61lhnnotijga.administrator.net.daraz.com^
 ||61.0.44.251$all
@@ -744583,6 +744585,7 @@ zzzyk.com###Tinfo
 ||6a0ocfj6rjt42z99.twtelecom.net.daraz.com^
 ||6a2596e48d.com^
 ||6a4876c08c.com^
+||6a4oabslx.com^
 ||6a575669-94eb-45e9-a5bc-233748f18528-00-1k1l58kvcn9w4.riker.replit.dev^
 ||6a575669-94eb-45e9-a5bc-233748f18528-00-1k1l58kvcn9w4.riker.replit.dev^$all
 ||6a5pwlafb373q0eo.azure.net.daraz.com^
@@ -817965,6 +817968,7 @@ zzzyk.com###Tinfo
 ||bcfnxxdrmzbpi5cc.partner.nautilus.net.daraz.com^
 ||bcfrmjrhbshgui.com^
 ||bcftrk.novuna.co.uk^
+||bcfykbmrntjwj.space^
 ||bcg.com.edgekey.net/resource/0000018f-e39d-d615-a5df-f39fa8390000/496.d1150ba37b661871bf38.js$all
 ||bcg.com.edgekey.net/resource/0000018f-e39d-d615-a5df-f39fa8390000/848.563ace2e6ebbe1303ad8.js$all
 ||bcg.geleidehond.be^
@@ -1250156,6 +1250160,7 @@ zzzyk.com###Tinfo
 ||ghackbalid3.click.s11.sfmc-osl.com^
 ||ghacks.net/statics/px.gif
 ||ghaftmemko.shop^$all
+||ghajwnobhfsb.com^
 ||ghana-post.bond^$all
 ||ghanapost.my.id^$all
 ||ghastlyejection.com^
@@ -1354422,6 +1354427,7 @@ zzzyk.com###Tinfo
 ||iaasn00126770.accountb2b-oceania-exchangedns.tt-stage1.omtrdc.net^
 ||iaasn00127372.accountbac2.tt-stage-ci1.omtrdc.net^
 ||iaasn00127379.accountchef-api-backup-s3-cache-production.tt.omtrdc.net^
+||iaaujulvsclwy.space^
 ||iab8443ec68bdc42e3be5b28fde4583809.myavlive.com^
 ||iabao.com/sladewap.js
 ||iabdly.hoselink.com.au^
@@ -1411706,6 +1411712,7 @@ zzzyk.com###Tinfo
 ||libst291.mmspdistribe.tt.omtrdc.net^
 ||libstat.com^
 ||libstat.com^$third-party
+||libsunakite.cfd^
 ||libsyn.com/assets/vendor-c69516f0.js$all
 ||libsyn.com/p/assets/platform/websuite/js/jquery.smartmenus.js$all
 ||libtl.com^
@@ -1472176,6 +1472183,7 @@ zzzyk.com###Tinfo
 ||mootedacouchy.com^
 ||mootermedia.com^
 ||moothearing.com^$all
+||mootmancrouton.cyou^
 ||mootoon.co.kr$removeparam=in_id
 ||mootwombsteeple.com^
 ||mop.com/js/common/watermark.js
@@ -1759825,6 +1759833,7 @@ zzzyk.com###Tinfo
 ||wylqafraq7.com^
 ||wymcloud.love^
 ||wymimtskbceow.space^
+||wymiqruqkyjeu.website^
 ||wymotefurdel.qpon^
 ||wymuxgvyjwmraqn.net^
 ||wyndham.tt.omtrdc.net^
@@ -1767862,6 +1767871,7 @@ zzzyk.com###Tinfo
 ||yeahmobi.com^
 ||yeahmobi.com^$third-party
 ||yeahteesmile.com^$all
+||yeanedtelexesmantid.cyou^
 ||yeappsvisionnceappsvisionncook.neappsvisionutilus.net.daraz.com^
 ||year-plate.net.daraz.com^
 ||year.celcomaxiata.tt.omtrdc.net^
