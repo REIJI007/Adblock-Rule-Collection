@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-30 06:49:40 (UTC+8)
-! Total rules: 1783198
+! Generated: 2026-10-30 07:39:21 (UTC+8)
+! Total rules: 1783205
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -534740,6 +534740,7 @@ shop.cosmed.com.tw##div:has(> div:first-child > p:first-child > a[href^="//shop.
 shop.deeper.network#%#//scriptlet('set-session-storage-item', 'ecomsend_pp_already_show250959', 'true')
 shop.driveplaza.com###plg_social_area
 shop.driveplaza.com##div[id$="BnrArea"]
+shop.dropticket.it,secretmag.ru,blog.okko.tv,ferra.ru,jetpacglobal.com,motor.ru#%#//scriptlet('set-local-storage-item', 'cookiesAccepted', 'true')
 shop.dyson.ru##.top-pop-message--cookie
 shop.elbers-hof.de##+js(set-cookie, cb_accepted, 1)
 shop.elbers-hof.de##+js(set-cookie, cb_validCookies, 1)
@@ -841264,6 +841265,7 @@ zzzyk.com###Tinfo
 ||brandcalb.net.mydays.de^
 ||brandcalb.usbank.tt.omtrdc.net^
 ||brandcar21.net.daraz.com^
+||brandcasters.com^
 ||brandcdn-origin-aws.tt.omtrdc.net^
 ||brandcdn.com/pixel/
 ||brandcdn.com/pixel/cv_pixel.js$all
@@ -1348083,6 +1348085,7 @@ zzzyk.com###Tinfo
 ||holtruck8.tt.omtrdc.net^
 ||holuagency.top^
 ||holx-bsh-de-ua-aks-poc2-f3e67543.myavlive.com^
+||holxlriacffphq.com^
 ||holy-push.com^$all
 ||holy-ruddy-brace.glitch.me^
 ||holy-ruddy-brace.glitch.me^$all
@@ -1543487,6 +1543490,7 @@ zzzyk.com###Tinfo
 ||qvkweketjnnfu.space^
 ||qvlaccdtxdrsi.site^
 ||qvlcdw.ho-br.com^
+||qvlrnkoedioux.online^
 ||qvlvz.alphaindustries.com^
 ||qvmclq.vivido.net^
 ||qvmucs.abluestore.com^
@@ -1637137,6 +1637141,7 @@ zzzyk.com###Tinfo
 ||sht.sparkhormonetherapy.com^
 ||sht7.com^
 ||sht87.com^
+||shticksmares.cyou^
 ||shticksyahuna.com^
 ||shtipukdnuusx.site^
 ||shtptt.cupshe.com^
@@ -1736667,6 +1736672,7 @@ zzzyk.com###Tinfo
 ||vub-appsk.web.app^$all
 ||vubamm.corso101.com^
 ||vubcp.bondno9.com^
+||vubhmskprvebn.online^
 ||vubmzx.com^
 ||vuclrlmqpq3wjbwv.net.daraz.com^
 ||vuclrlmqpq3wjbwv.tt.omtrdc.net^
@@ -1745283,6 +1745289,7 @@ zzzyk.com###Tinfo
 ||whiskerlake.com^
 ||whiskersbiographypropulsion.com^$all
 ||whiskerspeppersane.com^
+||whiskeyoportodasyure.qpon^
 ||whiskeypatrol.com^$all
 ||whiskyqueue.com^
 ||whisla.com^
