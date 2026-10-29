@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-29 18:06:46 (UTC+8)
-! Total rules: 1406109
+! Generated: 2026-10-29 18:12:31 (UTC+8)
+! Total rules: 1406110
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -95077,6 +95077,7 @@ adbeat.com#$#body.modal-open { overflow: auto !important; padding-right: 0 !impo
 adblock-tester.com##embed[width="240"]
 adblock-tester.com##object[width="240"]
 adblock.turtlecute.org##.notice_stack > a[rel$="sponsored"]
+adblock.turtlecute.org##.notice_stack > button[data-umami-event*="banner"]
 adblockplus.org###cookiebar
 adblockplus.org###social-list
 adblockplus.org,tinkercad.com#$##navbar { position: absolute !important; top: 0 !important; }
