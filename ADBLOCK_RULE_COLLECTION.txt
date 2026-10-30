@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-30 10:19:01 (UTC+8)
-! Total rules: 1778884
+! Generated: 2026-10-30 11:01:37 (UTC+8)
+! Total rules: 1778898
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -162905,8 +162905,13 @@ deeplearning.ai#?##content > div.py-16:has(> section#subscribe)
 deeplearning.ai#?#aside.flex-col > div.flex:has(> div.flex > div.text-sm + div:contains(Share))
 deeplearning.ai#?#aside.flex-col > div.relative:has(> span + a[href^="https://www.deeplearning.ai/resources/"])
 deeplol.atlassian.net,bitbucket.org##div[aria-labelledby="cookiesTrackingNoticeLink"]
+deeplol.gg###billboard
 deeplol.gg###center_content_bottom_ad_box
 deeplol.gg###champion_content_bottom_ad_box
+deeplol.gg###content-container > div[class*=" "] > div > div[class*=" "] > div[class*=" "] > div[class*=" "]:has(> div:not([class]):only-child:empty)
+deeplol.gg###desktop-takeover
+deeplol.gg###summoner_content_box > div:not([class]) div[class]:has(> a[target="_blank"] > img[src^="./images/ad/"])
+deeplol.gg##.p__info > div[class]:has(> div:not([class]):only-child:empty)
 deeplol.gg##div[data-ad]
 deepmind.com#?#body > div > div.c_cms_content__meta__container:has(> div.c_cms_content__meta__wrapper > ul > li.c_blog_content__meta__share_item)
 deepp--bssniiees--674838.start.page
@@ -805821,6 +805826,7 @@ zzzyk.com###Tinfo
 ||aurangcohostsbillons.cyou^
 ||auraodin.com^
 ||aurapurify-ss.olladeals.com^
+||aurasmorisco.cfd^
 ||aurasport.net^
 ||auravibes04ko.shop^
 ||auravibes04ko.shop^$all
@@ -896250,6 +896256,7 @@ zzzyk.com###Tinfo
 ||csmoonrise.pro^
 ||csmstaging-stageconbert2mp3.net.daraz.com^
 ||csmt3455.tt.tt.omtrdc.net^
+||csmvsosefwowj.space^
 ||csmzticvczsrs.online^
 ||csn-message-service-web-int.accountb2b-oceania-exchangedns.tt-stage1.omtrdc.net^
 ||csn-microsite-service.tt.omtrdc.net^
@@ -1340644,6 +1340651,7 @@ zzzyk.com###Tinfo
 ||hersheypa.com/assets/cdn/js/jquery-3.6.0.min.js$all
 ||hersheypa.com/assets/cdn/js/moment-2.29.4.min.js$all
 ||hersheys.tt.omtrdc.net^
+||herspqrsawohn.site^
 ||hersre2.digitalpublishing.tt.omtrdc.net^
 ||herten.calderacademie.nl^
 ||hertharaimondi.github.io^$all
@@ -1343467,6 +1343475,7 @@ zzzyk.com###Tinfo
 ||hoafot.itoman.com^
 ||hoagie94.s3.eu-central-003.tt.omtrdc.net^
 ||hoakhoithanhlichmamnon9999.weebly.com^
+||hoamingurus.cfd^
 ||hoamt60fa.com^
 ||hoamunich.go-static.info^
 ||hoanewto.brianho.tt.omtrdc.net^
@@ -1397870,6 +1397879,7 @@ zzzyk.com###Tinfo
 ||kphxk.jaxxliving.com^
 ||kpi.mysoberhome.nl^
 ||kpi.oprotocolodereversao.online^
+||kpigpglvlxlhi.online^
 ||kpihmqz3bq9kkvz4.docs.net.daraz.com^
 ||kpihmqz3bq9kkvz4.net.daraz.com^
 ||kpirog.com^
@@ -1417832,6 +1417842,7 @@ zzzyk.com###Tinfo
 ||lkr.reply.eu^
 ||lkremqcsocetq.online^
 ||lkrhtt.gogojungle.co.jp^
+||lksauxpdfzhzg.online^
 ||lksbnrs.com^
 ||lksda.com^
 ||lksdtq-zucw-lg6l6-906-bit.pages.dev^
@@ -1440061,6 +1440072,7 @@ zzzyk.com###Tinfo
 ||loudwire.com/internal-ad-api/
 ||loufile.ru^
 ||louhu.com/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js$all
+||louiesphase.com^
 ||louimg.com/i/2021/08/17/*.gif
 ||louimg.com/u/20191214/17512133.jpg
 ||louisan.cn^
@@ -1539207,6 +1539219,7 @@ zzzyk.com###Tinfo
 ||qutxn5vpe4j0u37k.doclogin.net.daraz.com^
 ||qutyan8848.com^
 ||quu175kt3.com^
+||quuacgfqxizsq.online^
 ||quuawwsijimlf.website^
 ||quudraidfg.com^
 ||quueeswrbyjqg.space^
@@ -1649187,6 +1649200,7 @@ zzzyk.com###Tinfo
 ||sqovyrwommzik.online^
 ||sqpengg.com^
 ||sqpengg.com^$all
+||sqpiyvemxlxgi.site^
 ||sqpvnivabieye.site^
 ||sqpwzuvlvxpkn.site^
 ||sqpyclvkzpgnw.space^
