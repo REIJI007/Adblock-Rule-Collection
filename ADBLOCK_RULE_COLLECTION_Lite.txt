@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-10-31 00:38:13 (UTC+8)
-! Total rules: 1405900
+! Generated: 2026-10-31 00:39:28 (UTC+8)
+! Total rules: 1405907
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -140741,9 +140741,15 @@ easywintergarten.de###chc-cookiehint-modal
 easywintergarten.de#%#//scriptlet('ubo-set-cookie', 'chcCookieHint', '1', '', 'reload', '1')
 eater.com##.adblock-whitelist-messaging__article-wrapper
 eater.com##.c-toaster-stuck.c-toaster-active.c-toaster
+eater.com##.duet--ledes--standard-lede-bottom
 eater.com##[data-concert="desktop_network_river"]
+eater.com##div[data-concert="connatix_right_rail"]
+eater.com##div[data-concert="medium_rectangle_gamestop_desktop"]
+eater.com##div[data-concert="medium_rectangle_variable"]
 eater.com#$#.l-header + .l-wrapper, .l-header + style + .l-wrapper { margin-top: 0 !important; }
+eater.com,bluebirdbanter.com##.duet--navigation--pmc-privacy-banner
 eater.com,polygon.com,racked.com,recode.net,sbnation.com,vox.com###chorus_notifiations
+eater.com,polygon.com,theverge.com##.duet--cta--newsletter
 eater.com,sbnation.com##[data-concert="frontpage_hero_desktop"]
 eater.com,sbnation.com##[data-concert="medium_rectangle_variable_home"]
 eater.com,sbnation.com##[data-native-ad-id="container"]
@@ -379878,6 +379884,7 @@ eventernote.com##.gb_social
 eventfrog.ch###tf-modal-container
 eventfrog.ch,eventfrog.de###tf-modal-container
 eventfrog.de###tf-modal-container
+eventings.de,wngstore.com,chopincompetition.pl,chatlab.com,mangodeveloper.com,nelvix.xyz,update.kia.com,aa.com.tr##.fixed.inset-0
 eventix.io##.ot-cookies
 evently.pl#%#//scriptlet('trusted-set-cookie', 'evently_cookie_settings', '%7B%22necessary%22%3Atrue%2C%22analytics%22%3Afalse%2C%22marketing%22%3Afalse%7D')
 evently.pl#@#.cookie-consent-banner
