@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-01 21:50:42 (UTC+8)
-! Total rules: 1769355
+! Generated: 2026-11-01 23:28:27 (UTC+8)
+! Total rules: 1769380
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -447211,6 +447211,7 @@ instargam.kz
 instasexyblog.com##.banner-spot
 instastory.net##div[class^="adp"]
 instaunlockacc.ddns.net
+instavipclub.com>>##+js(rmnt, script, /HTMLAllCollection|popundersPerIP|referrerPolicy|WebAssembly/)
 instinctcoder.com##div[id^="ppsPopup"]
 instinto26.pt
 institucional.tauste.com.br##.upflight-cookies
@@ -468821,10 +468822,10 @@ lula.com.br##.share-bt
 lulacloud.com##+js(aost, Object.defineProperty, https)
 lull.com###chat-box
 lulobank.digiventures.la
-lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvid.com##+js(acs, WebAssembly, Promise)
-lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvid.com##+js(acs, document.write, unescape)
-lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvid.com##+js(rmnt, script, /detect/i)
-lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvid.com##+js(rmnt, script, /h=decodeURIComponent|popundersPerIP/)
+lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvido.com,luluvid.com##+js(acs, WebAssembly, Promise)
+lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvido.com,luluvid.com##+js(acs, document.write, unescape)
+lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvido.com,luluvid.com##+js(rmnt, script, /HTMLAllCollection|popundersPerIP|referrerPolicy|WebAssembly/)
+lulu.st,lulust.com,lulustream.com,lulustream.live,luluvdo.com,luluvido.com,luluvid.com##+js(rmnt, script, /detect/i)
 lulu0.ovh,goodstream.one#%#//scriptlet('remove-node-text', 'script', 'showADBOverlay')
 lulu0.ovh,goodstream.one$$script:contains(showADBOverlay)
 lulu0.ovh,luluvdoo.com,luluvido.com,luluvdo.com##body > div[style="position: fixed; inset: 0px; z-index: 2147483647; background: transparent; cursor: pointer;"]
@@ -739627,6 +739628,7 @@ zzzyk.com###Tinfo
 ||7hacks.com^
 ||7hbz.com^
 ||7hbz.com^$all
+||7hc5zpcv6.com^
 ||7hdl8dlfjm4g.www.cybernetman.com^
 ||7hjb8.com^*.php
 ||7hkzkx6ypndn.com^$all
@@ -783298,6 +783300,7 @@ zzzyk.com###Tinfo
 ||anedot.com/assets/donation-page-view-Ddr98cvB.js$all
 ||anedot.com/assets/env-zrktw8-a.js$all
 ||anedot.com/assets/index-SIhfCHQP.js$all
+||anedvzkjfgrw.com^
 ||aneguftwymwfg.store^
 ||anelsonidocs-winter.net.daraz.com^
 ||anemiachoky.com^
@@ -857302,6 +857305,7 @@ zzzyk.com###Tinfo
 ||clearfield.net.daraz.com^
 ||clearfield.tt.omtrdc.net^
 ||cleargenetics.nissanheliosna.tt.omtrdc.net^
+||cleargit.com^
 ||clearhello.com/js/clear_hello.js$all
 ||clearing.brinker.tt.omtrdc.net^
 ||clearlogs.tt.omtrdc.net^
@@ -950106,6 +950110,7 @@ zzzyk.com###Tinfo
 ||egeduyuru.tt.omtrdc.net^
 ||egee.harleyprivatedental.co.uk^
 ||egellocstneduts.tt.omtrdc.net^
+||egencesilker.qpon^
 ||egencia.abcam.tt.omtrdc.net^
 ||egencia.discover.tt.omtrdc.net^
 ||egencia.restaurantcom.tt.omtrdc.net^
@@ -1233562,6 +1233567,7 @@ zzzyk.com###Tinfo
 ||genieessp.jp^$third-party
 ||genieesspv.jp^
 ||genieesspv.jp^$third-party
+||genieprosescherzi.qpon^
 ||genipspillion.com^
 ||genishury.pro^$popup
 ||genius.com$domain=washingtonpost.com
@@ -1314985,6 +1314991,7 @@ zzzyk.com###Tinfo
 ||gqlpiot.net.daraz.com^
 ||gqltk.rebeccataylor.com^
 ||gqlws.net.daraz.com^
+||gqmeltvok.com^
 ||gqmuky.kaigonohonne.com^
 ||gqnet.daraz.net.daraz.com^
 ||gqo10ffbzre.tt.omtrdc.net^
@@ -1324159,6 +1324166,7 @@ zzzyk.com###Tinfo
 ||gtplite.tt.omtrdc.net^
 ||gtpoc.flowo.com^
 ||gtpso.com/Home/TopSdk/getFavCoupItems
+||gtpszlaxssynd.site^
 ||gtpxgg.nacesty.cz^
 ||gtqkag.madeleine-fashion.be^
 ||gtqup.casparasports.com^
@@ -1384911,6 +1384919,7 @@ zzzyk.com###Tinfo
 ||kefan.info^
 ||kefeng56.com^$third-party
 ||kefiricoxalate.com^
+||kefssashery.cyou^
 ||kegbvaptaaeyy.site^
 ||kegll5mwl2.com^
 ||kegpjgnbjmnrh.space^
@@ -1386723,6 +1386732,7 @@ zzzyk.com###Tinfo
 ||kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js$all
 ||kjuteddoluinter.weebly.com^
 ||kjuteddoluinter.weebly.com^$all
+||kjvnmnogvptik.space^
 ||kjwbjnxpc.com^
 ||kjwx8.com^
 ||kjxmcn.eset.com^
@@ -1401642,6 +1401652,7 @@ zzzyk.com###Tinfo
 ||lgtm.littlejuels.com^
 ||lgu7in90o.com^
 ||lguhcerbqufqc.website^
+||lguibpqlzunxn.space^
 ||lgujmoikutaid.site^
 ||lgunuddjobkyl.online^
 ||lguplus.goldenplanet.co.kr^
@@ -1428808,6 +1428819,7 @@ zzzyk.com###Tinfo
 ||locopar.com^$popup
 ||locotomato.com/_next/static/chunks/turbopack-0vu.pkofcyvjp.js$all
 ||locotrack.net^$third-party
+||locowater.com^
 ||locpull-bd-drzlivelhost.ppull-bd-drzliveyment.net.daraz.com^
 ||locregionclhost.pregioncyment.net.daraz.com^
 ||locsapi.lib-ht-1.net.daraz.com^
@@ -1441318,6 +1441330,7 @@ zzzyk.com###Tinfo
 ||mangakoma.net/ajax/manga/view
 ||mangaku.live^$all
 ||mangalove.me/images/app_yuudou.png
+||mangamad.com^
 ||manganato.gg/images/bns/common/shirley.png
 ||manganato.gg/js/ads/
 ||manganato.gg/js/ads/clck-adu-ntgg.js
@@ -1459333,6 +1459346,7 @@ zzzyk.com###Tinfo
 ||mkpes-stagingmr.net.daraz.com^
 ||mkpes-stagingstage.ytmp4.net.daraz.com^
 ||mkpes-stagingstaging-mr.net.daraz.com^
+||mkpk53re94zfkeql2cy42mb.cfd^
 ||mkpl9k9taqi12.accountapilegacy-databasevpn.tt-stage3.omtrdc.net^
 ||mkpqcbr.com^
 ||mkpqcbr.com^$all
@@ -1481591,6 +1481605,7 @@ zzzyk.com###Tinfo
 ||nxkyiwh.com^
 ||nxl791.com^
 ||nxlqtogxebdgs.site^
+||nxmovllgwvgfm.space^
 ||nxmpmugazsghw.website^
 ||nxmqgoxazvcwc.space^
 ||nxmsiuptjboqj.space^
@@ -1483525,6 +1483540,7 @@ zzzyk.com###Tinfo
 ||oesonx.10000recipe.com^
 ||oespn.com^$all
 ||oessbi.yves-rocher.ru^
+||oestfjly.com^
 ||oestpq.com^
 ||oestrumreswillfrazing.qpon^
 ||oesxlp.atlasformen.co.uk^
@@ -1501727,6 +1501743,7 @@ zzzyk.com###Tinfo
 ||pf.a23.in^
 ||pf.intuit.com^
 ||pf.newegg.com^
+||pf2r891ic7ch7jiqfjl.rest^
 ||pf34zdjoeycr.com^
 ||pf6tjxbzsl0mjhu-c.adkclicker.fr^
 ||pf6tjxbzsl0mjhu-p.adkclicker.fr^
@@ -1518554,6 +1518571,7 @@ zzzyk.com###Tinfo
 ||pxlvvktn.horizon-liberal.fr^
 ||pxlvvktn.milo-kine.fr^
 ||pxmhwn.wellstore.it^
+||pxmnruzfzondx.online^
 ||pxmzlk.redfin.com^
 ||pxnmeo.mugsyjeans.com^
 ||pxnzwgdyvcaqd.online^
@@ -1596172,6 +1596190,7 @@ zzzyk.com###Tinfo
 ||rhetorischemittel.de^
 ||rhetorischemittel.de^$all
 ||rhexiastarful.qpon^
+||rhghwnwrilmwc.website^
 ||rhgxenlijkggd.website^
 ||rhhahzqblcxem.online^
 ||rhhpp.drinkavaline.com^
@@ -1620929,6 +1620948,7 @@ zzzyk.com###Tinfo
 ||shoesconcierge.jp/shop/*/cookie.
 ||shoeskeleton.com^
 ||shofarscomida.cyou^
+||shofarsfervors.cyou^
 ||shoffree.cc/ajax/get-random-ad.php
 ||shofonline.org/javashofnet/ti.js
 ||shogidojo.net/images/app24_banner.png
@@ -1673291,6 +1673311,7 @@ zzzyk.com###Tinfo
 ||teksykzu.com^
 ||teksykzu.com^$all
 ||tekvox.actonservice.com^
+||tekzezzseaonk.website^
 ||tel-opond.weebly.com^
 ||tel-opond.weebly.com^$all
 ||tel-tel-fie.com^
@@ -1678974,6 +1678995,7 @@ zzzyk.com###Tinfo
 ||tk71mu9u7.com^
 ||tk9998.com^
 ||tka.tiki.vn/pixel/
+||tkaxszeqntbiu.online^
 ||tkb.taximarc-knokke.be^
 ||tkbo.com^
 ||tkbtgedqqopnz.site^
@@ -1696989,6 +1697011,7 @@ zzzyk.com###Tinfo
 ||tuplazaenlinea.bancoplataza.org^$all
 ||tuple.txdot.tt.omtrdc.net^
 ||tuplebar.com^
+||tuplemuscleswoks.cfd^
 ||tupload-ns3ial-lib-ht-1.net.daraz.com^
 ||tuploadaffic-keele-nnw-leis-mc-leis.net.daraz.com^
 ||tuploadliback.net.daraz.com^
@@ -1731868,6 +1731891,7 @@ zzzyk.com###Tinfo
 ||wicket.pw/embeds/icc-cwc.png$image
 ||wickiupacidify.qpon^
 ||wickscindieyeuky.cfd^
+||wicktilled.cyou^
 ||wicmdokqlpdso.space^
 ||wicomicociviccenter.go-static.info^
 ||wicreset.online^
@@ -1767998,6 +1768022,7 @@ zzzyk.com###Tinfo
 ||zyheracles8vncsfovient.net.daraz.com^
 ||zyhx.ltd^
 ||zyhzzhxnlnfdk.site^
+||zyichcksiqhqn.online^
 ||zyifk.cn^
 ||zyihldjutmvmh.online^
 ||zyiis.net^
