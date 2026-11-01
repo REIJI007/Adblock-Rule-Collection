@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-02 06:42:08 (UTC+8)
-! Total rules: 1769511
+! Generated: 2026-11-02 07:16:54 (UTC+8)
+! Total rules: 1769515
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -58989,7 +58989,6 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /120-600-
 /120-600.
 /120_600_
-/120x600-
 /120x600-$image
 /120x600.
 /120x600_
@@ -73474,7 +73473,6 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /page_perf_log?
 /pagead.js^$domain=adblock.turtleneck.com,important
 /pagead/1p-user-list/*$image
-/pagead/conversion.js$script
 /pagead/conversion.js|$script
 /pagecpv/*
 /pagedot.gif?
@@ -137307,6 +137305,7 @@ boyfriendtv.com#$#body { cursor: default; }
 boyfriendtv.com#$#body { cursor:default; }
 boyfriendtv.com#%#//scriptlet('abort-on-property-read', 'backgroundBlack')
 boyfriendtv.com#%#//scriptlet('prevent-addEventListener', 'click', 'interstitial')
+boyfriendtv.com#?#.grid:has(a[href*="faphouse.com"])
 boyfriendtv.com,historydaily.org##.adwrapper
 boyfriendtv.com,pornoxo.com,boyfriend.tv###limitedExperienceNotice
 boyfriendtv3.com##.media-listing-grid > .js-quiet.mtile-x7:has(> .mtile-x7__inner-wrapper a[href^="/zv3/cam"])
@@ -425147,6 +425146,7 @@ gamepadla.com#?#.pMain:has(div:-abp-properties(Partner))
 gamepadla.com#?#.pMain:has(div[class^="asd_"])
 gamepadla.com#?#.pMain:has(div[title="Partner placement"])
 gamepadla.com#?#.pMain:has-text(Partner)
+gamepadla.com#?#.panel-container:has(.media-header-row-item)
 gamepadla.com#?#.sliderBlock:contains(ADS)
 gamepadla.com#?#.sliderBlock:has-text(ADS)
 gamepedia.com###bodyContent:style(width:100%!important)
@@ -564145,10 +564145,7 @@ turo.com##.seo-pages-1h9aax
 turo.com#$#.seo-pages-1bo79dh-NavbarHeader { position: absolute !important; }
 turocu.mywire.org
 turtlecereals.com###SITE_ROOT ~ .siteAspectsContainer
-turtlecute.org##.collab_wrap
 turtlecute.org##.notice_stack > button[role="link"][aria-label]
-turtlecute.org##.sponsor_banner_wrap
-turtlecute.org##a[href^="https://shockvpn.com/?"]
 turtleman.grv961010.pro
 turtleviplay.xyz##+js(aost, document.createElement, openNewTab)
 turtleviplay.xyz##+js(nowoif)
@@ -780728,6 +780725,7 @@ zzzyk.com###Tinfo
 ||amunx.de^$third-party
 ||amused-condition.com^$all
 ||amusedbucket.com^
+||amusedlotus.com^
 ||amusedradish.com^
 ||amusementcombinationconfer.com^$all
 ||amusementfranchise.com^
@@ -1437287,6 +1437285,7 @@ zzzyk.com###Tinfo
 ||macdonald1223d.tt.omtrdc.net^
 ||macdonaldhotelsloyalty.myavlive.com^
 ||macduff.shutterflycom.tt.omtrdc.net^
+||macecuttyscallom.qpon^
 ||macedonia.go-static.info^
 ||macedoniareka.tt.omtrdc.net^
 ||macegroup.tt.omtrdc.net^
@@ -1484830,6 +1484829,7 @@ zzzyk.com###Tinfo
 ||okotoksdonairandpizza.ca^$all
 ||okoulvuvtzurb.site^
 ||okoumegastful.com^
+||okpnormhslnqm.site^
 ||okq2b5zjft.com^
 ||okqefbozkgqvd.website^
 ||okqmc.bloomnu.com^
@@ -1491427,6 +1491427,7 @@ zzzyk.com###Tinfo
 ||owxpzlhikjoyj.store^
 ||owxsolpqxqyiy.space^
 ||owycnls3jhmr60u-p.bonnelectureatous.fr^
+||owytgmalqrefj.website^
 ||owyweb-whatsapp.com^$doc
 ||owyweb-whatsapp.com^$document
 ||owywlwjvvkcjc.site^
@@ -1701274,6 +1701275,7 @@ zzzyk.com###Tinfo
 ||ugwsvh.eurorelogios.com.br^
 ||ugxcvvfmhxjus.space^
 ||ugxlk87yei5lieq8.rest^
+||ugyoqbzzvaoyl.website^
 ||ugytuiciyl.aem.hb.tt.omtrdc.net^
 ||ugzbsu.klimaworld.com^
 ||ugzlf.bossaudio.com^
@@ -1701844,6 +1701846,7 @@ zzzyk.com###Tinfo
 ||ukcampsite.co.uk/banners/
 ||ukchat.co.uk/js/popunder.js
 ||ukchatbottest-test.ukchatbottest-test.tt.omtrdc.net^
+||ukchzmzfeeqsb.space^
 ||ukdefault.19.altad.share.ntv.io^
 ||ukdevilz.com/api/stats?
 ||ukdevilz.com/static/players/*/vast.js
@@ -1767720,6 +1767723,7 @@ zzzyk.com###Tinfo
 ||zuyjlq.24mx.fi^
 ||zuykihipzrmv.com^
 ||zuyloscnskdiu.online^
+||zuyuojwrqarjn.website^
 ||zuza.stefek.szczecin.pl^
 ||zuza.stefek.szczecin.pl^$all
 ||zuzab.com^$third-party
