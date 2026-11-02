@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-02 09:52:28 (UTC+8)
-! Total rules: 1765382
+! Generated: 2026-11-02 10:35:12 (UTC+8)
+! Total rules: 1765389
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -127537,7 +127537,6 @@ baeldung.com#$#body { overflow: visible!important; }
 baeldung.com#$#html { overflow: visible!important; }
 baeldung.com,cheatsheet.com,pcwelt.de,pwinsider.com##+js(rmnt, script, admiral)
 baeldung.com,cheatsheet.com,pcwelt.de,pwinsider.com#%#//scriptlet('ubo-rmnt', 'script', 'admiral')
-baer-original.de,ballhandel.de,myblender.de#%#//scriptlet('set-cookie', 'allowCookie', '1')
 baesystems.com##.twitter-embed
 baeumler-gartentechnik.de,biener-viehhandel.de,blumenecke-online.de,ddtaxi.de,foto-barth.de,gasthof-loebl.de,getraenke-wagner.de,mobiles-saegewerk-tribale.de,otto-mueller-gmbh.de,praxis-dr-hauer.de,rahuebner.de,schmutzkiller-martens.de,schreinerei-geller.de,suedkaelte.com,tischlermeister-hahn.de,torautomatic.de,weinhaus-zum-spielberg.de,xn--gnther-bau-9db.com##.infobar-wrapper
 bafa.de#@##cookiebanner
@@ -427644,7 +427643,6 @@ getavataaars.com#?#.container > div > h4:contains(/^Ads$/)
 getblock.io##._getblock_ui_cookie_1m598_1
 getbukkit.org##.col-md-offset-2 > div.limit
 getbukkit.org##.limit
-getcarv.com,krakow.pl,wieliczka.eu,authgear.com,plantica.pl,bloodbornepc.wiki,transfr.me,learning.ua,anythingmcp.com,schweiker.pl,bazalt.pl,datawrapper.de,czernica.pl,vgwort.de,brasilnippou.com,medcom.com.pl,nothing.community,yourimageshare.com,app.socios.com,mking.pl,cointracker.com,cloro.dev,wasgehtapp.de,kuplio.pl,birdweather.com,frapol.com.pl,eceenerji.com.tr,brdmap.de,denebunu.com,mzyy94.com,eliveshop.de,tabstack.ai,myagd.pl,luxpoint.com.pl,denebunu.com,igs.net.tr,lulek.tv,wolverineworldwide.com,mindmarket.com,ipinfo.io,decormarket.pl,dekory24.pl,pysznekarmy.pl,booktime.pl,darwina.pl,carsystems.eu,ajtrade.pl,vivab2b.pl,ajsklep.pl,hurtowniamultistore.pl,giewontshop.com,lubieklocki.pl,naogrod.pl,elektrohome.pl,koszule-meskie.pl,visciolafashion.com,modaservis.pl,sklep.karolnienartowicz.com,slupskiemeble.pl,yokodesign.pl,ekobruk.pl,skleprzeznika.pl,seatpick.com,izapachy.pl,clinus.pl,voyah.ru,intracom.pl,1twente.nl,fimewc.com,yazio.com,futbalsfz.sk,bts.aero,online.gdu.com.tr,novotel.ba,iuc.edu.tr,comu.edu.tr,w3.sdu.edu.tr,belganewsagency.eu,kofteciyusuf.com,2te-zahnarztmeinung.de,elenianna.com,aspire.dev,formytesla.com,li.sten.to,sign.com,paulistacultural.com.br,wasdland.com,nemzetiarchivum.hu,wooting.io,erzeszow.pl,primepc.pl,steuer-beamte.de,kgm.ru,jetour-ru.com,foton-mbrus.ru,voyah.su,soueast.ru,toyota.ru,gac.ru,fastconvert.co,technologypresswirenetherlands.com,evolute.ru,prnewswire.com,roxybrowser.com,nucba.ac.jp,revenue.mt.gov,mcskincraft.com,makeforms.io,serfloor.com.tr,biletmio.com,lingscars.com,koi.ai,hackmd.io,multipolls.com,alinco.co.jp,niebieskizaulek.pl,nefisyemektarifleri.com,spark-die-klassische-band.de,bisiparis.com,toya.net.pl,mateobar.pl,whoisxmlapi.com,jagapizza.pl,tapasslupsk.com,ytlarge.com,financer.com.ua,trakt.tv,unipegaso.it,escortempire.*,videspratiba.lv,soleretriever.com,healf.com,gameship.io,xzone.pl,givesendgo.com,workstreams.ai,trae.ai,imusic.*,dobrydietetyk.pl,zeno.fm,ratujlaptopa.pl,chat.mistral.ai,subdomains.whoisxmlapi.com,derslig.com,bikeexchange.de,webtv.tv,cargiant.co.uk,r34.app,webtv.sk,rustdesk.com,praha.eu,bdm.pl,mobimatter.com,gl-inet.com,astrowarp.net,gamers-outlet.net,kinnisvara24.ee,costa-coffee.cz,sterbabike.cz,codesandbox.io,xzone.cz,dap.gov.hu,idomsoft.hu,uxpilot.ai,evaluar.com,home.s.id,skubacz.pl,restaumatic.com,any.run,rekinysukcesu.pl,nutrend.pl,app.any.run,financnihra.cz,kurczakiodeliasza.com,kontomaniak.pl,snowboard-online.pl,whitebit.com,nicelocal.com.de,ndsas.sk,trakt.tv,greptime.com,newsinslowfrench.com,happyscribe.com,saaq.gouv.qc.ca###cc-main
 getcertifiedgetahead.com##.et_bloom_flyin_right
 getcoloringpages.com#@#.adsBlock
 getcomics.*##ul.menu > li:not(:has(> a[href^="https://getcomics."]))
@@ -494683,6 +494681,8 @@ nordbayern.de#$?#.frozen-mobile-body { overflow: visible !important; position: a
 nordbayern.de#?#.article__richtext .article__infobox:has(> div[id^="infobox"] > .apester-media)
 nordbayern.de#?#.article__richtext h2:contains(Umfrage)
 nordbayern.de#@#amp-consent
+nordcap.de#%#//scriptlet('set-cookie', 'mnd-cookie-accepted-wwwnordcapde1', '1')
+nordcap.de,nordcap.nl,baer-original.de,ballhandel.de,myblender.de#%#//scriptlet('set-cookie', 'allowCookie', '1')
 nordcap.nl#%#//scriptlet('set-cookie', 'mnd-cookie-accepted-wwwnordcapnl1', '1')
 nordcap.nl,baer-original.de,ballhandel.de,myblender.de#%#//scriptlet('set-cookie', 'allowCookie', '1')
 nordcheckout.com###__next > div > .text-grey-darker
@@ -754538,6 +754538,7 @@ zzzyk.com###Tinfo
 ||aattttttttwebmail.boxmode.io^
 ||aattttttttwebmail.boxmode.io^$all
 ||aatv.app/sport/sport.js
+||aatzjgqewyyhv.site^
 ||aau6.xyz^
 ||aau8.xyz^
 ||aau9.xyz^
@@ -1370167,6 +1370168,7 @@ zzzyk.com###Tinfo
 ||jlffeu.nadula.com^
 ||jlfiber.advancedtech.com^
 ||jlfiszmkxnyfb.site^
+||jlgalnwdwuspz.site^
 ||jlgapp-www01.access.tt.omtrdc.net^
 ||jlgrwmngbzsnapc-p.recettedubonheur.fr^
 ||jlhkumsptbwuz.site^
@@ -1518912,6 +1518914,7 @@ zzzyk.com###Tinfo
 ||qc1h31e8g3zj5q1c.net.daraz.com^
 ||qc6adinoqxfn53x6.nautilus.net.daraz.com^
 ||qc6adinoqxfn53x6.partner.net.daraz.com^
+||qcackvhdtmbeq.site^
 ||qcalq.whirleypopshop.com^
 ||qcbcgeuak8ozqs50.gwyancancook.net.daraz.com^
 ||qcbcgeuak8ozqs50.net.daraz.com^
@@ -1603770,6 +1603773,7 @@ zzzyk.com###Tinfo
 ||scurrypaleron.click^
 ||scut.dmiloppsservizoiarubapagamentosucreti.club^
 ||scut.dmiloppsservizoiarubapagamentosucreti.club^$all
+||scutalriotersungrown.qpon^
 ||scutesneatest.com^
 ||scutsjank.com^
 ||scuttlepopdownload.monster^
@@ -1732133,6 +1732137,7 @@ zzzyk.com###Tinfo
 ||wvluhltwdsaze.space^
 ||wvnggxfjhwdzd.online^
 ||wvoudw.magaseek.com^
+||wvovbfvjwbxyl.site^
 ||wvrp.cn^
 ||wvrukp.globalcyclingnetwork.com^
 ||wvtm13.share.ntv.io^
@@ -1756771,6 +1756776,7 @@ zzzyk.com###Tinfo
 ||yxdown.com/zt/zt/js/zt.js
 ||yxeawgomuxnix.space^
 ||yxfqar.trendhim.com.au^
+||yxgawnoujeedu.space^
 ||yxgcfb.petit-bateau.co.jp^
 ||yxgfcj.com^
 ||yxgfcj.com^$third-party
@@ -1762888,6 +1762894,7 @@ zzzyk.com###Tinfo
 ||zrnsri.vogacloset.com^
 ||zrofz.spectacularacademy.com^
 ||zrosq6dsha.com^
+||zrothrmvjxxiq.site^
 ||zrouimweexxno.online^
 ||zrpdtnihiwhlo.site^
 ||zrpfi.cheershealth.com^
