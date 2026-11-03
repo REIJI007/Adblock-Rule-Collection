@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-03 09:49:01 (UTC+8)
-! Total rules: 1449372
+! Generated: 2026-11-03 09:51:40 (UTC+8)
+! Total rules: 1449374
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -474590,6 +474590,8 @@ partnerkin.com,zutool.jp,jjan.kr,persol-tech-s.co.jp,ukranews.com##.article_soci
 partners.moseasia.com$image
 partnersbanka.cz,magazine.aldi-nord.de,leaflets.kaufland.com##.c-cookieconsent
 parts-people.com###cookie-policy-info-bar
+partsfinder.bilsteingroup.com#%#//scriptlet('set-cookie', 'FB_PIXEL_ENABLED', 'false')
+partsfinder.bilsteingroup.com#%#//scriptlet('set-cookie', 'PF_TRACKING_ENABLED', 'false')
 partsinmotion.co.uk###fancybox-overlay
 partsinmotion.co.uk#$#body,html { overflow: auto !important; position: initial !important; }
 partsnl.nl#@##cookienotice
