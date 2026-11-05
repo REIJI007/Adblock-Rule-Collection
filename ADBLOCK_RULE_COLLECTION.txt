@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-05 11:32:32 (UTC+8)
-! Total rules: 1813584
+! Generated: 2026-11-05 13:47:05 (UTC+8)
+! Total rules: 1813607
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -60087,6 +60087,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /^https:\/\/([a-z]{3,}\.)?[a-z]{7,}\.com\/[^\/]{5,}\/[-_a-zA-Z0-9]{10,}\.js$/$script,3p,match-case,to=com,from=azlyrics.com|nextchessmove.com|reneweconomy.com.au|vclock.com
 /^https:\/\/([a-z]{3,}\.)?[a-z]{7,}\.com\/[^\/]{5,}\/[-_a-zA-Z0-9]{10,}\.js$/$script,3p,match-case,to=com,header=x-xcxurl:https://*.js
 /^https:\/\/([a-z]{3,}\.)?[a-z]{7,}\.com\/[^\/]{5,}\/[-_a-zA-Z0-9]{10,}\.js$/$script,third-party,match-case,domain=addictinggames.com
+/^https:\/\/([a-z]{3,}\.)?[a-z]{7,}\.com\/[^\/]{5,}\/[-_a-zA-Z0-9]{10,}\.js$/$script,third-party,match-case,domain=addictinggames.com|reuters.com
 /^https:\/\/([a-z]{3,}\.)?[a-z]{7,}\.com\/[^\/]{5,}\/[-_a-zA-Z0-9]{10,}\.js$/$script,third-party,match-case,domain=variety.com|deadline.com|billboard.com|wwd.com|artnews.com|hollywoodreporter.com|rollingstone.com|robbreport.com|vibe.com|indiewire.com|goldderby.com|sportico.com
 /^https:\/\/(a|c)\.[0-9a-f]{56}\.com$/
 /^https:\/\/(www\.)?[a-z0-9-]+\.[a-z]+(\.[a-z]+)?\/(?:analyticsdata|gemets|gtm[a-z]+|metrics|securegtm)\/?$/$script,1p,match-case
@@ -460290,6 +460291,7 @@ i24news.tv##.header_share_part
 i24news.tv##.sticky-bottom-banner
 i24news.tv##.sticky-bottom-banner-wrapper
 i24news.tv##div[class^="Advert_"]
+i24news.tv##div[class^="GoogleNewsBanner_banner"]
 i24news.tv##div[class^="ShareButton"]
 i24news.tv#?#.column.col-6.col-sm-12:has(.sponsored)
 i24news.tv,zara.com##.native-app-banner
@@ -474585,6 +474587,8 @@ kitchentime.dk##.cookie
 kitchentime.fi##.cookie
 kitchentime.no##.cookie
 kitchentime.se##.cookie
+kitco.com###in-content-1
+kitco.com###in-content-2
 kitco.com###leaderboard
 kitco.com###left_square
 kitco.com##.ad_space_730
@@ -475411,6 +475415,7 @@ kohlhammer.de##.sc-gdpr
 kohlhammer.de##div[id^="cookieConsentPanel"]
 kohls.com###PDP_monetization_HL
 kohls.com###PMP_monetization_HL
+kohls.com###kmn-brand-spotlight
 kohls.com###kmn-featured-carousel
 kohls.com###kmn-more-to-consider
 kohls.com###kmnbanner-pencil_bottom-anchor
@@ -478959,6 +478964,7 @@ ldplayer.net###blog-double-banner
 ldplayer.net##.h-280px
 ldplayer.net##div.inline-flex:has(> div.flex-center > svg > path[d^="M11.885"])
 ldplayer.net##div[class^="support-install__ad"]
+ldplayer.net,meteomedia.com##div[id^="ad-"]
 ldqk.xyz#@#.google-ad
 ldqk.xyz,masuit.com##.bs-slider
 ldqk.xyz,masuit.com##.ibox-content > .wow[id]
@@ -513130,6 +513136,7 @@ nordstrom.com#?#article:has(.Yw5es:has-text(Sponsored))
 nordstrom.com#?#ul[style^="padding: 0px; position: relative;"] > li[class]:contains(Sponsored)
 nordstrom.com#?#ul[style^="padding: 0px; position: relative;"] > li[class]:has-text(Sponsored)
 nordstromrack.com##.nr-home__email-collector
+nordstromrack.com#?#[data-container-type="product-grid"] article:has-text(Sponsored)
 nordusdecospan.com##.gdprForm
 nordvpn.com###consent-widget-container
 nordvpn.com##.BlogPost__banner-wrapper
@@ -542826,6 +542833,7 @@ reuters.com#%#//scriptlet("set-constant", "Object.prototype.enable_floating", "f
 reuters.com#%#//scriptlet('abort-current-inline-script', 'document.createElement', '/adshieldScript|as_essential/')
 reuters.com#%#//scriptlet('prevent-setTimeout', '.call(null)', '10')
 reuters.com#%#//scriptlet('remove-attr', 'style', 'div[class*="site-header__with-mobile-leaderboard"]')
+reuters.com#%#//scriptlet('remove-node-text', 'script', 'adshieldScript')
 reuters.com#%#//scriptlet('set-local-storage-item', 'ajs_anonymous_id', 'null')
 reuters.com#%#//scriptlet('ubo-set-local-storage-item', 'ArcP', '$remove$')
 reuters.com#?##content > div[class]:has(> div[style="display: none;"])
@@ -542845,6 +542853,7 @@ reuters.com#?#div[data-testid="toolbar-container"] > div[class^="toolbar-item__s
 reuters.com#?#h4:contains(Advertisement)
 reuters.com#@#.adsbox
 reuters.com#@#[class^="primary-video__container_"]
+reuters.com$$script:contains(adshieldScript)
 reutilizemais.co.mz
 revalidating.boxmode.io
 revanced.app##+js(set-local-storage-item, analytics, false)
@@ -585459,10 +585468,14 @@ united.no#@#.page-ads
 united24media.com##.c-post__props
 united24media.com##.gtm-article-small
 united24media.com##.gtm-bottom-popup-article
+united24media.com##.gtm-bottom-popup-homepage
+united24media.com##article[data-donation-article]
+united24media.com##footer > div.c-post__props:has(> ul > li > button[data-share-button])
 united24media.com#?#.c-prose__ignore:contains(Every article pushes)
 united24media.com#?#.c-prose__ignore:has-text(Every article pushes)
 united24media.com#?#.z-modal.border-white:contains(Support)
 united24media.com#?#.z-modal.border-white:has-text(Support)
+united24media.com,kitco.com,fool.com,biggo.com,game8.jp,famitsu.com,biggo.com.tw,ominho.pt,staradvertiser.com,vejasp.abril.com.br,spanjevandaag.com,pewpewtactical.com,lapresse.ca,gamepro.de,slidstvo.info,tokenpost.kr,dengekionline.com,nbcnews.com,cityam.com,essentiallysports.com,health.com,eurogamer.net,beincrypto.com,yahoo.com,explainx.ai,apk.dog,eweek.com,m.economictimes.com,economictimes.indiatimes.com,apple.news,betanews.com,cars.com,soranews24.com,rocketnews24.com,khelnow.com,homeandsmart.de,drive.com.au,carscoops.com,bankadunyasi.com,outsideonline.com,klix.ba,investopedia.com,s.response.jp,danas.rs,bankier.pl,dermoeczanem.com,golem.de,ittefaq.com.bd,my-best.com,ytechb.com,infomercado.pe,tomarnarede.pt,baseballchannel.jp,kyivindependent.com,timesofisrael.com,android.com.pl,gamestar.de,discovermagazine.com,epe.es,cmjornal.pt,theguardian.com,sourceforge.net,cybernews.com,igeeksblog.com,resinet.pl,topgearitalia.com,topgeargreece.gr,yorozoonews.jp,qz.com,ladepeche.fr,lifehacker.jp,lifehacker.com,click-or-die.ru,sammyguru.com,moviepilot.de,umatoku.hochi.co.jp,teltarif.de,haberler.com,spaziogames.it,sondakika.com,itc.ua,fxmag.pl,stimme.de,oloygeia.gr,berliner-zeitung.de,sueddeutsche.de,eurosport.de,itmedia.co.jp,ndtv.in,femmeactuelle.fr,from-ua.org,nikkansports.com,meteoweb.eu,businessinsider.jp,enikos.gr,ostdeutscheallgemeine.com,falstaff.com,ad.nl,real.gr,motor-fan.jp,ign.com,dw.com,alfavita.gr,actualidadiphone.com,jprime.jp,laviola.it,fanipogody.pl,yna.co.kr,pchocasi.com.tr,spidersweb.pl,empireonline.com,jiji.com,fictionhorizon.com,beebom.com,techwiser.com,12punto.com.tr,infobae.com,fitbook.de,tsn.ua,haberx.com,timeturk.com,saopaulosecreto.com,urfanatik.com,stadt-bremerhaven.de,ekonomim.com,omgubuntu.co.uk,winfuture.de,movilforum.com,sponichi.co.jp,gamingbible.com,ladbible.com,sportbible.com,thecontentbible.com,tyla.com,unilad.com,clubic.com,sugarfreelondoner.com,fotomac.com.tr,dengarden.com,mako.co.il,ajansspor.com,gazetadopovo.com.br,onejailbreak.com,progameguides.com,aydinlik.com.tr,euronews.com,rtl.be,dogruhaber.com.tr,daily.co.jp,autoblog.com,haberturk.com,kp.ua,rotaborsa.com,mid-day.com,betaprofiles.com,news.tv-asahi.co.jp,zakzak.co.jp,donanimhaber.com,tokyo-sports.co.jp,searchengineland.com,jornaldenegocios.pt,gigazine.net,football24.ua,47news.jp,stuff.co.nz,eleconomista.es,lance.com.br,skateboarding.com,ua.tribuna.com,bloomberght.com,thestreet.com,redmas.com.co,record.pt,zamin.uz,thesun.co.uk,footballtransfers.com,gamingbible.com,yenisafak.com,sportsdunia.com,bsc.news,movilzona.es,isinolsa.com,gendai.media,clutchpoints.com,newstime.joyn.de,hisse.net,gazetegercek.com.tr,focus.ua,polygon.com,autoevolution.com,onedio.co,sn-jp.com,games.gg,hongkongfp.com,computerbase.de,gzt.com,crash.net,foxsports.com.mx,theguardian.com,star.com.tr,halktv.com.tr,zaxid.net,ballotpedia.org,timesofmalta.com,24tv.ua,thepost.co.nz,sportbible.com,washingtonpost.com,expert.in.ua,turkiyegazetesi.com.tr,aksam.com.tr,trhaber.com.tr,droidwin.com,onedio.com,cheezburger.com,tastesbetterfromscratch.com,techgear.gr,glavcom.ua,noticias.yahoo.com,hurriyet.com.tr,dexerto.com,saltandbaker.com,bbc.com,decrypt.co,uniladtech.com,mothership.sg,pcmag.com,coindesk.com,sammyfans.com,m9.news,crankers.com,asiaone.com,cbr.com,thedailyjagran.com,digitaltrends.com,hardwaretimes.com,www.yahoo.com,interestingengineering.com##a[href^="https://www.google.com/preferences/source?q="]
 unitedcinemas.jp##.bg_mask
 unitedcinemas.jp##.interstitial_uc
 unitedhomeexperts.com###popup-container
@@ -595217,6 +595230,7 @@ walgreens.com###prod-sponsored
 walgreens.com###searchSponsoredProductContainer
 walgreens.com##.footer__email-sign-up
 walgreens.com##li.owned-brands:has(figure.sponsored)
+walgreens.com##li.product-grid-item:has(.sponsored-badge)
 walgreens.com#?#li.owned-brands:has(figure.sponsored)
 walica.jp##footer + div.fixed.bottom-0.left-0.right-0.z-50.sm\:hidden
 walitex.com#%#//scriptlet('prevent-fetch', 'adsbygoogle')
@@ -848437,6 +848451,7 @@ zzzyk.com###Tinfo
 ||bzdsklou.firebaseapp.com^$all
 ||bzdsklou.web.app^
 ||bzdsklou.web.app^$all
+||bzdtdagnyiven.space^
 ||bzdutznootnvg.website^
 ||bzees.concurtechnologies.tt.omtrdc.net^
 ||bzees.dteenergy.tt.omtrdc.net^
@@ -1238234,6 +1238249,7 @@ zzzyk.com###Tinfo
 ||eypvsxdxyswmu.online^
 ||eyqbvz.greysonclothiers.com^
 ||eyqkpep11zh3kqxqyr.cfd^
+||eyqsngpfiwxbi.online^
 ||eyqsrrwmvhavp.website^
 ||eyqw474.com^
 ||eyqw474.com^$all
@@ -1409091,6 +1409107,7 @@ zzzyk.com###Tinfo
 ||jewishcontentnetwork.com^
 ||jewishcontentnetwork.com^$third-party
 ||jewvvkh.cyou^
+||jexbndsybbpni.space^
 ||jexzbvkfnmmyw.store^
 ||jeycmzwemqzfr.com^
 ||jeyrkyshop.com^
@@ -1422942,6 +1422959,7 @@ zzzyk.com###Tinfo
 ||kitchenmusings.com^$all
 ||kitchentablemedicine.com^$all
 ||kitchiepreppie.com^$popup
+||kitco.com/api/cms-proxy?
 ||kitco.com/jscripts/popunders/
 ||kitdev-whatsapp.com^$doc
 ||kitdev-whatsapp.com^$document
@@ -1513567,6 +1513585,7 @@ zzzyk.com###Tinfo
 ||nishiwaki.ne.jp^
 ||nishiwaki.ne.jp^$all
 ||nisii.resiliencelabo.com^
+||nisjslzjxhyvl.site^
 ||niskevesti.rs^$csp=script-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:
 ||nisputlkdilbu.space^
 ||nissan-cdn.net/etc/designs/pace-omni-nav/ui-build/main.401ef65a401d4638.js$all
@@ -1560806,6 +1560825,7 @@ zzzyk.com###Tinfo
 ||qe2erv7n8krj2pljw5inc96ty.rest^
 ||qe9wckxig.com^
 ||qeapps.com/ecom_apps_n/production/pwabyqe/apps/pwabyqe/index.js$all
+||qebyweotemowl.online^
 ||qecmposqk.com^
 ||qecsasdafhtqr.online^
 ||qed.uk.com^$all
@@ -1758856,6 +1758876,7 @@ zzzyk.com###Tinfo
 ||vhbbeareiglah.website^
 ||vhbbubfytrjht.space^
 ||vhcmc2.xyz^
+||vhcnpglbmsuhn.online^
 ||vhdbqelbulsyv.site^
 ||vhddgff.americansocietyofcli.tt.omtrdc.net^
 ||vhdgz.homage.com^
@@ -1798236,6 +1798257,7 @@ zzzyk.com###Tinfo
 ||xscp03121xq.com^
 ||xscp03130xq.com^
 ||xscp03131xq.com^
+||xscueumaijhmk.website^
 ||xscwpv.camping-des-alberes.com^
 ||xscwsgdmgnjfo.space^
 ||xsdizch.cn^
@@ -1802649,6 +1802671,7 @@ zzzyk.com###Tinfo
 ||ylligknjyhnpr.space^
 ||yllix.com^
 ||yllix.com^$third-party
+||ylmcxpmcknwxd.space^
 ||ylmqwj.sumikominavi.com^
 ||ylnet.com.cn/dl*.js
 ||ylnet.com.cn/gj.js
