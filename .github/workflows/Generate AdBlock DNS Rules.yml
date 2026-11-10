@@ -1,0 +1,819 @@
+name: Generate AdBlock DNS Rules
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: generate-adblock-dns-rules
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  filter-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.TOKEN || github.token }}
+
+      - name: 同步 main 分支
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git pull --rebase origin main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Convert and validate AdGuard DNS rules
+        shell: python3 {0}
+        run: |
+          import datetime
+          import ipaddress
+          import os
+          import re
+          from collections import Counter
+          from pathlib import Path
+          from zoneinfo import ZoneInfo
+
+          # 校验域名标签格式的正则表达式
+          DOMAIN_LABEL_RE = re.compile(
+              r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\Z",
+              re.IGNORECASE,
+          )
+
+          # 识别规则列表头部元数据的正则表达式
+          ADBLOCK_HEADER_RE = re.compile(
+              r"^\[(?:Adblock Plus|AdGuard)\s+\d+(?:\.\d+)*\]$",
+              re.IGNORECASE,
+          )
+
+          # $dnstype 修饰符允许的 DNS 记录类型白名单
+          DNS_TYPES = set("""
+              A AAAA A6 AFSDB AMTRELAY ANY APL ATMA AVC AXFR
+              CAA CDNSKEY CDS CERT CNAME CSYNC DHCID DLV DNAME
+              DNSKEY DOA DS EID EUI48 EUI64 GID GPOS HINFO HIP
+              HTTPS IPSECKEY ISDN IXFR KEY KX L32 L64 LOC MAILA
+              MAILB MB MD MF MG MINFO MR MX NAPTR NID NIMLOC NS
+              NSAP NSAP-PTR NSEC NSEC3 NSEC3PARAM NULL NXT
+              OPENPGPKEY OPT PTR PX RKEY RP RRSIG RT SIG SMIMEA
+              SOA SPF SRV SSHFP SVCB TA TALINK TKEY TLSA TSIG TXT
+              UINFO UID UNSPEC URI WKS ZONEMD
+          """.split())
+
+          # 本转换器支持的修饰符白名单
+          ALLOWED_MODIFIERS = {
+              "client",
+              "denyallow",
+              "dnstype",
+              "dnsrewrite",
+              "important",
+          }
+
+          class FatalConversionError(RuntimeError):
+              pass
+
+          def canonical_domain(value: str):
+              if not value or value != value.strip():
+                  return None
+
+              if value.endswith(".."):
+                  return None
+
+              if value.endswith("."):
+                  value = value[:-1]
+
+              if not value or len(value) > 253 or "*" in value:
+                  return None
+
+              try:
+                  labels = value.split(".")
+                  if (
+                      len(labels) < 2
+                      or any(not label for label in labels)
+                      or labels[-1].lower() == "localhost"
+                  ):
+                      return None
+
+                  ascii_labels = []
+                  for label in labels:
+                      ascii_label = label.encode("idna").decode("ascii").lower()
+
+                      if len(ascii_label) > 63:
+                          return None
+
+                      if not DOMAIN_LABEL_RE.fullmatch(ascii_label):
+                          return None
+
+                      ascii_labels.append(ascii_label)
+
+                  result = ".".join(ascii_labels)
+
+                  if len(result) > 253:
+                      return None
+
+                  try:
+                      ipaddress.ip_address(result)
+                      return None
+                  except ValueError:
+                      pass
+
+                  return result
+
+              except (UnicodeError, ValueError):
+                  return None
+
+          def parse_dns_type_value(value: str):
+              if not value or value != value.strip():
+                  return None, "invalid dnstype value"
+
+              components = value.split("|")
+
+              if any(not item for item in components):
+                  return None, "empty dnstype entry"
+
+              normalized = []
+              negation_modes = set()
+
+              for item in components:
+                  negated = item.startswith("~")
+                  type_name = item[1:] if negated else item
+
+                  if not type_name:
+                      return None, "empty dnstype name"
+
+                  type_name = type_name.upper()
+
+                  if not re.fullmatch(r"[A-Z0-9]+", type_name):
+                      return None, f"invalid dnstype name: {type_name}"
+
+                  if type_name not in DNS_TYPES:
+                      return None, f"unsupported dnstype: {type_name}"
+
+                  negation_modes.add(negated)
+                  normalized.append(("~" if negated else "") + type_name)
+
+              if len(negation_modes) > 1:
+                  return None, "mixed positive and negative dnstype entries"
+
+              if len(set(normalized)) != len(normalized):
+                  return None, "duplicate dnstype entry"
+
+              return "|".join(sorted(normalized)), None
+
+          def split_outside_quotes(value: str, separator: str):
+              parts = []
+              current = []
+              quote = None
+              escaped = False
+
+              for char in value:
+                  if escaped:
+                      current.append(char)
+                      escaped = False
+                      continue
+
+                  if quote is not None and char == "\\":
+                      current.append(char)
+                      escaped = True
+                      continue
+
+                  if quote is not None:
+                      current.append(char)
+                      if char == quote:
+                          quote = None
+                      continue
+
+                  if char in ("'", '"'):
+                      quote = char
+                      current.append(char)
+                  elif char == separator:
+                      if (
+                          separator == "$"
+                          and current
+                          and current[0] == "/"
+                          and "".join(current).rfind("/") == 0
+                      ):
+                          current.append(char)
+                      else:
+                          parts.append("".join(current).strip())
+                          current = []
+                  else:
+                      current.append(char)
+
+              if quote is not None or escaped:
+                  return None, "unterminated quoted or escaped value"
+
+              parts.append("".join(current).strip())
+              return parts, None
+
+          def parse_denyallow_value(value: str):
+              if not value or value != value.strip():
+                  return None, "invalid denyallow value"
+
+              raw_domains = value.split("|")
+              if any(not item or item != item.strip() for item in raw_domains):
+                  return None, "empty or whitespace-padded denyallow domain"
+
+              domains = []
+              for raw_domain in raw_domains:
+                  domain = canonical_domain(raw_domain)
+                  if not domain:
+                      return None, f"invalid denyallow domain: {raw_domain}"
+                  domains.append(domain)
+
+              if len(set(domains)) != len(domains):
+                  return None, "duplicate denyallow domain"
+
+              return "|".join(sorted(domains)), None
+
+          def validate_client_value(value: str):
+              if not value or value != value.strip():
+                  return None, "invalid client value"
+
+              if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                  return None, "control character in client value"
+
+              entries, error = split_outside_quotes(value, "|")
+              if error:
+                  return None, error
+              if any(not entry for entry in entries):
+                  return None, "empty client entry"
+
+              for entry in entries:
+                  if entry.startswith("~"):
+                      item = entry[1:]
+                      if not item or item != item.strip():
+                          return None, "invalid whitespace or empty negated client entry"
+                  else:
+                      item = entry
+                  if not item:
+                      return None, "empty client entry"
+
+                  if item.startswith(("'", '"')):
+                      quote = item[0]
+                      if len(item) < 2 or item[-1] != quote:
+                          return None, "malformed quoted client name"
+                  elif any(char in item for char in ("'", '"', "\\")):
+                      return None, "quotes and escapes in client names must be quoted"
+                  elif any(char.isspace() for char in item):
+                      return None, "client names containing whitespace must be quoted"
+
+              return value, None
+
+          def validate_dnsrewrite_value(value: str):
+              if not value or value != value.strip():
+                  return None, "invalid dnsrewrite value"
+              if any(ord(char) < 32 or ord(char) == 127 for char in value):
+                  return None, "control character in dnsrewrite value"
+
+              try:
+                  address = ipaddress.ip_address(value)
+                  return str(address), None
+              except ValueError:
+                  pass
+
+              if value in {"NOERROR", "NXDOMAIN", "REFUSED", "SERVFAIL", "FORMERR"}:
+                  return value, None
+
+              fields = value.split(";")
+              if len(fields) != 3:
+                  domain = canonical_domain(value.rstrip("."))
+                  if domain:
+                      return domain, None
+                  return None, "unsupported dnsrewrite shorthand"
+
+              rcode, rrtype, payload = fields
+              allowed_rcodes = {
+                  "NOERROR", "FORMERR", "SERVFAIL", "NXDOMAIN",
+                  "NOTIMP", "REFUSED", "YXDOMAIN", "YXRRSET",
+                  "NXRRSET", "NOTAUTH", "NOTZONE",
+              }
+              if rcode not in allowed_rcodes:
+                  return None, f"unsupported dnsrewrite response code: {rcode}"
+              if rcode != "NOERROR":
+                  if rrtype or payload:
+                      return None, "non-NOERROR dnsrewrite must have empty RR type and value"
+                  return value, None
+              if not rrtype and not payload:
+                  return value, None
+              if rrtype not in DNS_TYPES:
+                  return None, f"unsupported dnsrewrite RR type: {rrtype}"
+              if rrtype in {"A", "AAAA"}:
+                  try:
+                      address = ipaddress.ip_address(payload)
+                  except ValueError:
+                      return None, f"invalid dnsrewrite IP address: {payload}"
+                  if (rrtype == "A" and address.version != 4) or (rrtype == "AAAA" and address.version != 6):
+                      return None, f"dnsrewrite address family does not match {rrtype}"
+                  payload = str(address)
+              elif rrtype in {"CNAME", "NS", "PTR"}:
+                  domain = canonical_domain(payload.rstrip("."))
+                  if not domain:
+                      return None, f"invalid dnsrewrite domain: {payload}"
+                  payload = domain
+              elif not payload and rrtype not in {"TXT", "MX", "SRV", "HTTPS", "SVCB", "PTR"}:
+                  return None, f"empty dnsrewrite payload for {rrtype}"
+              return f"{rcode};{rrtype};{payload}", None
+
+          def parse_modifiers(modifier_text: str):
+              if not modifier_text:
+                  return None, "empty modifier list"
+
+              raw_modifiers, split_error = split_outside_quotes(modifier_text, ",")
+              if split_error:
+                  return None, split_error
+              if any(not item for item in raw_modifiers):
+                  return None, "malformed modifier list"
+
+              normalized = []
+              seen = set()
+
+              for token in raw_modifiers:
+                  key, separator, value = token.partition("=")
+                  key = key.strip().lower()
+                  value = value.strip()
+
+                  if not key:
+                      return None, "empty modifier name"
+                  if key == "badfilter":
+                      return None, "badfilter is not allowed in output rules"
+                  if key not in ALLOWED_MODIFIERS:
+                      return None, f"unsupported or non-portable modifier: {key}"
+                  if key in seen:
+                      return None, f"duplicate modifier: {key}"
+                  seen.add(key)
+
+                  if key == "important":
+                      if separator:
+                          return None, "important must not have a value"
+                      normalized.append(("important", None))
+                      continue
+
+                  if not separator:
+                      return None, f"{key} requires a value"
+
+                  if key == "dnstype":
+                      parsed_value, error = parse_dns_type_value(value)
+                  elif key == "denyallow":
+                      parsed_value, error = parse_denyallow_value(value)
+                  elif key == "client":
+                      parsed_value, error = validate_client_value(value)
+                  elif key == "dnsrewrite":
+                      parsed_value, error = validate_dnsrewrite_value(value)
+                  else:
+                      return None, f"unsupported modifier: {key}"
+
+                  if error:
+                      return None, error
+                  normalized.append((key, parsed_value))
+
+              normalized.sort(key=lambda item: item[0])
+              result = []
+              for key, value in normalized:
+                  result.append(key if value is None else f"{key}={value}")
+
+              return ",".join(result), None
+
+          def parse_adguard_dns_rule(candidate: str, allow_exact_anchor=True):
+              if not candidate:
+                  return None, "empty rule"
+
+              if any(ord(char) < 32 or ord(char) == 127 for char in candidate):
+                  return None, "control character in rule"
+
+              # 提取白名单前缀 @@
+              allow_prefix = "@@" if candidate.startswith("@@") else ""
+              body = candidate[len(allow_prefix):]
+
+              if body.startswith("@@"):
+                  return None, "misplaced exception marker"
+
+              parts, split_error = split_outside_quotes(body, "$")
+              if split_error:
+                  return None, split_error
+              if len(parts) > 2:
+                  return None, "multiple modifier delimiters"
+
+              pattern = parts[0]
+              modifier_text = parts[1] if len(parts) == 2 else None
+
+              domain_pattern = None
+              exact_anchor = False
+
+              if not pattern.startswith(("/", "|")) and "*" not in pattern:
+                  bare_domain = canonical_domain(pattern)
+                  if bare_domain:
+                      normalized = f"{allow_prefix}|{bare_domain}^"
+                      if modifier_text is not None:
+                          normalized_modifiers, error = parse_modifiers(modifier_text)
+                          if error:
+                              return None, error
+                          normalized += "$" + normalized_modifiers
+                      return normalized, None
+
+              if (
+                  pattern.startswith("||")
+                  and pattern.endswith("^")
+                  and "*" not in pattern[2:-1]
+              ):
+                  # 标准形式：匹配域名及其全部子域名
+                  domain_pattern = pattern[2:-1]
+
+              elif (
+                  allow_exact_anchor
+                  and pattern.startswith("|")
+                  and not pattern.startswith("||")
+                  and pattern.endswith("^")
+              ):
+                  # 精确锚点形式：仅匹配该主机名本身
+                  domain_pattern = pattern[1:-1]
+                  exact_anchor = True
+
+              elif pattern.startswith("/") and pattern.endswith("/") and len(pattern) > 2:
+                  return None, "regular-expression hostname masks are excluded from DNS output"
+
+              elif pattern.startswith("||") and pattern.endswith("^") and "*" in pattern[2:-1]:
+                  wildcard_domain = pattern[2:-1].lower()
+                  if not re.fullmatch(r"[a-z0-9*.-]+", wildcard_domain):
+                      return None, "unsupported wildcard hostname pattern"
+                  labels = wildcard_domain.split(".")
+                  if len(labels) < 2 or labels[-1] == "localhost":
+                      return None, "wildcard must target a qualified non-localhost hostname"
+                  if any(not label or label.startswith("-") or label.endswith("-") for label in labels):
+                      return None, "invalid wildcard hostname label"
+                  if len(wildcard_domain) > 253 or any(len(label) > 63 for label in labels):
+                      return None, "wildcard hostname exceeds DNS length limits"
+                  normalized = allow_prefix + "||" + wildcard_domain + "^"
+                  if modifier_text is not None:
+                      normalized_modifiers, error = parse_modifiers(modifier_text)
+                      if error:
+                          return None, error
+                      normalized += "$" + normalized_modifiers
+                  return normalized, None
+
+              else:
+                  return None, "pattern is not a supported AdGuard DNS hostname rule"
+
+              if (
+                  not domain_pattern
+                  or "^" in domain_pattern
+                  or "|" in domain_pattern
+                  or "/" in domain_pattern
+                  or "\\" in domain_pattern
+                  or "?" in domain_pattern
+                  or "#" in domain_pattern
+                  or "$" in domain_pattern
+                  or "*" in domain_pattern
+              ):
+                  return None, "unsupported hostname pattern"
+
+              domain = canonical_domain(domain_pattern)
+
+              if not domain:
+                  return None, "invalid hostname or IP literal"
+
+              if exact_anchor:
+                  normalized = f"{allow_prefix}|{domain}^"
+              else:
+                  normalized = f"{allow_prefix}||{domain}^"
+
+              if modifier_text is not None:
+                  normalized_modifiers, error = parse_modifiers(modifier_text)
+
+                  if error:
+                      return None, error
+
+                  normalized += "$" + normalized_modifiers
+
+              return normalized, None
+
+          def parse_hosts_as_adguard(line: str):
+              body = line.split("#", 1)[0].strip()
+
+              if not body:
+                  return False, None, None
+
+              parts = body.split()
+
+              try:
+                  address = ipaddress.ip_address(parts[0])
+              except (ValueError, IndexError):
+                  return False, None, None
+
+              if len(parts) < 2:
+                  return True, None, "Hosts mapping has no hostname"
+
+              if not (address.is_unspecified or address.is_loopback):
+                  return (
+                      True,
+                      None,
+                      "non-blocking Hosts IP mapping cannot be represented "
+                      "as an equivalent Adblock-style block rule",
+                  )
+
+              domains = []
+
+              for raw_domain in parts[1:]:
+                  domain = canonical_domain(raw_domain)
+
+                  if not domain:
+                      return (
+                          True,
+                          None,
+                          f"invalid hostname in Hosts mapping: {raw_domain}",
+                      )
+
+                  domains.append(domain)
+
+              if not domains:
+                  return True, None, "Hosts mapping contains no valid hostname"
+
+              return True, [f"|{domain}^" for domain in domains], None
+
+          def extract_badfilter(candidate: str):
+              parts, split_error = split_outside_quotes(candidate, "$")
+              if split_error or len(parts) != 2:
+                  return False, candidate
+
+              pattern, modifier_text = parts
+              tokens, split_error = split_outside_quotes(modifier_text, ",")
+              if split_error:
+                  return False, candidate
+
+              if not any(token.strip().lower() == "badfilter" for token in tokens):
+                  return False, candidate
+
+              remaining = [
+                  token.strip() for token in tokens
+                  if token.strip().lower() != "badfilter"
+              ]
+              if remaining:
+                  return True, pattern + "$" + ",".join(remaining)
+
+              return True, pattern
+
+          def classify_and_convert(line: str):
+              candidate = line.strip()
+
+              if not candidate:
+                  return [], "empty", None
+
+              if candidate.startswith(("!", "#")):
+                  return [], "comment", None
+
+              if ADBLOCK_HEADER_RE.fullmatch(candidate):
+                  return [], "comment", None
+
+              recognized, hosts_rules, hosts_error = parse_hosts_as_adguard(
+                  candidate
+              )
+
+              if recognized:
+                  if hosts_error:
+                      return [], "rejected", hosts_error
+
+                  return hosts_rules, "hosts", None
+
+              is_badfilter, stripped = extract_badfilter(candidate)
+              converted, error = parse_adguard_dns_rule(stripped)
+
+              if error:
+                  return [], "rejected", error
+
+              if is_badfilter:
+                  return [converted], "badfilter", None
+
+              return [converted], "adblock-style", None
+
+          def compile_file(input_path: str, output_path: str, title: str):
+              source_path = Path(input_path)
+
+              if not source_path.is_file():
+                  raise RuntimeError(f"required input file does not exist: {input_path}")
+
+              with source_path.open("r", encoding="utf-8-sig", newline=None) as source:
+                  input_lines = source.readlines()
+
+              if not input_lines:
+                  raise RuntimeError(f"input file is empty: {input_path}")
+
+              stats = Counter()
+              badfilter_targets = set()
+              rejected_samples = []
+              rules = []
+              seen = set()
+
+              for line_number, original_line in enumerate(input_lines, 1):
+                  line = original_line.rstrip("\r\n")
+
+                  try:
+                      converted, kind, reason = classify_and_convert(line)
+                  except FatalConversionError as error:
+                      raise FatalConversionError(
+                          f"{input_path}:{line_number}: {error}"
+                      ) from error
+
+                  if reason:
+                      stats["rejected"] += 1
+                      stats[f"reason: {reason}"] += 1
+                      if line.strip().startswith("@@"):
+                          stats["rejected: exception rule"] += 1
+
+                      if len(rejected_samples) < 25:
+                          rejected_samples.append(
+                              f"{input_path}:{line_number}: "
+                              f"{reason}: {line.strip()[:240]}"
+                          )
+
+                      continue
+
+                  if not converted:
+                      if kind not in ("empty", "comment"):
+                          stats[f"skipped: {kind}"] += 1
+                      continue
+
+                  if kind == "badfilter":
+                      stats["converted: badfilter"] += 1
+                      badfilter_targets.update(converted)
+                      continue
+
+                  stats[f"converted: {kind}"] += len(converted)
+
+                  for rule in converted:
+                      if rule in seen:
+                          stats["duplicates"] += 1
+                          continue
+
+                      seen.add(rule)
+                      rules.append(rule)
+
+              if badfilter_targets:
+                  removed_targets = {
+                      rule for rule in rules if rule in badfilter_targets
+                  }
+                  rules = [
+                      rule for rule in rules if rule not in badfilter_targets
+                  ]
+                  stats["badfilter: removed"] = len(removed_targets)
+                  stats["badfilter: unmatched"] = len(
+                      badfilter_targets - removed_targets
+                  )
+
+              if not rules:
+                  raise RuntimeError(
+                      f"{input_path}: conversion produced zero rules. "
+                      "Refusing to replace the existing output with an "
+                      "empty or effectively unusable list."
+                  )
+
+              timestamp = datetime.datetime.now(
+                  ZoneInfo("Asia/Singapore")
+              ).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+              header = (
+                  f"!Title: {title}\n"
+                  f"!Description: 一个汇总了多个DNS过滤器规则的DNS过滤器，每20分钟更新一次，确保即时同步上游减少误杀\n"
+                  f"!Homepage: https://github.com/REIJI007/Adblock-Rule-Collection\n"
+                  f"!LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL%203.0\n"
+                  f"!LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA%204.0\n"
+                  f"!Generated: {timestamp}\n"
+                  f"!RuleCount: {len(rules)}\n"
+              )
+
+              document = header + "\n" + "\n".join(rules) + "\n"
+
+              return {
+                  "input_path": input_path,
+                  "output_path": output_path,
+                  "title": title,
+                  "document": document,
+                  "rules": rules,
+                  "stats": stats,
+                  "input_lines": len(input_lines),
+                  "rejected_samples": rejected_samples,
+              }
+
+          def validate_generated_document(result):
+              output_path = result["output_path"]
+              validated = 0
+              seen = set()
+
+              for line_number, line in enumerate(
+                  result["document"].splitlines(), 1
+              ):
+                  candidate = line.strip()
+
+                  if not candidate or candidate.startswith(("!", "#")):
+                      continue
+
+                  normalized, error = parse_adguard_dns_rule(
+                      candidate,
+                      allow_exact_anchor=True,
+                  )
+
+                  if error:
+                      raise RuntimeError(
+                          f"{output_path}:{line_number}: output validation "
+                          f"failed: {error}: {candidate}"
+                      )
+
+                  if normalized != candidate:
+                      raise RuntimeError(
+                          f"{output_path}:{line_number}: output is not in "
+                          f"canonical form: {candidate}"
+                      )
+
+                  if candidate in seen:
+                      raise RuntimeError(
+                          f"{output_path}:{line_number}: duplicate output rule: "
+                          f"{candidate}"
+                      )
+
+                  seen.add(candidate)
+                  validated += 1
+
+          # 分别生成主版和 Lite 版 DNS 规则，并在全部通过校验后写入文件。
+          output_specs = [
+              (
+                  "ADBLOCK_RULE_COLLECTION.txt",
+                  "ADBLOCK_RULE_COLLECTION_DNS.txt",
+                  "Adblock-Rule-Collection-DNS",
+              ),
+              (
+                  "ADBLOCK_RULE_COLLECTION_Lite.txt",
+                  "ADBLOCK_RULE_COLLECTION_DNS_Lite.txt",
+                  "Adblock-Rule-Collection-DNS-Lite",
+              ),
+          ]
+
+          generated_results = [
+              compile_file(input_path, output_path, title)
+              for input_path, output_path, title in output_specs
+          ]
+
+          for result in generated_results:
+              validate_generated_document(result)
+
+          for result in generated_results:
+              output_path = Path(result["output_path"])
+              output_path.write_text(result["document"], encoding="utf-8")
+              print(
+                  f"Generated {output_path}: "
+                  f"{len(result['rules'])} DNS rules."
+              )
+
+      - name: Commit and safely push DNS rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ADBLOCK_RULE_COLLECTION_DNS.txt ADBLOCK_RULE_COLLECTION_DNS_Lite.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Update AdBlock DNS rules"
+          branch="main"
+          git fetch origin "$branch"
+          if ! git rebase -X ours "origin/$branch"; then
+            git rebase --abort || true
+            echo "::error::与远程 main 分支同步失败，停止推送以避免覆盖远程提交。"
+            exit 1
+          fi
+
+          if git push origin "HEAD:$branch"; then
+            echo "Push successful."
+            exit 0
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            echo "推送遇到并发更新；第 ${attempt} 次重新拉取远程 main 并尝试变基。"
+            git fetch origin "$branch"
+            if ! git rebase -X ours "origin/$branch"; then
+              git rebase --abort || true
+              echo "::error::无法自动同步远程 main 分支。"
+              exit 1
+            fi
+            if git push origin "HEAD:$branch"; then
+              echo "Push successful."
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+
+          echo "::error::多次尝试后仍无法推送 DNS 规则。"
+          exit 1
