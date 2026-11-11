@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-11 23:40:51 (UTC+8)
-! Total rules: 1874200
+! Generated: 2026-11-12 00:21:23 (UTC+8)
+! Total rules: 1874212
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -504240,6 +504240,7 @@ kontramarka.ua##.promo-line
 kontramarka.ua##.social-linkss
 kontramarka.ua#?#.content-block:has(> div.follow_us)
 kontramarka.ua,forbes.kz,japanese.engadget.com##.social-follow
+kontramarka.ua,park4night.com,testing.com,vici.eu,bibleserver.com,history.vn.ua,iseyskyr.com##.cc-container
 kontrast.dk#$##modal-background { display: none !important; }
 kontrast.dk#$#body { overflow: visible !important; }
 kontrolfreek.com##.klaviyo-form-container
@@ -517739,6 +517740,7 @@ m.economictimes.com###prominentOverlay
 m.economictimes.com###wapFooter
 m.economictimes.com###whatsapp_banner
 m.economictimes.com##+js(json-edit, ..ad_shield_wap, matches, /ad_shield_wap/)
+m.economictimes.com##+js(nosiif, _grx)
 m.economictimes.com##+js(set-session-storage-item, nudgeStickyBannerHide, true)
 m.economictimes.com##._2YmFf
 m.economictimes.com##._2rMIm
@@ -552421,7 +552423,6 @@ park-skocjanske-jame.si##div[style*="text-align:center;-webkit-box-shadow:0px -5
 park-volokolamsk.ru###cookies-drop
 park.ajinomoto.co.jp##.bottomMenu
 park.ajinomoto.co.jp##.wrapperShareBtn
-park4night.com,testing.com,vici.eu,bibleserver.com,history.vn.ua,iseyskyr.com##.cc-container
 parkablogs.com###block-block-115
 parkablogs.com###block-block-77
 parkbutor.hu#@#.cookie-alert
@@ -981323,6 +981324,7 @@ zzzyk.com###Tinfo
 ||dfcfw.com/tg/
 ||dfcfw.com/zndh/
 ||dfcfw.com^
+||dfcqsybwzgnzy.online^
 ||dfcthngzpxiwc.site^
 ||dfcvflmanslal.top^
 ||dfcvflmanslal.top^$all
@@ -1332423,6 +1332425,7 @@ zzzyk.com###Tinfo
 ||gexing.com/i/*960x
 ||gexing.com/j/??zmask.js,easing.js?
 ||gexq.cn^
+||geyabxkpzbvsy.online^
 ||geygin.bonprix.ch^
 ||geystikigonia.openapp.link^
 ||geyvkhjsinjvn.website^
@@ -1477052,6 +1477055,7 @@ zzzyk.com###Tinfo
 ||junwjwl.com^
 ||junxy0gcijc3ah2-p.adktrack37.xyz^
 ||juo4y146j.o8e2vntnneokn8.cyou^
+||juoanvouymacf.site^
 ||juokkbdsqxgak.site^
 ||juozxeay2fhvmfll.sparta.members.tt.omtrdc.net^
 ||jup-dex.org^$all
@@ -1484176,6 +1484180,7 @@ zzzyk.com###Tinfo
 ||kejiadoor.cn^
 ||kejiwanjia.com/wp-content/uploads/*/1040x100.
 ||kejreecs.twin.so^
+||kejwsfsmcdvyd.space^
 ||kejyrcp923.com^
 ||kek.yourdream.love^
 ||kekenet.com/Images/*/tom640X40.gif
@@ -1491438,6 +1491443,7 @@ zzzyk.com###Tinfo
 ||kvsk8a6t5mnfjtd9.click.s11.sfmc-osl.com^
 ||kvskic.jadore-jun.jp^
 ||kvsklf.ateliergs.de^
+||kvskvclkziqne.online^
 ||kvsosyysxmdwd.site^
 ||kvt5.blesscollectionhotels.com^
 ||kvv.jxc.mybluehost.me^$doc
@@ -1491518,6 +1491524,7 @@ zzzyk.com###Tinfo
 ||kwkhit.stuttgarter-jobanzeiger.de^
 ||kwkhsacpwwnkv.online^
 ||kwlmpwbrsennw.space^
+||kwmomvbdrhrrg.site^
 ||kwmtfcylgivln.space^
 ||kwmyeong.tt-qe2.omtrdc.net^
 ||kwn91x0jke.top^
@@ -1600318,6 +1600325,7 @@ zzzyk.com###Tinfo
 ||pdftoshokan.com^$script,replace=/if\s*\(\s*[-\$0-9A-Z_a-z]+\s*-\s*[-\$0-9A-Z_a-z]+\s*>\s*[-\$0-9A-Z_a-z]+\s*\*\s*\d+(e\d)?\s*\)/if(0)/
 ||pdftoshokan.com^$script,replace=/if\s*\(\s*\(\s*[-\$0-9A-Z_a-z]+\s*-\s*[-\$0-9A-Z_a-z]+\s*\)\s*\/\s*\d+(e\d)?\s*>\s*[-\$0-9A-Z_a-z]+\s*\)//
 ||pdg.pauldavidsguitar.com^
+||pdgifgpbfasrb.online^
 ||pdhalum64773.ipage.com^
 ||pdhalum64773.ipage.com^$all
 ||pdheo.thechocolateworkshop.co.uk^
@@ -1739079,6 +1739087,7 @@ zzzyk.com###Tinfo
 ||snandi.com^$all
 ||snanews.de/js/sw/analytics.js
 ||snaoarwbagsiq.space^
+||snaooicdnsuas.space^
 ||snap-api.arkoselabs.com/metrics/
 ||snap.plnar.ai^
 ||snapachat.com^$all
@@ -1769241,6 +1769250,7 @@ zzzyk.com###Tinfo
 ||swag-01-car21-web-wwww0node.net.daraz.com^
 ||swag.draganddropobjects.net.daraz.com^
 ||swagduftite.cyou^
+||swaggedstrepenlowmen.cfd^
 ||swagger-00d70000000motieas.net.daraz.com^
 ||swagger-frontpage-partner.net.daraz.com^
 ||swagger.kubemarketing.net.daraz.com^
@@ -1828138,6 +1828148,7 @@ zzzyk.com###Tinfo
 ||vvpingtai.com^
 ||vvqc95xhtx.com^
 ||vvqizy.witt-weiden.de^
+||vvqpgzbwrzsuh.space^
 ||vvqyzi.odisel.com^
 ||vvrbtw.martinexshop.com^
 ||vvrjm.drench.co.uk^
@@ -1830682,6 +1830693,7 @@ zzzyk.com###Tinfo
 ||wbscyctyiiold.space^
 ||wbshu.com^$third-party
 ||wbsleixbsbbrf.space^
+||wbsmuenfbnsqk.site^
 ||wbss.wrist-band.com^
 ||wbswtr.decathlon.com.tr^
 ||wbt-tankautomat.de^
