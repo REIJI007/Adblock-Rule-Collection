@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-11 15:39:19 (UTC+8)
-! Total rules: 1504592
+! Generated: 2026-11-11 16:11:23 (UTC+8)
+! Total rules: 1504601
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -89261,6 +89261,11 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 4866.ftp-qa1.marketingcloudqaops.com$image
 4866.sfap-qa1.marketingcloudqaops.com$image
 4866.sock-qa1.marketingcloudqaops.com$image
+489.fm###botbonnie-chatbox
+489.fm###rightContents > ul.sakuraBnr[style="margin-top: 15px;"]
+489.fm###top_sakura2
+489.fm##.aid-plugin
+489.fm##.tax5cp > a[href="https://www.489.fm/apphtml/"]
 4893.connector-qa1.marketingcloudqaapis.com$image
 4893.editor-qa1.marketingcloudqaapis.com$image
 4893.ftp-qa1.marketingcloudqaops.com$image
@@ -95364,6 +95369,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 @@.mp4$media,stealth=referrer,domain=api.animeuzayi.com
 @@.mp4$media,stealth=referrer,domain=sekai.one
 @@.mp4%3Fsign%3$third-party,media,stealth=referrer,domain=vidrock.ru
+@@.mp4%3Fsign%3$third-party,media,stealth=referrer,domain=vidrock.to|vidrock.net|vidrock.*
 @@.mp4?$media,stealth=referrer,domain=vidlink.pro
 @@.mp4?sign=$media,stealth=referrer,domain=officialmoviebox.com|movieboxonline.net|123moviesfree.club|netnaija.film|m2box.org|netfilm.world
 @@.my.salesforce-setup.com/_ui/common/config/field/*/d?id=*&type=
@@ -95633,6 +95639,8 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 @@/favicon.ico|
 @@/favicon1.ico|
 @@/file$xmlhttprequest,stealth=referrer,domain=streameeeeee.site|videostr.net
+@@/file*.m3u8|$xmlhttprequest,stealth=referrer,domain=vidrock.to|vidrock.net|vidrock.*
+@@/file*/page-*.html|$xmlhttprequest,stealth=referrer,domain=vidrock.to|vidrock.net|vidrock.*
 @@/file2/*$xmlhttprequest,stealth=referrer,domain=vidora.stream
 @@/file2/*==/*$xmlhttprequest,stealth=referrer,domain=megacloud.*
 @@/fingerprint.$domain=abchina.com
@@ -429880,6 +429888,7 @@ fanpage.it##.fp_share__actions > button.fp_button
 fanpage.it##.fp_underfollow
 fanpage.it##.ft-icon
 fanpage.it##div[class^="taboola-widget-"]
+fanpage.it,geopop.it,cookist.it##.adv-wrapper
 fanpage.it,geopop.it,ohga.it,3dexperience.3ds.com,duunitori.fi,l-a.no,deptagency.com,soshace.com##.gdpr-modal
 fanpop.com#$#header.fanpop { position: absolute !important; }
 fanqiangzhe.com###mobile-bottom-ads
