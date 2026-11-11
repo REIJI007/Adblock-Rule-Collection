@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-11 16:12:02 (UTC+8)
-! Total rules: 1871064
+! Generated: 2026-11-11 16:21:40 (UTC+8)
+! Total rules: 1871065
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -602745,7 +602745,6 @@ thueringer-energienetze.com#%#//scriptlet('trusted-click-element', 'a#CybotCooki
 thuglink.com##+js(set, adblockEnabled, false)
 thuisarts.nl##.block-social-sharing
 thuisarts.nl##main > div.layout-wrapper:has(> div.layout-wrapper__inner > div.promotion-block)
-thuisarts.nl#%#//scriptlet('trusted-click-element', '#ai-assistant >>> dialog button.ai_center', 'containsText:Akkoord')
 thuisbezorgd.nl##.c-cookieBanner
 thuisbezorgd.nl,takeaway.com,just-eat.ch,lieferando.at,lieferando.de,just-eat.fr,pyszne.pl,just-eat.dk,just-eat.no##div[data-selector-id="app-banner"]
 thumbnailcreator.com##div.fixed:has([href="/cookie-policy"])
@@ -1579814,6 +1579813,7 @@ zzzyk.com###Tinfo
 ||oepdduabkjtda.site^
 ||oepinfo.orlando.org^
 ||oepkdmcujxace.space^
+||oeqaofwnietjp.website^
 ||oeqloiksnepwl.website^
 ||oeqwtcfk.com^
 ||oeqzzqgnwczfo.online^
@@ -1767392,6 +1767392,7 @@ zzzyk.com###Tinfo
 ||szpgzn.com^
 ||szpkhq.ds-nature.co.kr^
 ||szpl0.com^
+||szpmhpaglacgw.website^
 ||szpyqrgh.xyz^
 ||szpzwvdcpedjl.site^
 ||szqbzj.croisieresdiscount.com^
