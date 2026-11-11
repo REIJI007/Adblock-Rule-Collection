@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-12 06:20:17 (UTC+8)
-! Total rules: 1874332
+! Generated: 2026-11-12 06:51:12 (UTC+8)
+! Total rules: 1874343
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -67129,6 +67129,7 @@ $~xmlhttprequest,removeparam=r,domain=tv2.no|linode.com|ledger.*|mrgay.com|odyse
 /^https?:\/\/[a-z]+\.[a-z]{4,}\/oop\/\d+_md(?:\/\d+){5}\b/$document,match-case
 /^https?:\/\/[a-z]+\d\.gogomailbali(\.it)?\.eu\.org\/#\?act=/$doc,match-case,to=eu.org
 /^https?:\/\/[a-z]+\d\.gogomailbali(\.it)?\.eu\.org\/#\?act=/$document,match-case,to=eu.org
+/^https?:\/\/[a-z]{10,}\.(cfd|click|cyou|online|pro|qpon|rest|shop|site|space|store|top|website|xyz)\/\d{6,}\/\d{6,}\/[a-z]$/$media,third-party
 /^https?:\/\/[a-z]{4,}\.top\/z-[a-z0-9]{7,10}$/$script,3p,match-case,to=top
 /^https?:\/\/[a-z]{5,7}\.com\/script\/[-_0-9A-Za-z]+(\.min)?\.js$/$script,3p,match-case,from=~edu|~gov,header=x-guploader-uploadid
 /^https?:\/\/[a-z]{6,12}\.com\/script\/n[a-z]su\.js$/$script,3p
@@ -769238,6 +769239,7 @@ zzzyk.com###Tinfo
 ||3pohpyurxxirl1mqtzj1mj2p1ftj.cfd^
 ||3pornstarmovies.com/*/*/*/js/ssu*.js^
 ||3pornstarmovies.com/ai/s/s/su.php
+||3pq0vah1e0.com^
 ||3pre-alicert-adminketing.net.daraz.com^
 ||3pre-webimrketing.net.daraz.com^
 ||3prn.com/even/ok.js
@@ -1009230,6 +1009232,7 @@ zzzyk.com###Tinfo
 ||dwin2.com^$third-party
 ||dwis0v-k0.zeitzusammen.de^
 ||dwizdq.ekosport.nl^
+||dwjdzygbmnrdr.website^
 ||dwjhc6lfywbuhvkz.javhihi.net.daraz.com^
 ||dwjhc6lfywbuhvkz.mobilecl.bellsouth.net.daraz.com^
 ||dwjle.cn^
@@ -1019036,6 +1019039,7 @@ zzzyk.com###Tinfo
 ||ehgum.xyz^$all
 ||ehh91kb6ic.com^
 ||ehi.senshukai.tt.omtrdc.net^
+||ehiakjopnzwcc.online^
 ||ehibml.revolveclothing.fr^
 ||ehidjqbxcdufh2y2.net.daraz.com^
 ||ehimc.myndmushrooms.com^
@@ -1291505,6 +1291509,7 @@ zzzyk.com###Tinfo
 ||eradicated.tt.omtrdc.net^
 ||eradisciplinemomentary.com^
 ||eradn-i.tt.omtrdc.net^
+||eraf2uzhji.com^
 ||erafbtkgkirqe.site^
 ||eragon.goasrv.com^
 ||erahissed.com^$all
@@ -1328738,6 +1328743,7 @@ zzzyk.com###Tinfo
 ||gbpgu.groomiebeauty.com^
 ||gbphe.letswander.co^
 ||gbpuw9l.5yvw6h11o179qj.cyou^
+||gbpzrfkwopjeq.website^
 ||gbq.cognizanttarget.tt.omtrdc.net^
 ||gbq.tataunistore.tt.omtrdc.net^
 ||gbqofs.com/bcbsal/common/p/detector-lazy.min.js$all
@@ -1443659,6 +1443665,7 @@ zzzyk.com###Tinfo
 ||hygienehomicidalreflex.com^$all
 ||hygienicpee.com^
 ||hygienicpug.com^$all
+||hygripbkapinz.space^
 ||hyh.happyheroes.de^
 ||hyhavaflmeguk.site^
 ||hyhfimgg.com^
@@ -1532543,6 +1532550,7 @@ zzzyk.com###Tinfo
 ||ltqbn8nc5ly6ad0g.javhihi.net.daraz.com^
 ||ltqbn8nc5ly6ad0g.lib-oa-1.net.daraz.com^
 ||ltqbn8nc5ly6ad0g.net.daraz.com^
+||ltqosdxkeodrq.site^
 ||ltqpej.vidaxl.ie^
 ||ltqren.beamer-discount.de^
 ||ltqsl.liplab.com^
@@ -1565821,6 +1565829,7 @@ zzzyk.com###Tinfo
 ||mtvnservices.com/metrics/
 ||mtwashingtonshopnsave.oid.links.rosieapp.com^
 ||mtwataveihajz.space^
+||mtwfocbhbulit.online^
 ||mtwsraeaglikg.online^
 ||mtx.belfius.be^
 ||mtx.godo.com.au^
@@ -1566039,6 +1566048,7 @@ zzzyk.com###Tinfo
 ||multiple46.top^
 ||multiplewhenceingredient.com^
 ||multiplication29.top^
+||multiplicator98.com^
 ||multiplier47.top^
 ||multiply5.top^
 ||multiplylonesomepigeons.com^$all
@@ -1805373,6 +1805383,7 @@ zzzyk.com###Tinfo
 ||uaxyutpxh.xyz^
 ||uaxzqwagnvfoz.website^
 ||uaz.ru/js/analytics/gtm.js
+||uazawlvvpacgj.space^
 ||uazfxlngnrhtd.site^
 ||uazhaixvzaggm.space^
 ||uazher.tt.omtrdc.net^
