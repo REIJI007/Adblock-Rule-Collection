@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-16 02:18:52 (UTC+8)
-! Total rules: 1862600
+! Generated: 2026-11-16 03:55:09 (UTC+8)
+! Total rules: 1862633
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -178677,6 +178677,7 @@ daily.co.jp##+js(trusted-rpnt, script, /(window\.AdObserverManager\.register\('d
 daily.co.jp##.add-button-dialog
 daily.co.jp##.daily-unext-widget
 daily.co.jp##.inner > a[target="_blank"][rel="noopener noreferrer"][style="line-height: 25.5px; font-size: 17px; color: rgb(0, 108, 204); display: block; margin-bottom: 2rem;"]
+daily.co.jp##.kb-promo
 daily.co.jp##.supplemental > div.social-wrapper
 daily.co.jp##.ul_socialClip
 daily.co.jp##.ul_socialFull
@@ -475480,6 +475481,8 @@ glas-javnosti.rs##.row.pt-4.pb-4
 glas-javnosti.rs##.skini
 glasgowlive.co.uk##.copy-link-list
 glasgowlive.co.uk##.sharebar-provider
+glasgowlive.co.uk##div[class*="aboola"]
+glasgowlive.co.uk##div[data-tmdatatrack="non-content-unit"]
 glasgowtimes.co.uk###subscription-content > p > a[href="https://www.whatsapp.com/channel/0029VaA1fJO3rZZZLMMFFK0U"]
 glashkoff.com##.rrssb-panel-bottom
 glashuette-original.com###js_dataNnoticeBackdrop
@@ -484717,6 +484720,7 @@ histmag.org,inzynieria.com##.w2g-rodzic
 histock.tw###tbadword
 histock.tw##.bottom-right
 historiademexicobreve.com##.wpfront-fixed-position
+historianet.fi##+js(trusted-click-element, #didomi-notice-agree-button)
 historianet.fi,tieku.fi##+js(set, cicc.cookie_cat_functional, true)
 historianet.fi,tieku.fi##+js(set, cicc.cookie_cat_marketing, true)
 historianet.fi,tieku.fi##.topscroll-banner
@@ -586116,10 +586120,22 @@ speedof.me##.ftl-zone
 speedof.me##.hero-promos
 speedof.me##.home-promos
 speedof.me##.intro-ad-footer
+speedof.me##.sci2q2w-nu695q4
 speedof.me##.share-btn-group > foreignObject > div.result_icon_container > div.result_icon_group:is([aria-label^="Share"], [aria-label="Copy link"])
 speedof.me##.test-ad-container
 speedof.me##body > [class]:has(> a[href="/api?src=rail"])
-speedof.me#%#//scriptlet('set-constant', 'innerWidth', '800')
+speedof.me##body div:not(.cc-consent-toast):matches-css(position: fixed):matches-css(bottom: /^(1[0-9]|2[0-9])px$/):matches-css(width: /^(2[9][0-9]|3[0-9]{2}|4[0-6][0-9])px$/):matches-css(height: /^(9[0-9]|1[0-5][0-9])px$/)
+speedof.me##body div:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
+speedof.me##body section:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
+speedof.me##body span:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
+speedof.me#%#(()=>{try{const a=window.adsbygoogle=window.adsbygoogle||[];a.loaded=!0;const r=/(^|\s)(api-ad-footer|web-ad-footer|intro-ad-footer|ad-rail|example-ad-sidebar)(\s|$)/;const m=()=>{const l=document.querySelectorAll('ins.adsbygoogle');for(let i=0;i<l.length;i++){const s=l[i],p=s.parentElement;if(!p)continue;const c=typeof p.className==='string'?p.className:'';if(!r.test(c))continue;if((s.textContent||'').replace(/\s+/g,''))continue;s.textContent='\u200d'}};m();document.addEventListener('DOMContentLoaded',m,{once:true});window.addEventListener('load',m,{once:true});setTimeout(m,1500);setTimeout(m,4000)}catch(e){}})();
+speedof.me#%#//scriptlet('set-constant', 'somH3zjtii', 'true')
+speedof.me#%#//scriptlet('trusted-create-element', '.api-ad-footer.left-footer ins.adsbygoogle', 'span', 'style="display:none"', '.')
+speedof.me#%#//scriptlet('trusted-create-element', '.api-ad-footer.right-footer ins.adsbygoogle', 'span', 'style="display:none"', '.')
+speedof.me#?#body div:not(.cc-consent-toast):matches-css(position: fixed):matches-css(bottom: /^(1[0-9]|2[0-9])px$/):matches-css(width: /^(2[9][0-9]|3[0-9]{2}|4[0-6][0-9])px$/):matches-css(height: /^(9[0-9]|1[0-5][0-9])px$/)
+speedof.me#?#body div:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
+speedof.me#?#body section:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
+speedof.me#?#body span:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
 speedostream.*##+js(aost, JSON.parse, computed)
 speedpan.com###float-window
 speedporn.net##.sbox + #uwee
@@ -839085,6 +839101,7 @@ zzzyk.com###Tinfo
 ||amwgisnagixqe.store^
 ||amwm.cn^
 ||amx.andremendesadv.com^
+||amxpjpqepqmbe.space^
 ||amxprd.com^$doc
 ||amxprd.com^$document
 ||amxrpujyldelq.space^
@@ -853038,6 +853055,7 @@ zzzyk.com###Tinfo
 ||ato071.firebaseapp.com^$all
 ||ato071.web.app^
 ||ato071.web.app^$all
+||atofsegchckii.space^
 ||atoins.com^$all
 ||atom-data.io/session/latest/track.html?$third-party
 ||atom-ds.com^$3p
@@ -907663,6 +907681,7 @@ zzzyk.com###Tinfo
 ||charitylingoreformer.com^
 ||charizard.joaovitorscr.com^
 ||charizardex2004.tt.omtrdc.net^
+||charkshiite.qpon^
 ||charleigh.net.daraz.com^
 ||charlemagne.tt.omtrdc.net^
 ||charles0781.github.io^
@@ -974222,6 +974241,7 @@ zzzyk.com###Tinfo
 ||dkwwiibjjvawu.website^
 ||dkxobcs.cn^
 ||dkxtzubbtmzie.space^
+||dkxutggyyyajh.website^
 ||dkxwqu.annefontaine.com^
 ||dky1g9ncv.creditsafebusinessso.tt.omtrdc.net^
 ||dky1g9ncv.ptzinsurance.tt.omtrdc.net^
@@ -1280251,6 +1280271,7 @@ zzzyk.com###Tinfo
 ||eri0-dreayi.vercel.app^$all
 ||eri267.roslin.tt.omtrdc.net^
 ||eri2eslqpta2b.corp.net.daraz.com^
+||erianswarmysyruped.cfd^
 ||eric-12.dev.do.tt.omtrdc.net^
 ||eric-issy.tt.omtrdc.net^
 ||eric-staging.ns.tt.omtrdc.net^
@@ -1318582,6 +1318603,7 @@ zzzyk.com###Tinfo
 ||gengtaidianqi.com^$all
 ||gengtm.webuildgood.ca^
 ||genhack.com^
+||genhkjwtgpemz.space^
 ||geni.us/snippet.js
 ||geni.us/snippet.min.js
 ||geniad.net^
@@ -1474006,6 +1474028,7 @@ zzzyk.com###Tinfo
 ||kifortequimica.com.br^
 ||kifortequimica.com.br^$all
 ||kifqnx.ardennes-etape.com^
+||kifrgktcqlzha.space^
 ||kifu.goaserv.com^
 ||kifvf.babylisspro.com^
 ||kifwa.tt.omtrdc.net^
@@ -1538938,6 +1538961,7 @@ zzzyk.com###Tinfo
 ||meebo.com/cim/sandbox.php?
 ||meebo.com^$third-party
 ||meechumextlauncher.tt-qe2.omtrdc.net^
+||meedfulunsappy.com^
 ||meediabuy.com^
 ||meekermonglerdkl.cyou^
 ||meelba.com^
@@ -1572048,6 +1572072,7 @@ zzzyk.com###Tinfo
 ||ofojho.timecenter.com.br^
 ||ofoltekbn.com^
 ||ofovp.mypeakchallenge.com^
+||ofpagrfix.in^
 ||ofpeg.trywellbe.de^
 ||ofphxmkvkpdro.site^
 ||ofppahlkiz.com^
@@ -1595940,6 +1595965,7 @@ zzzyk.com###Tinfo
 ||popinacelektrameered.cyou^
 ||popinads.com^
 ||popjanuary.shop^
+||popjoybivial.com^
 ||popkulturowykociolek.pl/wp-content/uploads/*/*/*-Baner-Reklama.webp
 ||popkulturowykociolek.pl/wp-content/uploads/*/*/*-reklama-baner.png
 ||popland.info^
@@ -1617567,6 +1617593,7 @@ zzzyk.com###Tinfo
 ||qtgoiasqfgbgb.space^
 ||qthij.naturalizer.com^
 ||qtidcabun.in^
+||qtiizeosoagct.site^
 ||qtiofrxmeuyuk.online^
 ||qtj0.destinia.pl^
 ||qtjqntugrlwyn.website^
@@ -1618525,6 +1618552,7 @@ zzzyk.com###Tinfo
 ||qwgnmethokkkg.site^
 ||qwgruwrtcyxft.store^
 ||qwhcyayvoo.senza-formations.com^
+||qwhrfaudlpwjl.website^
 ||qwiklabs.com/assets/application-a8f2e5f3226b877f94468913812e76662003aeb7.js$all
 ||qwiklabs.com/assets/hallofmirrors/hallofmirrors-0ca4baaf26e513667565aad0391795faf3c19908.js$all
 ||qwiklabs.com/assets/vendor-1c75122c864db561eb016ef97dbd4eb4a740856f.js$all
@@ -1756301,6 +1756329,7 @@ zzzyk.com###Tinfo
 ||supabase.co/rest/v1/prmos_$domain=eloshapes.com
 ||supabase.co/rest/v1/promos_available
 ||supafter.com^
+||supaoyedsvqnb.site^
 ||supariairily.cyou^
 ||super-1-foods.bbanywhere.links.rosieapp.com^
 ||super-1-foods.cgi.links.rosieapp.com^
@@ -1795422,6 +1795451,7 @@ zzzyk.com###Tinfo
 ||ulyss-mes-voyages.com^
 ||ulyss-mes-voyages.com^$all
 ||ulyvjty4rd.com^
+||ulzgdvsqjkirw.online^
 ||um*.com^$third-party
 ||um-bredirect.com^$all
 ||um-public-panel-prod.s3.amazonaws.com^
@@ -1802555,6 +1802585,7 @@ zzzyk.com###Tinfo
 ||uziskins.com^
 ||uzjfuc.millesima.de^
 ||uzjvhbzumhnkg.online^
+||uzjwrcyopvzej.website^
 ||uzjzdtaiijqhy.online^
 ||uzkhd.centexautomation.net^
 ||uzl8.bkimfvv8gr9ix9uk5oy45t.cyou^
@@ -1845232,6 +1845263,7 @@ zzzyk.com###Tinfo
 ||xmailinctrrses.weebly.com^$all
 ||xmangetsux6.tt.omtrdc.net^
 ||xmangoculture.com^
+||xmaqolcvrsdvd.online^
 ||xmatch.com^
 ||xmatch.com^$popup
 ||xmaterial.tu.qq.com^
@@ -1855162,6 +1855194,7 @@ zzzyk.com###Tinfo
 ||zbl40hvzzy.com^
 ||zblbp.dukeshealth.com.au^
 ||zblpihyqktciu.space^
+||zblykoizftori.space^
 ||zbmbuk.moenchengladbacher-jobanzeiger.de^
 ||zbmeerconq.com^
 ||zbmre.pitbarrelcooker.com^
