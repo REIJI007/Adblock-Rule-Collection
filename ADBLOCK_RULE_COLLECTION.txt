@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-15 19:08:30 (UTC+8)
-! Total rules: 1864943
+! Generated: 2026-11-15 19:17:10 (UTC+8)
+! Total rules: 1864939
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -139558,6 +139558,10 @@ appleinsider.ru#?#.entry-content > p:has(> code > a[href^="https://t.me/"])
 appleinsider.ru,hi-news.ru##.sidebar-banner-telegram
 appleinsider.ru,hi-news.ru,androidinsider.ru##.banner_telegram
 applemymusic.com
+applescoop.org##+js(rmnt, script, /probe|adblock|__asPicks/i)
+applescoop.org##.as-ad
+applescoop.org##.as-ad-rail
+applescoop.org##.story-content .ad
 applesecureservices.lat
 applesencia.com##div[id^="facebook-flyer"]
 applesencia.com,capitalibre.com,frenomotor.com,placeralplato.com,sportadictos.com,winphonemetro.com,xombit.com,xombitgames.com,xombitmusic.com##.top-button
@@ -149861,8 +149865,8 @@ bhol.co.il##div[id^="interstitial-caption-"]
 bhol.co.il#%#//scriptlet('set-local-storage-item', 'analyticsUserId', '$remove$')
 bhol.co.il#%#//scriptlet('set-session-storage-item', 'analyticsSessionId', '$remove$')
 bhoomtv.*##+js(rmnt, script, /adblock/i)
-bhoomtv.org,porntv.us,rustv.fun,xxxtv.us##+js(ra, oncontextmenu|onkeydown|onselectstart, body, complete)
-bhoomtv.org,porntv.us,xxxtv.us##+js(rmnt, script, contextmenu)
+bhoomtv.*,porntv.us,rustv.fun,xxxtv.us##+js(ra, oncontextmenu|onkeydown|onselectstart, body, complete)
+bhoomtv.*,porntv.us,xxxtv.us##+js(rmnt, script, contextmenu)
 bhp-inka.pl##.js-modal-cookies
 bhphotovideo.com##.newsletter_PK8HvolxQy
 bhphotovideo.com##[class^="newsletter_"]
@@ -190852,7 +190856,6 @@ eisamay.com,indiatimes.com,samayam.com,vijaykarnataka.com##.pwa-deals.wdt_amz
 eisamay.com,indiatimes.com,samayam.com,vijaykarnataka.com##.top-atf-enabled-wrapper
 eisamay.com,indiatimes.com,samayam.com,vijaykarnataka.com##div[class="news-card col4"]
 eisamay.com,maharashtratimes.com,navbharattimes.indiatimes.com##.wdt_newsLetter
-eisamay.com,samayam.com,indiatimes.com##.notification_popup
 eisbaeren.de#$#.rsSocialTabs > div.rsOverflow > div[class="rsContainer"][style] { transform: translate3d(-328px, 0px, 0px) !important; }
 eisbaeren.de#$#.rsSocialTabs > div.rsTabs > div.rsNavItem:first-child { display: none !important; }
 eisenbahn.com.br##.age-gate-modal
@@ -457803,6 +457806,7 @@ euronews.com#$#div.pub.ad.advertising.adzone.sponsored[data-ad-name] { display: 
 euronews.com#$?##o-site-hr__leaderboard-wallpaper.u-show-for-xlarge { remove: true; }
 euronews.com#$?#div[data-ad-name] { remove: true; }
 euronews.com#%#//scriptlet('trusted-replace-argument', 'Document.prototype.createElement', '0', 'replace:/^script$/div/', 'script', 'inlineScript')
+euronews.com#%#//scriptlet('trusted-suppress-native-method', 'Element.prototype.setAttribute', ' |"adheader"', 'prevent')
 euronews.com#%#//scriptlet('trusted-suppress-native-method', 'Element.prototype.setAttribute', ' |"adheader"', 'suppress')
 euronews.com#?#.m-object:has(.m-object__quote:contains(/In partnership with|En partenariat avec|Mit Unterstützung von|In collaborazione con|En colaboración con|Em parceria com|Совместно с|ile birlikte|Σε συνεργασία με|Együttműködésben a|با همکاری|بالمشاركة مع/))
 euronews.com#?#.m-object:has(.m-object__quote:has-text(/In partnership with|En partenariat avec|Mit Unterstützung von|In collaborazione con|En colaboración con|Em parceria com|Совместно с|ile birlikte|Σε συνεργασία με|Együttműködésben a|با همکاری|بالمشاركة مع/))
@@ -480908,7 +480912,6 @@ halkinsesikibris.com,haberekspres.com.tr##.panel-sosyal
 halktv.com.tr##.rel-link
 halktv.com.tr,alem.com.tr,tv8.com.tr,uzmantv.com,internethaber.com##.tooplay_share
 halktv.com.tr,bolgegundem.com##.tools
-halktv.com.tr,celebtattler.com,navbharattimes.indiatimes.com##.google-follow
 halktv.com.tr,haber.doviz.com##.follow-google-news
 hall-wattens.at##.mco-consent
 hall123.com,hi.people.com.cn##img[width="1000"]
@@ -494669,6 +494672,7 @@ iplark.com##div[style="position: relative;"]
 iplark.com#%#//scriptlet('prevent-addEventListener', 'DOMContentLoaded', 'localStorage')
 iplark.com#%#//scriptlet('trusted-set-local-storage-item', 'adClosedTimestamp', '$now$')
 iplastica.ru#?#aside > div.widget:has(> div.textwidget > form[style] > p > input[value="Подписаться"])
+iplayerhls.com,morencius.com,hanerix.com,vibuxer.com,audinifer.com##+js(set, HTMLDivElement.prototype.oncontextmenu, null)
 iplaypy.com##.if1200,[src^="http://dl.iplaypython.com/images/banner"],[style*="width:336px;height:280px"]
 iplaysoft.com###_cblzx
 iplaysoft.com###link1111
@@ -500114,6 +500118,7 @@ kadrovik.ua#$#body { background: none!important; }
 kadrovik.ua#?#.region > div:has(> div.content > .fb-like-box)
 kaec.net,thelawpages.com###terms
 kaelte-nuhn.com,kvvks.de,messe-kassel.de##.note
+kaembed.*,mfw09.org,streamingunity.*,vixcloud.*##+js(aeld, contextmenu)
 kaembed.*,mfw09.org,streamingunity.*,vixcloud.*##+js(set, HTMLDivElement.prototype.oncontextmenu, null)
 kaembed.net###uix_99
 kaembed.net##body > img[id]
@@ -519148,14 +519153,11 @@ magyarorszagom.hu##.floatingLike
 magzter.com##.cookies__notification
 mahacot.com##.google-adsense-ads
 mahajobwala.in##+js(rmnt, script, /adbl/i)
-maharashtratimes.com###google-preferred-source-strip
 maharashtratimes.com##.ad1
-maharashtratimes.com##.alaskamasthead
 maharashtratimes.com##.btn-subscribe
 maharashtratimes.com##.colombia
 maharashtratimes.com##.news-app
 maharashtratimes.com##.pwa-deals
-maharashtratimes.com##.topNotification
 mahendrachemicals.com
 mahfda.com##+js(set, __aab_init, true)
 mahfda.com#$##aab-overlay { display: none !important; }
@@ -535863,16 +535865,12 @@ navbharattimes.indiatimes.com##.gdpr-cookiebanner
 navbharattimes.indiatimes.com##.side-overlay
 navbharattimes.indiatimes.com##.social_tools > a
 navbharattimes.indiatimes.com##.top-atf-wrapper
-navbharattimes.indiatimes.com##.wdt_social_share > ._icon:not(.comments)
-navbharattimes.indiatimes.com##.wdt_social_share > .social-cell:not(.comments)
-navbharattimes.indiatimes.com##.web_social > .yt-iframe
 navbharattimes.indiatimes.com##div[id^="div-clmb-ctn"]
 navbharattimes.indiatimes.com#$#body.disable-scroll { overflow: auto !important; margin-right: 0 !important; }
 navbharattimes.indiatimes.com#$#body.disable-scroll { overflow: auto!important; margin-right: 0!important; }
 navbharattimes.indiatimes.com#?##end_article_parent > .pd0 > .col4:has(> .ad1)
 navbharattimes.indiatimes.com#?#.icons-section > span.dateline:has(> div.icons-section a[onclick^="gtmTrakerevenst('share'"])
 navbharattimes.indiatimes.com#?#.leftmain > div[style] ~ div[class*=" "]:has(> div > div > a[onclick])
-navbharattimes.indiatimes.com,telugu.samayam.com##.fbnad
 navcargo.com.br###body-modal
 navcomic.com##body > div#document-header > aside.widget.widget_text
 naver.com##+js(aeld, /contextmenu|selectstart|dragstart/)
@@ -546642,7 +546640,6 @@ orange.ro##+js(aeld, /^(?:pointerdown|mousedown)$/, , elements, .js-pachete-onli
 orangebank.mailerpage.io
 orangebeanindiana.com#$#.td-header-main-menu.td-affix { position: static !important; transform: translate3d(0,0,0) !important; }
 orangenews.hk##img[advid]
-orangepage.net###google-preferred-source
 orangepage.net##.articleDetailSns
 orangepage.net##main div[class*=":hidden"]:has(> div[data-cptid])
 orangepix.is,erothots.co,zenporn.com##.bnrs
@@ -574706,10 +574703,8 @@ samaria.co.jp,minitab.com##.cookie-toaster
 samaritans.org###footer ~ div[class*="root"]
 samaritansonlus.org###sB_injected
 samash.com##+js(acs, document.getElementById, for-variations)
-samayam.com##.share_whatsapp
 samayam.com##:xpath(//span[(text()='Ad')]/../../..)
 samayam.com##style[type="text/css"] + div[class]:not([id]):not([style]):not([class*=" "])
-samayam.com,maharashtratimes.com##.wdt_social_share
 samayam.com,navbharattimes.indiatimes.com##.hp-rhs-ads-container
 samayam.com,navbharattimes.indiatimes.com##.rhs-mrec-wrapper
 samayam.com,navbharattimes.indiatimes.com##.top-stories-modal
@@ -624767,6 +624762,7 @@ webcamera.pl#%#//scriptlet('set-constant', 'STREAM_PLAYER_CONFIG.ads', 'emptyArr
 webcamera.pl#%#//scriptlet('set-constant', 'adsbygoogleScriptLoaded', 'true')
 webcamjackers.com##.thumbs > div.thumb:has(> a[href^="https://chaturbate.com/in/?"])
 webcamjackers.com#?#.thumbs > div.thumb:has(> a[href^="https://chaturbate.com/in/?"])
+webcamromania.ro##+js(aeld, contextmenu, preventDefault)
 webcamsbabe.com#%#//scriptlet("set-constant", "bcs_popup_show_bongacams_pop", "true")
 webcamsdolls.com##+js(nostif, offsetWidth)
 webcamsdolls.com##.sponsor
@@ -1723834,7 +1723830,6 @@ zzzyk.com###Tinfo
 ||slightresignationswiftly.com^
 ||sligro.tt.omtrdc.net^
 ||sliiindy.top^
-||slike.indiatimes.com^
 ||slilindy.top^
 ||slim.slimkiezen.eu^
 ||slimads.vn^
@@ -1845996,6 +1845991,7 @@ zzzyk.com###Tinfo
 ||xcnfzp.icu^
 ||xcntl7gxgx1.autoclubgroup.tt.omtrdc.net^
 ||xco0dgqt.administracion-5.accountbackup-v2.tt-stage-ci1.omtrdc.net^
+||xcoddqfdcumcn.space^
 ||xcode.amazonwebservicesinc.tt.omtrdc.net^
 ||xcode.mlbadvancedmedialp.tt.omtrdc.net^
 ||xcode.wyndhamhotelgroup.tt.omtrdc.net^
