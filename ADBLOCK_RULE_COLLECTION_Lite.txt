@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-15 19:02:33 (UTC+8)
-! Total rules: 1504606
+! Generated: 2026-11-15 19:16:39 (UTC+8)
+! Total rules: 1504613
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -162033,7 +162033,6 @@ einvestidor.estadao.com.br###push-notification-prompt-container
 einvestidor.estadao.com.br##.teaser-share
 eisamay.com##style[type="text/css"] + div[class]:not([id]):not([style]):not([class*=" "])
 eisamay.com,maharashtratimes.com,navbharattimes.indiatimes.com##.wdt_newsLetter
-eisamay.com,samayam.com,indiatimes.com##.notification_popup
 eisbaeren.de#$#.rsSocialTabs > div.rsOverflow > div[class="rsContainer"][style] { transform: translate3d(-328px, 0px, 0px) !important; }
 eisbaeren.de#$#.rsSocialTabs > div.rsTabs > div.rsNavItem:first-child { display: none !important; }
 eisenbahn.com.br##.age-gate-modal
@@ -428056,6 +428055,7 @@ euronews.com#$#div.pub.ad.advertising.adzone.sponsored[data-ad-name] { display: 
 euronews.com#$?##o-site-hr__leaderboard-wallpaper.u-show-for-xlarge { remove: true; }
 euronews.com#$?#div[data-ad-name] { remove: true; }
 euronews.com#%#//scriptlet('trusted-replace-argument', 'Document.prototype.createElement', '0', 'replace:/^script$/div/', 'script', 'inlineScript')
+euronews.com#%#//scriptlet('trusted-suppress-native-method', 'Element.prototype.setAttribute', ' |"adheader"', 'prevent')
 euronews.com#%#//scriptlet('trusted-suppress-native-method', 'Element.prototype.setAttribute', ' |"adheader"', 'suppress')
 euronews.com#?#.m-object:has(.m-object__quote:contains(/In partnership with|En partenariat avec|Mit Unterstützung von|In collaborazione con|En colaboración con|Em parceria com|Совместно с|ile birlikte|Σε συνεργασία με|Együttműködésben a|با همکاری|بالمشاركة مع/))
 euronews.com#?#.the-media-object--has-sponsored:contains(/In partnership with|In collaborazione con|En partenariat avec|Mit Unterstützung von|En colaboración con|Em parceria com|We współpracy z|Совместно с|ile birlikte|Σε συνεργασία με|Együttműködésben a|با همکاری|با همکاری/)
@@ -446619,7 +446619,6 @@ halkinsesikibris.com,haberekspres.com.tr##.panel-sosyal
 halktv.com.tr##.rel-link
 halktv.com.tr,alem.com.tr,tv8.com.tr,uzmantv.com,internethaber.com##.tooplay_share
 halktv.com.tr,bolgegundem.com##.tools
-halktv.com.tr,celebtattler.com,navbharattimes.indiatimes.com##.google-follow
 halktv.com.tr,haber.doviz.com##.follow-google-news
 hall-wattens.at##.mco-consent
 hall123.com,hi.people.com.cn##img[width="1000"]
@@ -477957,12 +477956,9 @@ magyarorszag.hu#%#//scriptlet('ubo-set-cookie', 'szuf_consent', '0')
 magyarorszagom.hu##.floatingLike
 magzter.com##.cookies__notification
 mahacot.com##.google-adsense-ads
-maharashtratimes.com###google-preferred-source-strip
-maharashtratimes.com##.alaskamasthead
 maharashtratimes.com##.btn-subscribe
 maharashtratimes.com##.news-app
 maharashtratimes.com##.pwa-deals
-maharashtratimes.com##.topNotification
 mahfda.com#$##aab-overlay { display: none !important; }
 mahfda.com#$#html { overflow: auto !important; }
 mahfda.com#%#//scriptlet('set-constant', '__aab_init', 'true')
@@ -491479,14 +491475,10 @@ navbharattimes.indiatimes.com##.gdpr-cookiebanner
 navbharattimes.indiatimes.com##.side-overlay
 navbharattimes.indiatimes.com##.social_tools > a
 navbharattimes.indiatimes.com##.top-atf-wrapper
-navbharattimes.indiatimes.com##.wdt_social_share > ._icon:not(.comments)
-navbharattimes.indiatimes.com##.wdt_social_share > .social-cell:not(.comments)
-navbharattimes.indiatimes.com##.web_social > .yt-iframe
 navbharattimes.indiatimes.com##div[id^="div-clmb-ctn"]
 navbharattimes.indiatimes.com#$#body.disable-scroll { overflow: auto!important; margin-right: 0!important; }
 navbharattimes.indiatimes.com#?#.icons-section > span.dateline:has(> div.icons-section a[onclick^="gtmTrakerevenst('share'"])
 navbharattimes.indiatimes.com#?#.leftmain > div[style] ~ div[class*=" "]:has(> div > div > a[onclick])
-navbharattimes.indiatimes.com,telugu.samayam.com##.fbnad
 navcargo.com.br###body-modal
 navcomic.com##body > div#document-header > aside.widget.widget_text
 naver.com##._promotionBanner,._banner
@@ -500251,7 +500243,6 @@ orange.pl##.css-yco2eg
 orange.pl##.snrs-container-webpush
 orangebeanindiana.com#$#.td-header-main-menu.td-affix { position: static !important; transform: translate3d(0,0,0) !important; }
 orangenews.hk##img[advid]
-orangepage.net###google-preferred-source
 orangepage.net##.articleDetailSns
 orangepage.net##main div[class*=":hidden"]:has(> div[data-cptid])
 orangepix.is,erothots.co,zenporn.com##.bnrs
@@ -521743,9 +521734,7 @@ samara24.ru##.au-share
 samaria.co.jp,minitab.com##.cookie-toaster
 samaritans.org###footer ~ div[class*="root"]
 samaritansonlus.org###sB_injected
-samayam.com##.share_whatsapp
 samayam.com##style[type="text/css"] + div[class]:not([id]):not([style]):not([class*=" "])
-samayam.com,maharashtratimes.com##.wdt_social_share
 samayam.com,navbharattimes.indiatimes.com##.hp-rhs-ads-container
 samayam.com,navbharattimes.indiatimes.com##.rhs-mrec-wrapper
 samayam.com,navbharattimes.indiatimes.com##.top-stories-modal
@@ -656729,6 +656718,7 @@ zzzyk.com###Tinfo
 ||athenasbaklava.com^$all
 ||athens.toto-tst.nl^
 ||athens.toto.nl^
+||athensfungatetriform.cfd^
 ||athensvoice.gr/content/dist/app/Plugins/pageTrack.js
 ||athingjocelin.qpon^
 ||athl.lsusports.net^
@@ -754467,6 +754457,7 @@ zzzyk.com###Tinfo
 ||derwaistthatheha.org^
 ||derwent.tt.omtrdc.net^
 ||derwesten.de/stats/
+||derwqryqvgrtp.online^
 ||derynirealms.tt.omtrdc.net^
 ||des-3.tt.omtrdc.net^
 ||des-dev2.azdev.tt.omtrdc.net^
@@ -1080152,6 +1080143,7 @@ zzzyk.com###Tinfo
 ||fervidlowstrongest.com^$all
 ||fervidsparklingact.com^$all
 ||fervorsixtiesveteran.com^
+||fervorszymomin.com^
 ||fervortactic.com^$document
 ||fervvqxoshqfa.space^
 ||ferziendfljud.site^
@@ -1101495,6 +1101487,7 @@ zzzyk.com###Tinfo
 ||geekweek.pl/templates/rodo/rodo.js
 ||geekwire.com/wp-json/geekwire/v*/geekwire-sponsor-posts
 ||geeky-gadgets.net/api/event
+||geenvqqqccffg.online^
 ||geerahyasmak.cfd^
 ||geestsfigaro.com^
 ||geet3xanxc.com^
@@ -1184649,6 +1184642,7 @@ zzzyk.com###Tinfo
 ||jnmncpoktqope.online^
 ||jnmqhpecyjrnf.online^
 ||jnmqym4.cn^
+||jnno9y1a9.com^
 ||jnohm.stuartweitzman.com^
 ||jnoknz.bradfordexchange.ca^
 ||jnoxpedpszqfok.com^
@@ -1185574,6 +1185568,7 @@ zzzyk.com###Tinfo
 ||jpwfrl.mona.de^
 ||jpwhcyeqaikoz.site^
 ||jpwwqujvnoskd.site^
+||jpwxjnyomybsx.website^
 ||jpwzbglshulfq.space^
 ||jpya1r.webwave.dev^$all
 ||jpysvip.net/ad/
@@ -1281390,6 +1281385,7 @@ zzzyk.com###Tinfo
 ||nuxuwhawo.com^
 ||nuyibu.pieper.de^
 ||nuyujp.barstoolsports.com^
+||nuzrkozxu.com^
 ||nv-ad.24hstatic.com^
 ||nv.camys.com.br^
 ||nv.inhaabit.com^
@@ -1323026,6 +1323022,7 @@ zzzyk.com###Tinfo
 ||qtmojo.cn^
 ||qtmojo.com^
 ||qtmojo.com^$third-party
+||qtmomptkuldtf.online^
 ||qtmvp.roamans.com^
 ||qtmweb-whatsapp.com^$document
 ||qtnhmmqmoyxzd.space^
@@ -1344653,6 +1344650,7 @@ zzzyk.com###Tinfo
 ||reblameqm.cyou^
 ||reblownrandell.com^
 ||reblyi.sklepkawa.pl^
+||reboantflative.com^
 ||reboantzarf.com^
 ||reboltnyoro.com^
 ||rebootrewire.com^
@@ -1375566,7 +1375564,6 @@ zzzyk.com###Tinfo
 ||slightresignationswiftly.com^
 ||sligro.tt.omtrdc.net^
 ||sliiindy.top^
-||slike.indiatimes.com^
 ||slilindy.top^
 ||slim.slimkiezen.eu^
 ||slimads.vn^
@@ -1376098,6 +1376095,7 @@ zzzyk.com###Tinfo
 ||smeasurement.infiniti.ca^
 ||smeasurement.nissan.ca^
 ||smedata.sk/monitor/bundles/smeblockmanagerapi/build/js/gfcc.js
+||smeethcertosa.cfd^
 ||smelel.icu^
 ||smelt.allenpike.com^
 ||smenqskfmpfxnb.bid^
@@ -1436458,6 +1436456,7 @@ zzzyk.com###Tinfo
 ||trl.upperbooking.com^
 ||trl.upperbooking.com^$third-party
 ||trlcn.lindywell.com^
+||trlcvrshzpmfj.space^
 ||trldle.shikaku-square.com^
 ||trliawvdxthkz.website^
 ||trljnk.frankandeileen.com^
@@ -1442559,6 +1442558,7 @@ zzzyk.com###Tinfo
 ||uki2.tt.omtrdc.net^
 ||ukidp.net.daraz.com^
 ||ukiylfkgkurfy.site^
+||ukjcgjxbwitpr.online^
 ||ukjmrtjwlk.com^
 ||ukjphn.vitaminler.com^
 ||ukjugjhigvcax.site^
@@ -1449025,6 +1449025,7 @@ zzzyk.com###Tinfo
 ||uwdqokjwmnfxu.site^
 ||uwdzbo.tgw.com^
 ||uweco.com^$all
+||uweohpauhitgm.online^
 ||uwerpyh.cn^
 ||uwex.actonservice.com^
 ||uwezxr.provenwinners.com^
@@ -1449162,6 +1449163,7 @@ zzzyk.com###Tinfo
 ||uyduwdmzcwkn.com^
 ||uyenkbqmzlnlk.online^
 ||uyepkdfmrt.com^
+||uyetmitbsxcwd.website^
 ||uyfpvjbheoyws.store^
 ||uyfv.cn^
 ||uyfxgjcfkglfkhcgljchkvlkvjkhgyughgfggjh.weebly.com^$all
@@ -1454480,6 +1454482,7 @@ zzzyk.com###Tinfo
 ||vhesnshk.zasadzivot.cz^
 ||vheth.ascendadditions.com^
 ||vhewpprxfnprc.space^
+||vhfdpjmfdcovi.website^
 ||vhfim.nuorganic.com^
 ||vhfjkm5.eynijmqlgbgpehencc1k114.cyou^
 ||vhfkq.ecowaterspa.com^
@@ -1462176,6 +1462179,7 @@ zzzyk.com###Tinfo
 ||vxlpha.weddingpark.net^
 ||vxmhdaxyfjlmq.online^
 ||vxnurbodyeces.space^
+||vxnvskrzuwmpo.online^
 ||vxohkh.laboutiqueofficielle.com^
 ||vxotu.com/i/*.gif
 ||vxqpuuzamduiw.space^
@@ -1470365,6 +1470369,7 @@ zzzyk.com###Tinfo
 ||wiprolimited.tt.omtrdc.net^
 ||wiqccpxjtvkjs.store^
 ||wiqqcwenkdkcl.website^
+||wiqwxalxcjmsw.online^
 ||wire.contadia.com^
 ||wire.tributi.com^
 ||wirecomic.com^
@@ -1496223,6 +1496228,7 @@ zzzyk.com###Tinfo
 ||yvdjow.motea.com^
 ||yvdxij.applevacations.com^
 ||yveelrodaemod.online^
+||yveldihvltien.site^
 ||yvercbjclvafn.site^
 ||yvesrocher.com.tr/images/__utm.gif^
 ||yvesrocher.com.tr/images/avenseo/tr_TR/avenseo-uniq.min.js
@@ -1497145,6 +1497151,7 @@ zzzyk.com###Tinfo
 ||z37.web.core.brandnewapp.pro^
 ||z371.chicoer.com^
 ||z3br41ch0c0.xyz^$all
+||z3vkcnj9f.com^
 ||z3x-team.com/wp-content/*-banner-
 ||z444o.com^$third-party
 ||z47-14-v03.tt.omtrdc.net^
