@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-16 20:21:37 (UTC+8)
-! Total rules: 1502670
+! Generated: 2026-11-16 20:34:15 (UTC+8)
+! Total rules: 1502673
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -445346,6 +445346,7 @@ group.interfax.ru,99freelas.com.br##.box-cookie
 group.ntt##.c-sns-2
 group.pingan.com##.browser-notification
 groupama.fr##.perfModal
+groupdiy.com##.cmBP
 groupeelectrogene.com###cFrame
 groupelaposte.com###root > div > div
 grouperf.com###rgpdModal
@@ -531276,6 +531277,7 @@ sportechplc.com##.mdl-notification
 sportetstyle.fr##body > div[id*="cookie"]
 sportetstyle.fr##div[id^="cookie"][style="display: block;"]
 sporteurope.tv#%#//scriptlet('google-ima3')
+sporteurope.tv#%#//scriptlet('trusted-click-element', 'dialog[aria-labelledby="consent-wall-title"] h2#consent-wall-title ~ div.align-items-end > button.btn-primary')
 sporteurope.tv#%#//scriptlet('trusted-click-element', 'ngb-modal-window app-consent-wall button.btn-primary', '', '', 'reloadAfterClick')
 sportfm.ru##.fancybox-overlay
 sportfm.ru##.fancybox-wrap
@@ -1132780,6 +1132782,7 @@ zzzyk.com###Tinfo
 ||groupcalconn.myavlive.com^
 ||groupcdae.tt.omtrdc.net^
 ||groupcompare-pre-production-0587cd.admins1.accountfcanr.tt.omtrdc.net^
+||groupdiy.com/js/forum_systems/register_prompt/prompt.js
 ||groupe-seloger.com/tracking-data/
 ||groupe.net.daraz.com^
 ||groupe01.net.daraz.com^
