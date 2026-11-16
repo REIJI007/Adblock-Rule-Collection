@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-16 20:24:53 (UTC+8)
-! Total rules: 1858647
+! Generated: 2026-11-16 20:34:44 (UTC+8)
+! Total rules: 1858653
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -479398,6 +479398,7 @@ group.interfax.ru,99freelas.com.br##.box-cookie
 group.ntt##.c-sns-2
 group.pingan.com##.browser-notification
 groupama.fr##.perfModal
+groupdiy.com##.cmBP
 groupeapocom.com###website_cookies_bar
 groupeelectrogene.com###cFrame
 groupelaposte.com###root > div > div
@@ -586995,6 +586996,7 @@ sportetstyle.fr##body > div[id*="cookie"]
 sportetstyle.fr##div[id^="cookie"][style="display: block;"]
 sporteurope.tv##+js(set, google.ima.settings.setDisableFlashAds, noopFunc)
 sporteurope.tv#%#//scriptlet('google-ima3')
+sporteurope.tv#%#//scriptlet('trusted-click-element', 'dialog[aria-labelledby="consent-wall-title"] h2#consent-wall-title ~ div.align-items-end > button.btn-primary')
 sporteurope.tv#%#//scriptlet('trusted-click-element', 'ngb-modal-window app-consent-wall button.btn-primary', '', '', 'reloadAfterClick')
 sportfm.ru##.fancybox-overlay
 sportfm.ru##.fancybox-wrap
@@ -1402453,6 +1402455,7 @@ zzzyk.com###Tinfo
 ||groupcalconn.myavlive.com^
 ||groupcdae.tt.omtrdc.net^
 ||groupcompare-pre-production-0587cd.admins1.accountfcanr.tt.omtrdc.net^
+||groupdiy.com/js/forum_systems/register_prompt/prompt.js
 ||groupe-seloger.com/tracking-data/
 ||groupe-vyv.fr/js/socle-1.min.js$all
 ||groupe.net.daraz.com^
@@ -1420207,6 +1420210,7 @@ zzzyk.com###Tinfo
 ||hmlvxk.julian-fashion.com^
 ||hmma.baidu.com/app.gif
 ||hmma.baidu.com^
+||hmmagmmfcrld.com^
 ||hmmjtuwoseygq.space^
 ||hmmmkp.barudak.co.kr^
 ||hmmob.com^
@@ -1541578,6 +1541582,7 @@ zzzyk.com###Tinfo
 ||mftdhrlywaeil.space^
 ||mftkh.trustcache.com^
 ||mftnsjsenkwau.online^
+||mfuhwxojchmit.site^
 ||mfvoa.etrgovinca.hu^
 ||mfvskuommxwep.online^
 ||mfwbsveljxjsq.space^
@@ -1840188,6 +1840193,7 @@ zzzyk.com###Tinfo
 ||xexkerkgrfyaf.site^
 ||xexxngbeuz.net^$doc
 ||xexxngbeuz.net^$document
+||xeyiqgxsvuyzv.site^
 ||xeznjrljmzpnp.online^
 ||xf.cereouslooeys.qpon^
 ||xf.x-funded.com^
