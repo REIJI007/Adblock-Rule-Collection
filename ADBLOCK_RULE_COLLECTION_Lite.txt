@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-18 06:43:18 (UTC+8)
-! Total rules: 1503149
+! Generated: 2026-11-18 07:51:07 (UTC+8)
+! Total rules: 1503157
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -530704,19 +530704,10 @@ speedof.me##.ftl-zone
 speedof.me##.hero-promos
 speedof.me##.home-promos
 speedof.me##.intro-ad-footer
-speedof.me##.sci2q2w-nu695q4
 speedof.me##.share-btn-group > foreignObject > div.result_icon_container > div.result_icon_group:is([aria-label^="Share"], [aria-label="Copy link"])
 speedof.me##.test-ad-container
 speedof.me##body > [class]:has(> a[href="/api?src=rail"])
 speedof.me#%#(()=>{try{Object.defineProperty(window,'somZv1k180',{value:true,writable:true,configurable:true});setInterval(()=>{try{if(window.somZv1k180!==true)window.somZv1k180=true}catch(e){}},50)}catch(e){}})();
-speedof.me#%#(()=>{try{const a=window.adsbygoogle=window.adsbygoogle||[];a.loaded=!0;const r=/(^|\s)(api-ad-footer|web-ad-footer|intro-ad-footer|ad-rail|example-ad-sidebar)(\s|$)/;const m=()=>{const l=document.querySelectorAll('ins.adsbygoogle');for(let i=0;i<l.length;i++){const s=l[i],p=s.parentElement;if(!p)continue;const c=typeof p.className==='string'?p.className:'';if(!r.test(c))continue;if((s.textContent||'').replace(/\s+/g,''))continue;s.textContent='\u200d'}};m();document.addEventListener('DOMContentLoaded',m,{once:true});window.addEventListener('load',m,{once:true});setTimeout(m,1500);setTimeout(m,4000)}catch(e){}})();
-speedof.me#%#//scriptlet('set-constant', 'somH3zjtii', 'true')
-speedof.me#%#//scriptlet('trusted-create-element', '.api-ad-footer.left-footer ins.adsbygoogle', 'span', 'style="display:none"', '.')
-speedof.me#%#//scriptlet('trusted-create-element', '.api-ad-footer.right-footer ins.adsbygoogle', 'span', 'style="display:none"', '.')
-speedof.me#?#body div:not(.cc-consent-toast):matches-css(position: fixed):matches-css(bottom: /^(1[0-9]|2[0-9])px$/):matches-css(width: /^(2[9][0-9]|3[0-9]{2}|4[0-6][0-9])px$/):matches-css(height: /^(9[0-9]|1[0-5][0-9])px$/)
-speedof.me#?#body div:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
-speedof.me#?#body section:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
-speedof.me#?#body span:not([class*="ad-footer"]):not(.ad-rail):matches-css(position: fixed):matches-css(width: /^(1[5-6][0-9]|300)px$/):matches-css(height: /^[5-6][0-9]{2}px$/)
 speedpan.com###float-window
 speedporn.net##.sbox + #uwee
 speedporn.net,bananamovies.org,watchporn4k.com###video-overlay
@@ -678095,6 +678086,7 @@ zzzyk.com###Tinfo
 ||bnmperc.web.app^$all
 ||bnmymxvlfcxbx.space^
 ||bnn-whatsapp.com^$document
+||bnnnglgkxntbc.online^
 ||bno-whatsapp.com^$document
 ||bnobmgl.icu^
 ||bnopq.hansohome.com^
@@ -697706,6 +697698,7 @@ zzzyk.com###Tinfo
 ||cbjslog.baidu.com^
 ||cbjtfkjfukuyb.store^
 ||cbjtv.backcountry.com^
+||cbjwddpqyoihr.website^
 ||cbk--waw--pl.weebly.com^$all
 ||cbkb8fq2ckm6kp6km84cnbhh9bnbpk98.myavlive.com^
 ||cbl-gorilla.stagingmybooster.net.daraz.com^
@@ -784563,6 +784556,7 @@ zzzyk.com###Tinfo
 ||dvmscumentsr-vmsa-2.net.daraz.com^
 ||dvn-demo.tt.omtrdc.net^
 ||dvnfo.com^$third-party
+||dvnmstkybzyeu.site^
 ||dvo.nhs.tt.omtrdc.net^
 ||dvo.santanderchile.tt.omtrdc.net^
 ||dvoip1.login-freshegg.net.daraz.com^
@@ -797021,6 +797015,7 @@ zzzyk.com###Tinfo
 ||elocga.samsungchina.tt.omtrdc.net^
 ||elocker28.tt.omtrdc.net^
 ||elocker5.its.tt.omtrdc.net^
+||elodescrakesunglow.cyou^
 ||elodesshaula.cyou^
 ||eloer.cn^
 ||elof.net.daraz.com^
@@ -1156264,6 +1156259,7 @@ zzzyk.com###Tinfo
 ||hvohmn.kidscasting.com^
 ||hvoukybkppvfo.space^
 ||hvpeme.petedge.com^
+||hvplqfyjtvolj.space^
 ||hvpojkilqqykq.website^
 ||hvqndbbmvbcrc.online^
 ||hvqnfgvusjsnc.space^
@@ -1194987,6 +1194983,7 @@ zzzyk.com###Tinfo
 ||klsdruefcrrrd.space^
 ||klsjxp.kyeonsadol.co.kr^
 ||klslv.writual-collective.com^
+||klsqjcogadcvm.website^
 ||klsrv.footlocker.ca^
 ||klsv0005b.tt-stage3.omtrdc.net^
 ||klsv0027.tt-qe2.omtrdc.net^
@@ -1260442,6 +1260439,7 @@ zzzyk.com###Tinfo
 ||midy.me^
 ||mie-solutions.actonservice.com^
 ||mie.world^$all
+||miekasinine.com^
 ||mielemear.ecolarkireresmaereas.com^$all
 ||miembrosalt-ann.share.ntv.io^
 ||miembrosalt-ann1.share.ntv.io^
@@ -1345842,6 +1345840,7 @@ zzzyk.com###Tinfo
 ||remwukymdcakx.space^
 ||remy.ram534212.pro^$all
 ||renaissancerestrictedconveyed.com^$all
+||renamelegumen.com^
 ||renamereptiliantrance.com^
 ||renata.bodydanceprogress.com^
 ||renato-viva.vercel.app^$all
@@ -1355980,6 +1355979,7 @@ zzzyk.com###Tinfo
 ||sapphire.api.microsoftapp.net^$app=com.microsoft.bing
 ||sapphire.enamel-pins.com^
 ||sapphirelilac.com^
+||sappleshights.click^
 ||sappmetrics.sprint.com^
 ||saprouter.notifysrv.com^
 ||saps.casaleciarrocca.it^$all
@@ -1440092,6 +1440092,7 @@ zzzyk.com###Tinfo
 ||uauvamoscasar.goaserv.com^
 ||uauwsp.warentuin.nl^
 ||uavnfdezxzote.site^
+||uawdbluyply.com^
 ||uawefo.guylook.co.kr^
 ||uawxtipqoylci.space^
 ||uaxcuqmfdjcks.space^
@@ -1468622,6 +1468623,7 @@ zzzyk.com###Tinfo
 ||willalland.info^
 ||willalland.info^$third-party
 ||willcall.me^$all
+||willcollect.com^
 ||willfulalca.qpon^
 ||william-barclay.com^$all
 ||williamhill.tt.omtrdc.net^
@@ -1469649,6 +1469651,7 @@ zzzyk.com###Tinfo
 ||wmhnx.realdaily.com^
 ||wmhq8tw8t5ju3y.rest^
 ||wmich.actonservice.com^
+||wmidgrgmortdc.online^
 ||wmip.ru^
 ||wmirk.ru^
 ||wmiyoyrskgmuv.online^
@@ -1484706,6 +1484709,7 @@ zzzyk.com###Tinfo
 ||wxhiojortldjyegtkx.bid^$popup
 ||wxhxk.com^$all
 ||wxikfd89f.com^
+||wxitvcudngxhp.website^
 ||wxjj94.top^
 ||wxk8hign3oj6qko-p.akming.xyz^
 ||wxkhhw.lens-labo.com^
@@ -1490638,6 +1490642,7 @@ zzzyk.com###Tinfo
 ||xzhcedu.cn^
 ||xzhrwy.giordanoweine.de^
 ||xzhwxfgc.cn^
+||xzhzykhlrlisi.website^
 ||xzi.viontihealth.com^
 ||xziicydjexrii.online^
 ||xzikwwnrymtny.space^
@@ -1492636,6 +1492641,7 @@ zzzyk.com###Tinfo
 ||ygoqsybudqczf.website^
 ||ygpcwqvfagdge.site^
 ||ygpqxubqk.com^
+||ygpvwqsytvoee.online^
 ||ygqakovleohew.website^
 ||ygqgd.thelyferx.com^
 ||ygqikkpytkhlt.space^
@@ -1496673,6 +1496679,7 @@ zzzyk.com###Tinfo
 ||zemidaluitre.web.app^$all
 ||zemlady.xyz^$all
 ||zemmndpahyhjy.site^
+||zemmwvyxgnrxs.space^
 ||zemphis.tt.omtrdc.net^
 ||zemwmv.tretti.se^
 ||zen.healthcentar.com^
@@ -1500458,6 +1500465,7 @@ zzzyk.com###Tinfo
 ||zpqck.fromourplace.ca^
 ||zpqdgwcusmklx.site^
 ||zpqfqxoczrwfq.space^
+||zpqigdljesbnv.space^
 ||zpr.io/2UXPq7iE4Jzg^$all
 ||zpr.io/39TnNFXNGNaJ^$all
 ||zpr.io/5DMmQqJ9ATrp^$all
