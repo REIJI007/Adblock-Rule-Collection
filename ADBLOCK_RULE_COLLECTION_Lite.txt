@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-17 22:43:20 (UTC+8)
-! Total rules: 1503001
+! Generated: 2026-11-18 00:07:02 (UTC+8)
+! Total rules: 1503007
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -153036,6 +153036,7 @@ dailystar.co.uk##article > p[class]:has(> strong > a:is([href="https://www.faceb
 dailystar.co.uk#$?#[data-testid="commercial-above-header-box-1"] { remove: true; }
 dailystar.co.uk#?#.article-body > p:contains(sign up for our newsletters)
 dailystar.co.uk,abcnews.go.com,manchestereveningnews.co.uk,euronews.com,wgrz.com,newatlas.com,plymouthherald.co.uk,chroniclelive.co.uk,hulldailymail.co.uk,foreignpolicy.com##.taboola
+dailystar.co.uk,mirror.co.uk#%#//scriptlet('abort-current-inline-script', 'document.createElement', '/html-load\.com|error-report\.com|if\(await eval|nowprocket[\s\S]*?\};\(async\(\)=>\{/')
 dailystar.co.uk,mirror.co.uk,themirror.com##[data-tmdatatrack-type="commercial"]
 dailystar.co.uk,spiegel.de,besthealthmag.ca#%#//scriptlet('remove-class', 'jw-flag-floating', '.jwplayer.jw-flag-floating')
 dailystorm.ru###footer-panel
@@ -498283,7 +498284,11 @@ oggi.it##.adv-square
 oggi.it##.post > div[class^="wrapper-frame"]:has(> div[id^="rcsad_"])
 oggi.it##.wrapper-bottom1
 oggi.it##.wrapper-bottom2
+oggi.it##a[aria-label="Google Discover"]
+oggi.it##main > div.gridRow:has(> div.gridRow__item > div.gridRow__block > div.centeredContent > a[href^="https://www.oggi.it/speciale/"])
+oggi.it##main > div.gridRow:has(> div.gridRow__item > div.gridRow__block > div.tsb)
 oggi.it#%#//scriptlet('prevent-element-src-loading', 'script', 'imasdk.googleapis.com/js/sdkloader/ima3.js')
+oggi.it,style.president.jp,manabi.benesse.ne.jp,lalafo.az,mangaplaza.com,9111.ru,hmv.co.jp,dmarket.docomo.ne.jp,tabiyomi.yomiuri-ryokou.co.jp,znak.com,askmen.com##.shareBlock
 oggi.jp##.sidebar-header > .textwidget > div[style*="height:"]
 oggi.jp##section > div.textwidget:has(> div[style] > div[id^="div-gpt-ad-"])
 oggimilazzo.it##.cb-category-top
@@ -725539,6 +725544,7 @@ zzzyk.com###Tinfo
 ||components.justanswer.com^$third-party
 ||components2.*.it/rcs_tealium/
 ||components2.corriereobjects.it/rcs_data-tracking/
+||components2.corriereobjects.it/rcs_tag-manager/v*/index.min.js
 ||components2.gazzettaobjects.it/rcs_anti-adblocker/
 ||components2.gazzettaobjects.it/rcs_cpmt$domain=~video.gazzetta.it
 ||components2.rcsobjects.it/rcs_anti-adblocker-verticali/
