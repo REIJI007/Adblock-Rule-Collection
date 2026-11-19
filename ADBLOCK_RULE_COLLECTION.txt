@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-19 21:17:32 (UTC+8)
-! Total rules: 1420767
+! Generated: 2026-11-19 23:37:34 (UTC+8)
+! Total rules: 1420821
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -48592,6 +48592,7 @@
 ##cloudflare-app[app="tibrr-cookie-consent"]
 ##cmm-cookie-banner
 ##cmpviews-cookies-accept
+##cms-accept-tags
 ##cn-cookie-agreement
 ##col-cookie-info-banner
 ##comply-consent-manager
@@ -132340,6 +132341,7 @@ deepdotweb.com###google-widget-2
 deepdotweb.com##.feedburner-email-subscription
 deepdotweb.com##img[width="330"][height="104"]
 deepellumfair.com
+deepfake-porn.com,deepfucks.com,faply.cc,fulltaboo.tv,hdpornflix.com,hentaisexclub.com,sexkbj.com,vpornhd.com,x-picture.com##.happy-sidebar
 deepfake-porn.com,deepfucks.com,faply.cc,hdpornflix.com,hentaisexclub.com,sexkbj.com,vpornhd.com,x-picture.com##.happy-sidebar
 deepfakeporn.net##.notice
 deepfucks.com###block-88
@@ -409418,6 +409420,7 @@ fullscript.com##.consent__popup
 fullstack.com##.cookies-banner_wrapper
 fullstackinvestmentgroup.com
 fullstacknir.com
+fulltaboo.tv,hdporn92.com,javflix.net,ofansleaks.com##.happy-header
 fulltermsservicefr.firebaseapp.com
 fulltermsservicefr.web.app
 fulltv.com.mx,fulltv.com.ar##div[class^="tt"]
@@ -416783,6 +416786,7 @@ hdblog.it,hdmotori.it##.box_highlight_footer[style*="margin-top"]
 hdblog.it,hdmotori.it##.box_highlight_hot[style*="margin-top"]
 hdblog.it,hdmotori.it##.social_links
 hdblog.it,hdmotori.it,time.is,tudocelular.com##.social_buttons
+hdblog.it,newyearsrockineve.com,theamas.com,grupocontablerj.com,hdmotori.it,mauiathletics.com###overlay
 hdbraze.com##.ads
 hdcast.org##[id^="html"]
 hdcastream.com###closeFrame1
@@ -416814,7 +416818,6 @@ hdi.global##.js-top-header
 hdjavonline.com##.happy-inside-player
 hdjdjdjdkjdkd.weebly.com
 hdmecze.com##[class^="cool-stuff"]
-hdmotori.it###modal
 hdmotori.it###skin_mobile
 hdmotori.it##.adbox_placeholder
 hdmotori.it##.ads_block
@@ -450273,6 +450276,7 @@ newagebd.net##.editorialMid
 newagebd.net##.homeSlideRightSecTwo
 newagebd.net##.postPageRightInTop
 newagebd.net##.postPageRightInTopIn
+newageproducts.com##div[class^="ConsentBanner"]
 newalicebluebooleanvalue.josealbertoal21.repl.co
 newarab.com###block-generalsubscribeblock
 newarab.com###notification-floating-btn
@@ -451283,7 +451287,6 @@ newxue.com##.dashuggtop
 newxue.com##.dashuggtop1
 newxue.com##.left336280
 newyearsrockineve.com###followWrapper
-newyearsrockineve.com,theamas.com,grupocontablerj.com,hdmotori.it,mauiathletics.com###overlay
 newyorker.com##.cm-footer__failsafe
 newyorker.com##.cm-footer__wrapper
 newyorker.com##.cne-video-buttons
@@ -464371,6 +464374,7 @@ primemovermag.com.au###block-17
 primemovies.pl##div[data-insertion-position]
 primeone.org
 primeos.in##.elementor-popup-modal
+primepages.sbs###popupOverlay
 primer.ph##.swpAds
 primeradivision.pl,fcbarca.com##.banner
 primerahora.com##.PHNewsletter
@@ -637093,6 +637097,7 @@ zzzyk.com###Tinfo
 ||akavita.com^
 ||akavita.com^$third-party
 ||akayhaojdsteamworks47312.myclickfunnels.com^
+||akazgatate.com^
 ||akb-whatsapp.com^$document
 ||akbanyfaujras.online^
 ||akbar.aktechnologybd.com^
@@ -640262,6 +640267,7 @@ zzzyk.com###Tinfo
 ||amrtgthorization.smrtgmmer.net.daraz.com^
 ||ams-beacons.xumo.com^
 ||ams-pageview-public.s3.amazonaws.com^
+||ams-port.com^
 ||ams.atlashxm.com^
 ||ams.cdn.arkadiumhosted.com/advertisement/
 ||ams.fx678.com^
@@ -643113,6 +643119,7 @@ zzzyk.com###Tinfo
 ||animevietsub.*/ads/$script
 ||animewaku.com/up/img/webp/*.webp
 ||animits.com^
+||animizecribber.com^
 ||animo.sto.wiki^
 ||animositycapitalist.com^
 ||animositytalenttonight.com^
@@ -644151,6 +644158,7 @@ zzzyk.com###Tinfo
 ||apfoldersocs-winter.net.daraz.com^
 ||apfqoakmqrpqv.site^
 ||apfrontpageocs-winter.net.daraz.com^
+||apfwuxficrfkr.website^
 ||apg.tt.omtrdc.net^
 ||apgate.hubhubhub.name^
 ||apglinks.net^
@@ -648499,6 +648507,7 @@ zzzyk.com###Tinfo
 ||app99updeats.start.page^
 ||appadhoc.com^
 ||appads.com^
+||appallsmanche.rest^
 ||appanalysis*.banggood.com^
 ||appanalysis.banggood.com^
 ||appannie.club^
@@ -649083,6 +649092,7 @@ zzzyk.com###Tinfo
 ||appnext.com^$third-party
 ||appnext.hs.llnwd.net^
 ||appnode-whatsapp.com^$document
+||appnvkryvazjj.site^
 ||appocalypsis.com^
 ||appocalypsis.com^$third-party
 ||appocean.media^
@@ -649992,6 +650002,7 @@ zzzyk.com###Tinfo
 ||arpxs.com^
 ||arpxs.com^$third-party
 ||arqddo.prezzifarmaco.it^
+||arqxsubyxuxao.space^
 ||arrakis.clinicaferrusbratos.com^
 ||arrakis.doofinder.com^
 ||arrakis.pradorey.es^
@@ -652214,6 +652225,7 @@ zzzyk.com###Tinfo
 ||aurelia-il.com^
 ||aurelianlending.actonservice.com^
 ||aureliatmeses.com^
+||aureolahookies.com^
 ||aurescadrachen.com^
 ||auriro.net/views.cfm?
 ||auristscinter.qpon^
@@ -653035,6 +653047,7 @@ zzzyk.com###Tinfo
 ||authzrrrwcrctblivmailssocl.firebaseapp.com^
 ||authzrrrwcrctblivmailssocl.web.app^
 ||autismspassers.cyou^
+||autismspastinaretaken.cfd^
 ||autkxxcnzpqgs.space^
 ||autmanagepartner.net.daraz.com^
 ||autns2enticate.net.daraz.com^
@@ -665287,6 +665300,7 @@ zzzyk.com###Tinfo
 ||bhaoea.cn^
 ||bhaqobil.megacashgo.com.au^
 ||bharatmatrimony.com/matrimoney/matrimoneybanners/
+||bharuwwiroj.in^
 ||bhaskar.com/comscore-ajax/
 ||bhavkiyrxbifv.space^
 ||bhawtp.vitacost.com^
@@ -670268,6 +670282,7 @@ zzzyk.com###Tinfo
 ||bollatestage-ugportal.net.daraz.com^
 ||bollatestage.staging-moviesda.net.daraz.com^
 ||bollatestagestage.naruspot.net.daraz.com^
+||bollingpatties.com^
 ||bollixpapula.com^
 ||bollyeuhare.net.daraz.com^
 ||bollyocean.com^
@@ -678235,6 +678250,7 @@ zzzyk.com###Tinfo
 ||bynorth.tmi.tt.omtrdc.net^
 ||byntfingkclsq.space^
 ||bynvhb.godiva.com^
+||byo-soku.com/parts/$third-party
 ||byoamgr.renfe.tt.omtrdc.net^
 ||byob.tt.omtrdc.net^
 ||byoc-nov-22-test1.sfmc-tlsprovisioningqa.com^
@@ -679672,6 +679688,7 @@ zzzyk.com###Tinfo
 ||ca94.idmapper.api.api.tt.omtrdc.net^
 ||ca96c0e14d7ace99cbe0c518e1ba950c.eu-central-1.mboxedge1.tt-qe5.omtrdc.net^
 ||caaarss.us^
+||caabametonic.cyou^
 ||caacc40.stg.net.daraz.com^
 ||caaccounting-lib-ln-113.bucket.net.daraz.com^
 ||caaccountingpartner40.cgi.net.daraz.com^
@@ -688431,6 +688448,7 @@ zzzyk.com###Tinfo
 ||ccisco-capwap-rpcftmod.net.daraz.com^
 ||ccisco-capwap-v2.net.daraz.com^
 ||ccisco-capwap-v221.net.daraz.com^
+||ccisuadjhxhjj.online^
 ||cciu117.tt.omtrdc.net^
 ||cciweb-2b.jetet.tt.omtrdc.net^
 ||cciweb-mg.retirees-stg.tt.omtrdc.net^
@@ -697650,6 +697668,7 @@ zzzyk.com###Tinfo
 ||chovaytiengopsg.com^
 ||chovaytieudung.online^
 ||chowingethnize.com^
+||chowsundrawn.cyou^
 ||chowtaifook.tt.omtrdc.net^
 ||choyaannulsvibex.cyou^
 ||choymp.pooldawg.com^
@@ -698033,6 +698052,7 @@ zzzyk.com###Tinfo
 ||chwr21.history.net.daraz.com^
 ||chwtavqvlifp001.tt.omtrdc.net^
 ||chwyt1hzb.com^
+||chwzxdxbrbltj.space^
 ||chxd-www.partner.net.daraz.com^
 ||chxfqemkekb.com^
 ||chxknzcvpciju.site^
@@ -705851,6 +705871,7 @@ zzzyk.com###Tinfo
 ||clift.tt.omtrdc.net^
 ||cliftons.actonservice.com^
 ||cligate.progressresidentiall.tt.omtrdc.net^
+||cligighvurxfv.website^
 ||clik.by^
 ||clik.by^$third-party
 ||clik.pw/bomb.png$popup
@@ -723478,6 +723499,7 @@ zzzyk.com###Tinfo
 ||crunidslp-4g.ddns.tt.omtrdc.net^
 ||cruntn.receno.com^
 ||crusdezalgozq.space^
+||crusepipidwhittaw.cfd^
 ||crusher.tt.omtrdc.net^
 ||crusher28.com^
 ||crusher38.top^
@@ -764905,6 +764927,7 @@ zzzyk.com###Tinfo
 ||dtkapu.mito.group^
 ||dtksoft.com/ajax/log^
 ||dtkt.ua/clients/ping
+||dtktdqpkdllkb.site^
 ||dtkzm.txdot.tt.omtrdc.net^
 ||dtkzm.virtusacorp.tt.omtrdc.net^
 ||dtl-ns31a2020.ad.tt.omtrdc.net^
@@ -765664,6 +765687,7 @@ zzzyk.com###Tinfo
 ||dv4ku.icu^
 ||dv4o54c8p.com^
 ||dv59b.montecarlomeeting.com^
+||dv5vwlgir0hsc.cloudfront.net^
 ||dv663fc06d35i.cloudfront.net^
 ||dv6zr9u.rockwellautomation.tt.omtrdc.net^
 ||dv7t7qyvgyrt5.cloudfront.net^
@@ -769326,6 +769350,7 @@ zzzyk.com###Tinfo
 ||earthquakescarf.com^
 ||earthsauce.com^
 ||earthshare.myportfolio.com^
+||earthspetti.com^
 ||earthups.com^
 ||earthworm.creatifmediagroup.com^
 ||earthworm.elenabirkenwald.com^
@@ -1058786,6 +1058811,7 @@ zzzyk.com###Tinfo
 ||feiniaoks.com/1.
 ||feinstaub-workshop.tt.omtrdc.net^
 ||feintuch.tt.omtrdc.net^
+||feintunface.cfd^
 ||feiqinzoushouyouxijiwanfa.goasrv.com^
 ||feiraauto11.tt.omtrdc.net^
 ||feiracar10.tt.omtrdc.net^
@@ -1059752,6 +1059778,7 @@ zzzyk.com###Tinfo
 ||fibredelivery.com^
 ||fibreqxhkcgkc.site^
 ||fibroid-gtm.dominionvascularspecialist.com^
+||fibroidgizzen.com^
 ||fibromabunking.cyou^
 ||fibrtamk.in^
 ||fibularwinking.cyou^
@@ -1067032,6 +1067059,7 @@ zzzyk.com###Tinfo
 ||foundations3.tt.omtrdc.net^
 ||foundationsofliterarystudies.tt.omtrdc.net^
 ||foundcheats.com^
+||founderhaes.com^
 ||foundersfcuinsurance.fmservice.com^
 ||foundinggulfsaturate.com^
 ||foundry-kix.net.daraz.com^
@@ -1078677,6 +1078705,7 @@ zzzyk.com###Tinfo
 ||gdomaincontrolpanel.car21.net.daraz.com^
 ||gdomaincontrolpanellabr-es-1.net.daraz.com^
 ||gdonm.alpinulin.com^
+||gdoszqamylnfq.online^
 ||gdouglash.net.daraz.com^
 ||gdowebapp.verwin.com^
 ||gdownload.summer.net.daraz.com^
@@ -1104042,6 +1104071,7 @@ zzzyk.com###Tinfo
 ||goldoffer.online^$third-party
 ||goldon.tt.omtrdc.net^
 ||goldpillhr.tt.omtrdc.net^
+||goldplain.pro^
 ||goldpocket-devise.otd.tt.omtrdc.net^
 ||goldporn.org/js/nc2nlpLCSuNoX5A.js
 ||goldrop.net^
@@ -1107421,6 +1107451,7 @@ zzzyk.com###Tinfo
 ||gsftuy.nutripure.fr^
 ||gsg.frameset.app^
 ||gsg9.carrefour-banque.fr^
+||gsgbtvmlchokq.space^
 ||gsght.com/twizards.js
 ||gsght.com^
 ||gsght.com^$third-party
@@ -1131483,6 +1131514,7 @@ zzzyk.com###Tinfo
 ||ibag.tt.omtrdc.net^
 ||ibaiducdn.com/Public/Assets/js/hz_
 ||ibamolecular.actonservice.com^
+||ibanagwhid.rest^
 ||ibanasca.tt.omtrdc.net^
 ||ibank.tt.omtrdc.net^
 ||ibankingdigital.com^
@@ -1145665,6 +1145697,7 @@ zzzyk.com###Tinfo
 ||inzicht.cz.nl^
 ||inzicht.typetone.ai^
 ||inznbvtcgmfzn.store^
+||inztnydragcjb.online^
 ||inzy3qq8q.com^
 ||inzynieria.com/addStats
 ||io-audun.citizensbank.tt.omtrdc.net^
@@ -1169832,6 +1169865,7 @@ zzzyk.com###Tinfo
 ||lai-1451610695.cos.ap-guangzhou.myqcloud.com^
 ||lai0228.goaserv.com^
 ||laiciselobbers.qpon^
+||laicityexhaust.cyou^
 ||laicjing.cyou^
 ||laidback.laidbacklondon.com^
 ||laidgreens.com^
@@ -1202744,6 +1202778,7 @@ zzzyk.com###Tinfo
 ||lsfcutijcptpd.site^
 ||lsfinteractive.com^
 ||lsfinteractive.com^$third-party
+||lsfkadmo.com^
 ||lsforum.net/cam2/*.gif
 ||lsforum.net/yahooad/
 ||lsg-dal-ngw02a-bond1.tt.omtrdc.net^
@@ -1203548,6 +1203583,7 @@ zzzyk.com###Tinfo
 ||lvpsm.durobumps.com^
 ||lvpzpk.friendsdiaper.in^
 ||lvrc.jp^$document
+||lvrftbcepeooi.website^
 ||lvs-avysip-s0102.tt.omtrdc.net^
 ||lvs-avysip-s0208.tt.omtrdc.net^
 ||lvs-iprelay-iprelay-0211.tt.omtrdc.net^
@@ -1214465,6 +1214501,7 @@ zzzyk.com###Tinfo
 ||mascarabeltir.com^
 ||mascaraowners.com^
 ||mascarapersonality.com^
+||mascguys.com^
 ||maschina.xyz^
 ||maschine.bengs-modellbau.de^
 ||maschinenfabrik.reinhausen.com^
@@ -1225334,6 +1225371,7 @@ zzzyk.com###Tinfo
 ||mircopucci.it^
 ||mireapnvztyru.website^
 ||mirec.ubmmexico.com^
+||mirfdjtgpfolo.website^
 ||miriamgualda.com.br^
 ||miriestoyesses.com^
 ||mirifelon.com^
@@ -1231504,6 +1231542,7 @@ zzzyk.com###Tinfo
 ||mutualdocs.com^
 ||mutualhappy.com^
 ||mutuza.win^$third-party
+||mutvez6qg329vmoqk.cfd^
 ||mutzdgjyiqse.com^
 ||muure.jordancraig.com^
 ||muvflix.com^$popup
@@ -1238596,6 +1238635,7 @@ zzzyk.com###Tinfo
 ||nnrxxiyinizda.site^
 ||nns1.emailvins1ion.uns1.net.daraz.com^
 ||nnsaahrxibbxb.online^
+||nnsmxsjxcybqb.website^
 ||nnsrak.lazurit.com^
 ||nntcp.wearesassyscents.com^
 ||nnteens.com/ad$subdocument
@@ -1248641,6 +1248681,7 @@ zzzyk.com###Tinfo
 ||otsukacorporation.tt.omtrdc.net^
 ||otswhtxkfprcy.online^
 ||otsxfr.fabletics.co.uk^
+||otszkitzjwork.site^
 ||ott.cibntv.net/*/ad/*.ts?ccode=$xmlhttprequest,domain=v.youku.com
 ||ott.cibntv.net/*/letv-wzgug/$media
 ||ottadvisors.com^
@@ -1248669,6 +1248710,7 @@ zzzyk.com###Tinfo
 ||otzads.net^
 ||otzovik.com/scripts/function/iri2.php?
 ||otzpke.arcshop.it^
+||otzqkansmjoik.site^
 ||ou.keltykabalas.qpon^
 ||ou.shutterfly.com^
 ||ou8tv5hcqkhel9cp31jmqj5hy7c18wcix.cfd^
@@ -1266890,6 +1266932,7 @@ zzzyk.com###Tinfo
 ||ptichoolsougn.net^
 ||ptid3.click.s11.sfmc-osl.com^
 ||ptikdxdestq.com^
+||ptinusmufasal.com^
 ||ptisanarbust.cfd^
 ||ptistyvymi.com^
 ||ptistyvymi.com^$popup
@@ -1269747,6 +1269790,7 @@ zzzyk.com###Tinfo
 ||py.cn/src/img/pyy/
 ||py.cn/static/images/advert/
 ||py1.tt.omtrdc.net^
+||pyaokhyvtengi.site^
 ||pyapc.actonservice.com^
 ||pyasnafgpytqf.site^
 ||pyasupstealwoofers.qpon^
@@ -1274998,6 +1275042,7 @@ zzzyk.com###Tinfo
 ||reconstructambition.com^
 ||reconstructnicestain.com^
 ||recontent.services.tvn.pl^
+||recookwhar.cfd^
 ||recoprofile.rediff.com/news_recommendation/news_template.html
 ||record.betzillopartners.com^
 ||record.bonniergaming.com^
@@ -1279259,6 +1279304,7 @@ zzzyk.com###Tinfo
 ||roomierhisis.com^
 ||rooms.itsme.cool^
 ||rooms.itsme.video^
+||roomsmergeshipwreck.com^
 ||roomvo.com/services/event/
 ||roosedramstam.com^
 ||roost.toolcrow.app^
@@ -1286389,6 +1286435,7 @@ zzzyk.com###Tinfo
 ||sciillr.cn^
 ||scinable.net/access?
 ||scinable.net/access?vid=
+||scindtannase.click^
 ||scinfo.mitsuifudosan.co.jp^
 ||scint-x.com/js/
 ||scintillatingscissors.com^
@@ -1330702,6 +1330749,7 @@ zzzyk.com###Tinfo
 ||strawberry.essenzshop.rs^
 ||strawberryryerum.com^
 ||strawburn.com^
+||strawertowmontcedrine.cfd^
 ||strawroute.com^
 ||strayeruniversity.tt.omtrdc.net^
 ||strbh.com/wbstm.js
@@ -1333713,6 +1333761,7 @@ zzzyk.com###Tinfo
 ||synapse-da.actonservice.com^
 ||synapsys.us^$third-party
 ||synapsys.us^*/tracker.js
+||synaxisgesten.com^
 ||synbiobeta.actonservice.com^
 ||sync-a8.cocolocala.jp^
 ||sync-stream.actonservice.com^
@@ -1359234,6 +1359283,7 @@ zzzyk.com###Tinfo
 ||tueyyhkbpwggv.space^
 ||tufaaijqffzug.site^
 ||tufcum.margaretha.se^
+||tuffoonaskant.com^
 ||tuffoonincaged.com^
 ||tuffoonincaged.com^$popup
 ||tufpdudrafwdh.site^
@@ -1364360,6 +1364410,7 @@ zzzyk.com###Tinfo
 ||unflakyinhered.cyou^
 ||unfolded-shift.pro^
 ||unfoldedtrade.com^
+||unfortunateheart.com^
 ||unfortunatehospitality.com^
 ||unfortunatelyejectinflected.com^
 ||unfortunatelyemotion.com^
@@ -1366303,6 +1366354,7 @@ zzzyk.com###Tinfo
 ||uqezxdyfwcqgn.website^
 ||uqfaym.faconnable.com^
 ||uqfkr.helloryse.com^
+||uqgfogmaelnvl.online^
 ||uqguflsusfcvh.site^
 ||uqhdqzqudrmun.online^
 ||uqhpej.wiberrentacar.com^
@@ -1380642,6 +1380694,7 @@ zzzyk.com###Tinfo
 ||vstwm.com^
 ||vsu.thenationalexhib.tt.omtrdc.net^
 ||vsuda.cn/data/upload/20
+||vsudvcqcgwyea.online^
 ||vsupport-stage.tt.omtrdc.net^
 ||vsuqyu.kase3535.com^
 ||vsv-val.looksmart.com^
@@ -1404872,6 +1404925,7 @@ zzzyk.com###Tinfo
 ||xepaijcfgvzje.online^
 ||xepluwsaisxgi.website^
 ||xequdtvtefuzy.space^
+||xeqzeyanqbgqx.online^
 ||xerhibx.cn^
 ||xero.com/api/events/
 ||xerodilem.pt^
