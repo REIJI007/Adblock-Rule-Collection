@@ -73,7 +73,7 @@ def _basic_css_selector(selector: str) -> bool:
     if ":" in without_pseudos:
         return False
 
-    return re.fullmatch(r"[A-Za-z0-9_.*#\[\]()=~|^$'\"\s>,+\-]+", selector) is not None
+    return re.fullmatch(r"[A-Za-z0-9_.*#:\[\]()=~|^$'\"\s>,+\-]+", selector) is not None
 
 def _cosmetic_rule_error(line: str) -> str | None:
     for marker in _COSMETIC_MARKERS_UNSUPPORTED:
