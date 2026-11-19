@@ -1552,6 +1552,49 @@ def run_regression_tests() -> None:
     zero_ipv4 = ".".join(str(0) for _ in range(4))
     ip_host_rule = f"||{test_ipv4}^"
 
+    check("universal accepts a basic ABP host rule", universal_rule_error("||ads.example.com^"), None)
+    check("universal accepts a basic ABP exception", universal_rule_error("@@||safe.example.com^"), None)
+    check("universal accepts common request-type and party modifiers",
+          universal_rule_error("||ads.example.com^$script,third-party"), None)
+    check("universal accepts a common domain modifier",
+          universal_rule_error("||ads.example.com^$domain=example.com|~sub.example.com"), None)
+    check("universal accepts basic native CSS cosmetic rules",
+          universal_rule_error("example.com##.ad-banner"), None)
+    check("universal rejects Windows application filtering",
+          universal_rule_error("||app.example.com^$app=some.application") is not None, True)
+    check("universal rejects AdGuard network-only filtering",
+          universal_rule_error("||network.example.com^$network") is not None, True)
+    check("universal rejects DNS-only modifiers",
+          universal_rule_error("||dns.example.com^$dnstype=A") is not None, True)
+    check("universal rejects AdGuard HTML filtering",
+          universal_rule_error("example.com$script:contains(ad)") is not None, True)
+    check("universal rejects scriptlets without a shared resource contract",
+          universal_rule_error("example.com##+js(example-scriptlet)") is not None, True)
+    check("universal rejects procedural/extended cosmetic syntax",
+          universal_rule_error("example.com#?#div:has-text(ad)") is not None, True)
+    check("universal rejects engine-specific redirect modifiers",
+          universal_rule_error("||ads.example.com^$redirect=empty") is not None, True)
+
+    universal_source = Source("https://example.invalid/universal.txt", "adblock")
+    universal_text = (
+        "||shared.example^\\n"
+        "!#if adguard_app_windows\\n||windows-only.example^\\n!#endif\\n"
+        "!#if ext_ublock\\n||ubo-only.example^\\n!#endif\\n"
+    )
+    universal_lines = expand_filter_preprocessor_universal(
+        universal_source, universal_text,
+        {universal_source.url: (universal_source, universal_text)},
+    )
+    check("universal preprocessing keeps only lines active in every target profile",
+          [item.text.strip() for item in universal_lines], ["||shared.example^"])
+
+    try:
+        compile_line("adblock", "||app.example^$app=some.application", target="universal")
+    except CompilationError:
+        tests.append(("universal compiler rejects application-only modifiers", True, True))
+    else:
+        raise AssertionError("universal compiler must reject $app rules")
+
     check("IDNA and lowercase", canonical_hostname("BÜCHER.Example"), "xn--bcher-kva.example")
     exclusion_matchers = parse_hostlist_exclusion_patterns(
         "! comment\n||excluded.example^\n*track*\n/ads\\.example/\n"
@@ -1630,7 +1673,7 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("!env_legacy", target_condition_flags("chromium-mv3")), True)
     check("Safari does not inherit the Chromium stylesheet capability",
           evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("safari")), False)
-    check("default compiler target is AdGuard for Windows", DEFAULT_TARGET, "adguard-windows")
+    check("default compiler target is the shared portable profile", DEFAULT_TARGET, "universal")
     windows_flags = target_condition_flags("adguard-windows")
     check("uBlock Origin development-build condition is false for AdGuard Windows",
           evaluate_filter_condition("ext_devbuild", windows_flags), False)
