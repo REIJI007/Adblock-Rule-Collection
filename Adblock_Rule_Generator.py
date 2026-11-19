@@ -23,15 +23,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+from universal_compat import UNIVERSAL_TARGETS, universal_rule_error
+
 OUTPUT_DEFAULT = "ADBLOCK_RULE_COLLECTION.txt"
 REPORT_DEFAULT = "ADBLOCK_RULE_COLLECTION.semantic-report.json"
-DEFAULT_TARGET = "adguard-windows"
+DEFAULT_TARGET = "universal"
 FETCH_WORKERS = 12
 FETCH_TIMEOUT_SECONDS = 18
 
 # 这些是过滤操作符，不是注释前缀。
 VALID_HASH_RULE_PREFIXES = (
-    "##", "#@#", "#$#", "#$@#", "#?#", "#@?#", "#%#", "#@%#",
+    "##", "#@#", "#$#", "#$@#", "#?#", "#@?#", "#%#", "#@%#", "#$?#", "#@$?#",
 )
 COMMENT_PREFIXES = ("!",)
 FILTER_DIRECTIVE_RE = re.compile(
@@ -97,6 +99,14 @@ TARGET_PROFILES = {
     "safari": {
         "adguard": True, "adguard_ext_safari": True, "env_safari": True,
     },
+    "ublock-origin-chromium": {
+        "ext_ublock": True, "env_chromium": True, "cap_user_stylesheet": True,
+    },
+    "ublock-origin-firefox": {
+        "ext_ublock": True, "env_firefox": True, "cap_user_stylesheet": True,
+    },
+    # Composite target: only rules common to every profile are selected.
+    "universal": {},
     "generic": {"adguard": True},
 }
 # DNS/CNAME 来源逐条编译：已符合网络过滤语法的规则原样保留；
@@ -377,6 +387,8 @@ def normalize_native_domain_rule(line: str) -> str:
     )
 
 def detect_nonportable_native_rule(line: str, target: str = "generic") -> str | None:
+    if target == "universal":
+        return universal_rule_error(line)
     if DNS_ONLY_MODIFIER_RE.search(line):
         return "DNS-only modifier cannot be represented safely in an AdGuard network filter"
     if target != "adguard-windows" and NETWORK_ONLY_MODIFIER_RE.search(line):
@@ -807,33 +819,37 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
     if is_comment_or_header(line):
         return [], "comment"
 
+    def finalize(rules: list[str], category: str) -> tuple[list[str], str]:
+        if target == "universal":
+            for output_rule in rules:
+                reason = universal_rule_error(output_rule)
+                if reason:
+                    raise CompilationError(reason)
+        return rules, category
+
     if kind == "adblock":
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
-        # 原生规则保留目标语法；规范化简单域名锚点和裸 IPv4。
-
-        return [normalize_native_domain_rule(line)], "native"
+        return finalize([normalize_native_domain_rule(line)], "native")
 
     if kind == "hosts":
-        return compile_hosts_line(line)
+        rules, category = compile_hosts_line(line)
+        return finalize(rules, category)
 
     if kind == "domains":
-        return [compile_domain_line(line)], "domains"
+        return finalize([compile_domain_line(line)], "domains")
 
     if kind == "domains-exact":
-        return [compile_domain_exact_line(line)], "domains-exact"
+        return finalize([compile_domain_exact_line(line)], "domains-exact")
 
     if kind == "cname":
-        # CNAME 来源的常规规则本身通常就是标准 AdGuard 网络过滤语法。
-        # 原样纳入可增加直接匹配覆盖，但不能因此声称已实现 DNS CNAME 链检查。
         reason = detect_nonportable_native_rule(line, target)
         if reason:
             raise CompilationError(reason)
         if looks_like_native_network_filter_rule(line):
-            return [line], "native-cname"
-        # 非原生条目只在能够保守转换时才纳入；无法证明等价时交给严格审计阻止发布。
-        return [compile_dns_rule(line)], "cname-converted"
+            return finalize([line], "native-cname")
+        return finalize([compile_dns_rule(line)], "cname-converted")
 
     if kind == "exclusions":
         raise CompilationError(
@@ -842,19 +858,15 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
         )
 
     if kind == "dns":
-        # Preserve a complete rule first: '#' can be part of a regex or a cosmetic
-        # operator, so only strip inline comments from non-native DNS entries.
         if looks_like_native_network_filter_rule(line):
             reason = detect_nonportable_native_rule(line, target)
             if reason:
                 raise CompilationError(reason)
-            return [line], "native-dns"
+            return finalize([line], "native-dns")
 
-        # Plain DNS entries may contain trailing source comments.
         line = line.split("#", 1)[0].strip()
         if not line:
             return [], "comment"
-        # DNS 列表可能混有 Adblock 规则或 Hosts 映射，分别处理。
         fields = line.split()
         looks_like_hosts = False
         if len(fields) >= 2:
@@ -864,15 +876,9 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
             except ValueError:
                 pass
         if looks_like_hosts:
-            return compile_hosts_line(line, category="hosts-in-dns")
-        # 已经是网络过滤规则语法的 DNS 来源条目保持原文；非原生 DNS 表达式
-        # 才尝试转换为网络过滤语法。DNS 专用修饰符不在此处被静默丢弃。
-        if looks_like_native_network_filter_rule(line):
-            reason = detect_nonportable_native_rule(line, target)
-            if reason:
-                raise CompilationError(reason)
-            return [line], "native-dns"
-        return [compile_dns_rule(line)], "dns-converted"
+            rules, category = compile_hosts_line(line, category="hosts-in-dns")
+            return finalize(rules, category)
+        return finalize([compile_dns_rule(line)], "dns-converted")
 
     raise CompilationError(f"unknown source format: {kind}")
 
@@ -1139,6 +1145,25 @@ def expand_filter_preprocessor(
         raise CompilationError(f"{source.url}: unterminated !#if block")
     return output
 
+def expand_filter_preprocessor_universal(
+    source: Source,
+    text: str,
+    cache: dict[str, tuple[Source, str]],
+) -> list[ExpandedLine]:
+    """Keep only source lines selected in every supported engine/profile."""
+    per_profile = [
+        expand_filter_preprocessor(source, text, profile, cache)
+        for profile in UNIVERSAL_TARGETS
+    ]
+    common_lines = {line.text.strip() for line in per_profile[0]}
+    for expanded in per_profile[1:]:
+        common_lines.intersection_update(line.text.strip() for line in expanded)
+    return [
+        line for line in per_profile[0]
+        if line.text.strip() in common_lines
+    ]
+
+
 @dataclass(frozen=True)
 class ExclusionMatcher:
     kind: str
@@ -1303,9 +1328,20 @@ def compile_fetched_sources(
             )
             continue
 
+        if target == "universal" and source.kind == "cname":
+            summary.status = "skipped-target-mismatch"
+            summary.input_lines_skipped_by_target = summary.input_lines
+            summary.target_skip_reason = (
+                "CNAME-uncloaking requires DNS resolution context and has no shared "
+                "equivalent in the selected browser MV2 engines."
+            )
+            continue
+
         try:
             expanded_lines.extend(
-                expand_filter_preprocessor(source, text, target, cache)
+                expand_filter_preprocessor_universal(source, text, cache)
+                if target == "universal"
+                else expand_filter_preprocessor(source, text, target, cache)
             )
         except Exception as error:
             summary.status = "preprocessor-error"
@@ -1355,6 +1391,16 @@ def compile_fetched_sources(
             summary.target_skip_reason = (
                 "This file contains upstream exclusion metadata, not active filter rules."
             )
+            continue
+        if target == "universal" and source.kind == "cname" and not is_comment_or_header(line):
+            summary.target_excluded_rules += 1
+            state.target_exclusions.append({
+                "source": source.url,
+                "format": source.kind,
+                "line": expanded.line_number,
+                "rule": line[:500],
+                "reason": "CNAME-uncloaking semantics are not shared by all target engines.",
+            })
             continue
         if not is_comment_or_header(line):
             matched_exclusions = source_exclusions.get(source.url, [])
@@ -1421,7 +1467,13 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         })
     return {
         "generated_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "target": f"AdGuard network filter syntax ({target})",
+        "target": (
+            "Universal ABP/EasyList subset: AdGuard Windows + AdGuard Browser Extension MV2 "
+            "+ uBlock Origin MV2"
+            if target == "universal"
+            else f"AdGuard network filter syntax ({target})"
+        ),
+        "condition_profiles": list(UNIVERSAL_TARGETS) if target == "universal" else [target],
         "output": output_path,
         "unique_rule_count": len(state.records),
         "source_count": len(source_summaries) + len(source_failures),
@@ -1440,6 +1492,13 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
         "unsupported_count": len(state.issues),
         "unsupported_rules": state.issues,
         "semantic_guarantee": (
+            "Universal mode intersects preprocessor-active source lines across the declared MV2 profiles, "
+            "then admits only conservative shared ABP/EasyList network filters and basic native CSS cosmetic rules. "
+            "Engine-specific modifiers, HTML filtering, scriptlets, procedural/extended CSS, and CNAME-uncloaking "
+            "sources are excluded and reported. This is a conservative compatibility contract, not a claim that "
+            "all browser runtimes implement every allowed feature identically."
+            if target == "universal"
+            else (
             "Native AdGuard-compatible network-filter rules are preserved as Adblock-compatible syntax; "
             "hosts and domains-only entries become exact-host HTTP(S) URL regex rules; "
             "Native network-filter syntax from DNS/CNAME sources is retained where compatible; non-native DNS entries are converted only when safe, DNS-only modifiers are excluded individually, and copied CNAME patterns do not implement DNS CNAME-chain inspection. "
@@ -1447,6 +1506,7 @@ def build_report(state: CompileState, *, source_failures: list[dict[str, str]], 
             "unknown in-scope conversion failures still fail strict compilation. All exclusions "
             "are visible in the report. This is not a proof for arbitrary regex or "
             "engine-specific rules."
+            )
         ),
     }
 
@@ -1896,7 +1956,7 @@ def run_regression_tests() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compile upstream blocklists into an AdGuard network filter for the selected target, with explicit semantic-loss reporting.")
-    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default=DEFAULT_TARGET, help=f"AdGuard target profile (default: {DEFAULT_TARGET})")
+    parser.add_argument("--target", choices=sorted(TARGET_PROFILES), default=DEFAULT_TARGET, help=f"Target profile (default: {DEFAULT_TARGET}; universal = shared AdGuard/uBO MV2 subset)")
     parser.add_argument("--output", default=OUTPUT_DEFAULT, help=f"compiled filter path (default: {OUTPUT_DEFAULT})")
     parser.add_argument("--report", default=REPORT_DEFAULT, help=f"JSON compilation report (default: {REPORT_DEFAULT})")
     parser.add_argument("--allow-lossy", action="store_true", help="explicitly publish only translatable rules; report all omitted rules")
@@ -2002,7 +2062,9 @@ def main() -> int:
 
     num_rules = len(rules)
     header = f"""! Title: Adblock-Rule-Collection
-! Description: 一个汇总了多个广告过滤器过滤规则的广告过滤器订阅，每20分钟更新一次，确保即时同步上游减少误杀
+! Description: Portable ABP/EasyList-compatible rules for AdGuard Windows, AdGuard Browser Extension MV2, and uBlock Origin MV2.
+! Compatibility: Conservative shared network-filter syntax and basic native CSS cosmetic filtering.
+! Description-CN: 通用于 AdGuard for Windows、AdGuard 浏览器扩展 MV2 与 uBlock Origin MV2 的兼容规则集合。
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
