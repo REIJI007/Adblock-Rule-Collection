@@ -1577,9 +1577,9 @@ def run_regression_tests() -> None:
 
     universal_source = Source("https://example.invalid/universal.txt", "adblock")
     universal_text = (
-        "||shared.example^\\n"
-        "!#if adguard_app_windows\\n||windows-only.example^\\n!#endif\\n"
-        "!#if ext_ublock\\n||ubo-only.example^\\n!#endif\\n"
+        "||shared.example^\n"
+        "!#if adguard_app_windows\n||windows-only.example^\n!#endif\n"
+        "!#if ext_ublock\n||ubo-only.example^\n!#endif\n"
     )
     universal_lines = expand_filter_preprocessor_universal(
         universal_source, universal_text,
