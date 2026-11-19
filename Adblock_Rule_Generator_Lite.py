@@ -1411,7 +1411,7 @@ def compile_fetched_sources(
 
         target_exclusion_reason = (
             detect_nonportable_native_rule(line, target)
-            if source.kind == "adblock" and line and not is_comment_or_header(line)
+            if (source.kind == "adblock" or (source.kind == "dns" and looks_like_native_network_filter_rule(line))) and line and not is_comment_or_header(line)
             else None
         )
         if target_exclusion_reason:
