@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-20 01:54:08 (UTC+8)
-! Total rules: 1420844
+! Generated: 2026-11-20 03:31:02 (UTC+8)
+! Total rules: 1420878
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -68009,6 +68009,11 @@
 2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,tanpavirus.web.id,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,viirused.ee,udenvirus.dk##.primary_download
 2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,tanpavirus.web.id,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,viirused.ee,udenvirus.dk##.quick-download-button-placeholder
 2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,tanpavirus.web.id,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,viirused.ee,udenvirus.dk##.quick-download-button-text
+2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,udenvirus.dk##.automatic_removal_list
+2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,udenvirus.dk##.js-download_button_offer
+2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,udenvirus.dk##.primary_download
+2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,udenvirus.dk##.quick-download-button-placeholder
+2-spyware.com,novirus.uk,faravirus.ro,uirusu.jp,virusi.hr,wubingdu.cn,avirus.hu,odstranitvirus.cz,utanvirus.se,virukset.fi,losvirus.es,virusler.info.tr,semvirus.pt,lesvirus.fr,senzavirus.it,dieviren.de,viruset.no,usunwirusa.pl,zondervirus.nl,bedynet.ru,virusai.lt,virusi.bg,udenvirus.dk##.quick-download-button-text
 2-viruses.com##.active.prods-win.prod-download
 2.26.75.0/24
 2.27.5.0/24
@@ -129515,6 +129520,7 @@ crackevil.com###pop-ad-wrap
 crackevil.com##.pop-ad-wrap
 crackians.com##.cAnnouncements
 crackingpatching.com,wallpaperdirect.com,wiki.fextralife.com##.scroll-top
+crackkits.com,procrackerz.com,haxmac.cc,cracka2zsoft.com,crackpropc.com,onhax.in,haxpc.net,pcfullcrack.org##.getox
 crackkits.com,procrackerz.com,haxmac.cc,cracka2zsoft.com,crackpropc.com,onhax.in,haxpc.net,pcfullcrack.org,karancrack.com##.getox
 crackle.com##.vjs-ad-break-marker-adjustment
 crackllc.com##.onp-sl-social-locker
@@ -446122,8 +446128,11 @@ money.it###button
 money.it###gmp-insideposttop
 money.it###gmp-topmobile
 money.it##.btnYou
+money.it##.google-follow-wrapper
 money.it##.gptslot
 money.it##.gptslot[data-adunitid]
+money.it##.m26-condividi
+money.it##.m26-newsletter
 money.it#@#.cky-consent-container
 money.pl##.money-ecommerce-container
 money.udn.com##.open-on-app__link
@@ -454668,6 +454677,7 @@ onfact5-production.firebaseapp.com
 onfact5-production.web.app
 onfiltre.com.tr
 onfireverifylink.onelink.me
+onhax.in##[class*="buttonPress-"]
 onhax.in,igetintopc.info##[class*="buttonPress-"]
 onhax.net##div#mid_promo_right
 onhockey.tv##img[width="710"][height="80"]
@@ -455756,6 +455766,7 @@ otak.com.ua#@##cookies-modal
 otakomu.jp,kitimama-matome.net,gahalog.2chblog.jp,bitubu.blog.jp,tanu-soku.com,bipblog.com,matomeblade.com,kyousoku.net,news.2chblog.jp,labaq.com##.article-button-simple
 otakomu.jp,sabah.com.tr,browserleaks.com##.twt
 otakotaku.com##div[id^="im-ADS_"]
+otaku.goguynet.jp##.mamorioh-amazon-ideas
 otakukan.com##.ai-attributes
 otakukan.com##ins.adsbygoogle
 otakukart.com##.lc-newsletter-box
@@ -619595,6 +619606,7 @@ zzzyk.com###Tinfo
 ||9bd66765d7.0214217ebc.com^
 ||9bdb.pandasuite.io^
 ||9bialak0c.com^
+||9bple7bubupgime8vpqbgw.rest^
 ||9c03dda67d.8c66b76e9b.com^
 ||9c1g.cn^
 ||9c1k.cn^
@@ -626182,6 +626194,7 @@ zzzyk.com###Tinfo
 ||aarpgli.newyorklife.com^
 ||aarqmo.culturekings.co.nz^
 ||aarsl.itsbodily.com^
+||aarulitzet.com^
 ||aarzgcsyztgrs.site^
 ||aas.bellemaison.jp^
 ||aas.ismet.kz^
@@ -673437,6 +673450,7 @@ zzzyk.com###Tinfo
 ||bptzn917-5m8w2xq-4j7d3g-rv6210.pages.dev^
 ||bpu.samsungelectronics.com^
 ||bpucmkg.com^
+||bpvhzntnedovv.online^
 ||bpvoctpvauvyv.website^
 ||bpvou.hotelcollection.co.za^
 ||bpwmfh.backmarket.be^
@@ -677936,6 +677950,7 @@ zzzyk.com###Tinfo
 ||bvvic.net.daraz.com^
 ||bvwsvjhpbmzvj.space^
 ||bvxabstcuyoij.space^
+||bvxjmuo6yw5lur5n2uyzg769n8o2z.cfd^
 ||bvxvwb.miniwebshop.hu^
 ||bvxwlvzmmgnsb.space^
 ||bvyates.georges.tt.omtrdc.net^
@@ -765284,6 +765299,7 @@ zzzyk.com###Tinfo
 ||dugovicova.sk^
 ||dugstanat.tt.omtrdc.net^
 ||dugygysn.com^
+||dugzikkif.in^
 ||duh0b8nl8uhfn.cloudfront.net^
 ||duhkxehelalch.store^
 ||duhnet.tv/*/*/stats/init.min.js
@@ -1066805,6 +1066821,7 @@ zzzyk.com###Tinfo
 ||fortvision.com^
 ||fortvision.com^$third-party
 ||fortvite.com^
+||fortyninemaps.com^
 ||fortyphlosiona.com^$popup
 ||foruftuiov.com^
 ||foruftuiov.com^$document
@@ -1115136,6 +1115153,7 @@ zzzyk.com###Tinfo
 ||gwekhiqtmswhp.website^
 ||gwenet.org^
 ||gwex.tt.omtrdc.net^
+||gwexszlzklgne.site^
 ||gwf-tst.hb-api-stage.tt.omtrdc.net^
 ||gwfyn.ptmassagespringfieldmo.com^
 ||gwgatewayr-hx-1.net.daraz.com^
@@ -1148251,6 +1148269,7 @@ zzzyk.com###Tinfo
 ||ippdevx-production-fdjh0j.admins1.accountfcanr.tt.omtrdc.net^
 ||ippen.space/api/metrics
 ||ippen.space/idat
+||ippfoijrjhplp.site^
 ||ipphone-131-170-117-246.its.tt.omtrdc.net^
 ||ipphone-131-170-157-242.its.tt.omtrdc.net^
 ||ipphone-131-170-158-242.its.tt.omtrdc.net^
@@ -1155974,6 +1155993,7 @@ zzzyk.com###Tinfo
 ||jtktdlkjrh.com^
 ||jtm39.tt.omtrdc.net^
 ||jtmjafkhg2c5h7xk.click.s11.sfmc-osl.com^
+||jtmmxldoxjdcz.site^
 ||jtncexe.doitbest.tt.omtrdc.net^
 ||jtnjuzidtzzsb.website^
 ||jtokllecqapgc.site^
@@ -1155998,6 +1156018,7 @@ zzzyk.com###Tinfo
 ||jtsoyb.smartphoto.fr^
 ||jtsqetqkdcwbq.online^
 ||jtszc.homefreemusic.com^
+||jtszudkuecake.space^
 ||jtt.tt.omtrdc.net^
 ||jttcy.livesans.co.uk^
 ||jttmym.gear4music.com^
@@ -1162647,6 +1162668,7 @@ zzzyk.com###Tinfo
 ||kcms.subaruofamerica.tt.omtrdc.net^
 ||kcnlbswxseble.online^
 ||kcnm-group.tt.omtrdc.net^
+||kcnoyxjyphhcy.space^
 ||kcnqur.guante.cl^
 ||kcoh8a2twlh0ezyq.sparta.members.tt.omtrdc.net^
 ||kcoigpafs.com^
@@ -1202872,6 +1202894,7 @@ zzzyk.com###Tinfo
 ||lswcdn.net/js/vendor/frontend_loader.js
 ||lswdjtngkdhbe.website^
 ||lswfmx.stuartweitzman.com^
+||lsxbdmdusjhuz.online^
 ||lsxc.shop^
 ||lsxhxrpnhrqoj.space^
 ||lsxmg.com^
@@ -1225471,6 +1225494,7 @@ zzzyk.com###Tinfo
 ||mismetdeism.com^
 ||misosoup.io^$third-party
 ||misovxorsrti.in^
+||mispagejaraguasaple.cfd^
 ||misrepush.com^$third-party
 ||missaffiliate.com^
 ||missaidshielsculebra.cyou^
@@ -1231966,6 +1231990,7 @@ zzzyk.com###Tinfo
 ||mxslobalid3.click.s11.sfmc-osl.com^
 ||mxsvjc.hackers.ac^
 ||mxtkypzdwdrzl.site^
+||mxtltiomgoebi.space^
 ||mxtoolbox.com/Public/Lookup.aspx/GetNextInlineAd
 ||mxtwtelecom.azure.net.daraz.com^
 ||mxtzl.lemmelive.com^
@@ -1235308,6 +1235333,7 @@ zzzyk.com###Tinfo
 ||ndzhm.fromrebel.ca^
 ||ndzmgf9b7h952kt0.net.daraz.com^
 ||ndzorzxbsmyld.website^
+||ndzshjvntjduz.online^
 ||ndztl.iotabody.com^
 ||ne.8kjqhjz82xu6fb4b4516829.cfd^
 ||ne.dematic.com^
@@ -1261675,6 +1261701,7 @@ zzzyk.com###Tinfo
 ||playflix.in^
 ||playfocus.net^
 ||playful-unit.pro^
+||playfulharbor.info^
 ||playfullmovie.com^
 ||playfulriver.com^
 ||playfusion.net^
@@ -1266552,6 +1266579,7 @@ zzzyk.com###Tinfo
 ||prvsz4pe.micpn.com^
 ||prvsz4pe.micpn.com^$third-party
 ||prwave.info^$popup
+||prwixpswmaepk.online^
 ||prwtsupportbpfr.firebaseapp.com^
 ||prx.wayfair.com^
 ||prx6.destinia.ch^
@@ -1278539,6 +1278567,7 @@ zzzyk.com###Tinfo
 ||rknscandisvqp.space^
 ||rkohksa.cn^
 ||rkomf.com^
+||rkoockdu.in^
 ||rkoqurba.in^
 ||rkozoima.com^
 ||rkpjy.georgerichards.ca^
@@ -1286235,6 +1286264,7 @@ zzzyk.com###Tinfo
 ||scamforgottenbyte.com^
 ||scammerfail.com^
 ||scammerrecorder.com^
+||scampsaccount.cfd^
 ||scan.playsight.com^
 ||scanalert.com/meter/
 ||scanalytics.wral.com^
@@ -1300915,6 +1300945,7 @@ zzzyk.com###Tinfo
 ||slahpxqb6wto.com^
 ||slajoioyhw.com^
 ||slakinskewly.qpon^
+||slakypneumaanisil.cfd^
 ||slalom.tt.omtrdc.net^
 ||slamactress.com^
 ||slanderchristian.com^
@@ -1365000,6 +1365031,7 @@ zzzyk.com###Tinfo
 ||unsp1ash.net^
 ||unspalsh.net^
 ||unspec.0-058.net.daraz.com^
+||unspeedsnuffer.com^
 ||unsplach.net^
 ||unsplah.net^
 ||unsplasc.net^
@@ -1405675,6 +1405707,7 @@ zzzyk.com###Tinfo
 ||xixianad.com^
 ||xixianad.com^$third-party
 ||xixizaix.cn^
+||xixqkqpdxkybb.online^
 ||xixvvegwkskns.site^
 ||xiyouence.com^
 ||xiyouence.com^$popup,third-party
@@ -1416810,6 +1416843,7 @@ zzzyk.com###Tinfo
 ||zlgfuyslcpekc.site^
 ||zlgkpr.lottehotel.com^
 ||zlgpqh.rikorda.it^
+||zlhxcsrjvqugb.site^
 ||zli.wang^
 ||zlib-ht-1.account.net.daraz.com^
 ||zlib-official.com^$document
