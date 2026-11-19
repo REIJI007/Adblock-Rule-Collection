@@ -69,7 +69,7 @@ KNOWN_CONDITION_FLAGS = {
     "adguard_ext_chromium", "adguard_ext_chromium_mv3", "adguard_ext_firefox",
     "adguard_ext_edge", "adguard_ext_edge_mv3", "adguard_ext_opera",
     "adguard_ext_opera_mv3", "adguard_ext_android_cb", "ext_ublock",
-    "ext_ubol", "ext_abp", "ext_safari", "env_mobile", "env_safari", "env_chromium",
+    "ext_ubol", "ext_abp", "ext_safari", "ext_devbuild", "env_mobile", "env_safari", "env_chromium",
     "env_firefox", "env_edge", "env_mv3", "env_legacy",
     "cap_html_filtering", "cap_ipaddress", "cap_user_stylesheet",
 }
@@ -913,6 +913,8 @@ def target_condition_flags(target: str) -> dict[str, bool]:
         raise CompilationError(f"unknown AdGuard target profile: {target}")
     flags = {name: False for name in KNOWN_CONDITION_FLAGS}
     flags.update(TARGET_PROFILES[target])
+    # Every profile emits AdGuard-compatible output, never a uBlock Origin development build.
+    flags["ext_devbuild"] = False
     return flags
 
 def evaluate_filter_condition(expression: str, flags: dict[str, bool]) -> bool:
@@ -1555,8 +1557,8 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("adguard && adguard_ext_chromium && !adguard_ext_safari", target_condition_flags("chromium")), True)
     check("Chromium MV3 gets the MV3 condition, not the MV2 condition",
           evaluate_filter_condition("adguard_ext_chromium_mv3 && !adguard_ext_chromium", target_condition_flags("chromium-mv3")), True)
-    check("uBlock-only conditions are false for AdGuard output",
-          evaluate_filter_condition("ext_ublock || ext_ubol || ext_abp", target_condition_flags("chromium-mv3")), False)
+    check("uBlock-only and development-build conditions are false for AdGuard output",
+          evaluate_filter_condition("ext_ublock || ext_ubol || ext_abp || ext_devbuild", target_condition_flags("chromium-mv3")), False)
     check("literal false preprocessor condition is evaluated", evaluate_filter_condition("false", target_condition_flags("chromium-mv3")), False)
     check("unsupported capability flag is false for AdGuard output", evaluate_filter_condition("cap_ipaddress", target_condition_flags("chromium-mv3")), False)
     check("Safari-only flag is false for Chromium MV3", evaluate_filter_condition("ext_safari", target_condition_flags("chromium-mv3")), False)
@@ -1570,6 +1572,8 @@ def run_regression_tests() -> None:
           evaluate_filter_condition("cap_user_stylesheet", target_condition_flags("safari")), False)
     check("default compiler target is AdGuard for Windows", DEFAULT_TARGET, "adguard-windows")
     windows_flags = target_condition_flags("adguard-windows")
+    check("uBlock Origin development-build condition is false for AdGuard Windows",
+          evaluate_filter_condition("ext_devbuild", windows_flags), False)
     check("Windows target selects Windows-specific rules",
           evaluate_filter_condition("adguard && adguard_app_windows && !adguard_ext_chromium_mv3", windows_flags), True)
     check("Windows target enables HTML filtering capability",
@@ -1579,7 +1583,18 @@ def run_regression_tests() -> None:
     check("Windows target does not inherit Chromium extension conditions",
           evaluate_filter_condition("adguard_ext_chromium_mv3 || env_chromium || env_mv3", windows_flags), False)
     windows_source = Source("https://example.com/windows-filter.txt", "adblock")
-    windows_text = "!#if adguard_app_windows\n||windows-only.example^\n!#else\n||other-platform.example^\n!#endif\n"
+    windows_text = (
+        "!#if adguard_app_windows\n"
+        "||windows-only.example^\n"
+        "!#else\n"
+        "||other-platform.example^\n"
+        "!#endif\n"
+        "!#if ext_devbuild\n"
+        "||development-build-only.example^\n"
+        "!#else\n"
+        "||non-development-build.example^\n"
+        "!#endif\n"
+    )
     windows_lines = expand_filter_preprocessor(
         windows_source,
         windows_text,
@@ -1587,7 +1602,8 @@ def run_regression_tests() -> None:
         {windows_source.url: (windows_source, windows_text)},
     )
     check("Windows preprocessor selects Windows-specific rules",
-          [line.text.strip() for line in windows_lines], ["||windows-only.example^"])
+          [line.text.strip() for line in windows_lines],
+          ["||windows-only.example^", "||non-development-build.example^"])
     check("AdGuard CNAME include from an official filter source is allowlisted",
           allow_preprocessor_include(
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
