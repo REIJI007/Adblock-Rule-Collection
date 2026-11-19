@@ -1,35 +1,28 @@
 # -*- coding: utf-8 -*-
 """Conservative syntax contract for the shared Main/Lite subscriptions.
 
-This module deliberately accepts a portable ABP/EasyList subset rather than
-trying to emulate every engine-specific extension. It is a publish-time safety
-gate, not a complete implementation of any browser's filter parser.
+This is a publish-time safety gate for a portable ABP/EasyList subset, not a
+complete implementation of any browser's filter parser.
 """
 from __future__ import annotations
 
 import re
 
-# Concrete environments whose conditionally-selected rules must all intersect.
 UNIVERSAL_TARGETS = (
     "adguard-windows",
-    "chromium",              # AdGuard Browser Extension, MV2
-    "firefox",               # AdGuard Browser Extension, MV2
-    "ublock-origin-chromium",# uBlock Origin, MV2
-    "ublock-origin-firefox", # uBlock Origin, MV2
+    "chromium",               # AdGuard Browser Extension, MV2
+    "firefox",                # AdGuard Browser Extension, MV2
+    "ublock-origin-chromium", # uBlock Origin, MV2
+    "ublock-origin-firefox",  # uBlock Origin, MV2
 )
 
-# Network request types and modifiers with a conservative common interpretation.
 _RESOURCE_TYPES = {
     "script", "image", "stylesheet", "object", "xmlhttprequest",
     "subdocument", "font", "media", "popup", "other", "document",
 }
-_COMMON_FLAGS = {
-    "third-party", "3p", "match-case", "important", "badfilter",
-}
+_COMMON_FLAGS = {"third-party", "3p", "match-case", "important", "badfilter"}
 _DOMAIN_LABEL = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$", re.I)
 
-# These operators are engine extensions or require a runtime not shared by all
-# three products. Keep the check explicit so new upstream syntax fails closed.
 _COSMETIC_MARKERS_UNSUPPORTED = (
     "#@$?#", "#$?#", "#@?#", "#?#", "#$#", "#%#", "#@%#",
 )
@@ -58,7 +51,7 @@ def _valid_domain_modifier(value: str) -> bool:
 def _basic_css_selector(selector: str) -> bool:
     """Accept ordinary CSS selectors; reject scriptlets and procedural syntax."""
     selector = selector.strip()
-    if not selector or any(ch in selector for ch in "{};\\n\\r"):
+    if not selector or any(ch in selector for ch in "{};\n\r"):
         return False
     lowered = selector.lower()
     forbidden = (
@@ -69,10 +62,8 @@ def _basic_css_selector(selector: str) -> bool:
     if any(token in lowered for token in forbidden):
         return False
 
-    # Only a small, browser-native pseudo-class set is admitted. In particular,
-    # no engine-specific procedural pseudo-classes or extended CSS operators.
     pseudo_pattern = re.compile(
-        r":(?:not\\([^()]*\\)|nth-child\\([^()]*\\)|nth-of-type\\([^()]*\\)|"
+        r":(?:not\([^()]*\)|nth-child\([^()]*\)|nth-of-type\([^()]*\)|"
         r"first-child|last-child|only-child|empty|root|checked|disabled|enabled|"
         r"focus|hover|active|visited|link|target|required|optional|valid|invalid|"
         r"read-only|read-write)(?![a-z0-9_-])",
@@ -82,8 +73,7 @@ def _basic_css_selector(selector: str) -> bool:
     if ":" in without_pseudos:
         return False
 
-    # CSS selectors used in filter lists must not contain executable content.
-    return re.fullmatch(r"[A-Za-z0-9_.*#\\[\\]\\(\\)=~|^$'\"\\s>,+\\-]+", selector) is not None
+    return re.fullmatch(r"[A-Za-z0-9_.*#\[\]()=~|^$'\"\s>,+\-]+", selector) is not None
 
 def _cosmetic_rule_error(line: str) -> str | None:
     for marker in _COSMETIC_MARKERS_UNSUPPORTED:
@@ -108,7 +98,6 @@ def _cosmetic_rule_error(line: str) -> str | None:
                 domain = domain[1:]
             if domain in {"", "*"}:
                 continue
-            # Cosmetic domain scopes are hostnames, not URLs or regexes.
             if not _valid_domain_modifier(domain):
                 return f"unsupported cosmetic domain scope: {domain!r}"
 
@@ -122,8 +111,6 @@ def _split_network_pattern(line: str) -> tuple[str, list[str]] | None:
     if not body:
         return None
 
-    # Regex filters use slash delimiters. A dollar sign inside the regex body
-    # must not be mistaken for the modifier separator.
     if body.startswith("/"):
         escaped = False
         end = None
@@ -131,7 +118,7 @@ def _split_network_pattern(line: str) -> tuple[str, list[str]] | None:
             char = body[index]
             if escaped:
                 escaped = False
-            elif char == "\\\\":
+            elif char == "\\":
                 escaped = True
             elif char == "/":
                 end = index
@@ -155,12 +142,12 @@ def _portable_regex(pattern: str) -> bool:
         return False
     body = pattern[1:-1]
     unsupported = (
-        "(?=", "(?!", "(?<=", "(?<!", "(?P", "(?>", "\\\\k<",
-        "\\\\g<", "\\\\1", "\\\\2", "\\\\3", "\\\\A", "\\\\Z",
+        "(?=", "(?!", "(?<=", "(?<!", "(?P", "(?>", r"\k<",
+        r"\g<", r"\1", r"\2", r"\3", r"\A", r"\Z",
     )
     if any(token in body for token in unsupported):
         return False
-    if re.search(r"(?:\\*|\\+|\\?|\\{\\d+(?:,\\d*)?\\})[+?]", body):
+    if re.search(r"(?:\*|\+|\?|\{\d+(?:,\d*)?\})[+?]", body):
         return False
     try:
         re.compile(body)
@@ -169,12 +156,14 @@ def _portable_regex(pattern: str) -> bool:
     return True
 
 def universal_rule_error(raw_rule: str) -> str | None:
-    """Return why a rule is not safe for the shared AdGuard/ uBO MV2 target."""
+    """Return why a rule is outside the shared AdGuard/uBO MV2 contract."""
     line = raw_rule.strip()
-    if not line or line.startswith("!") or line.startswith("["):
+    if not line:
         return None
     if line.startswith("!#"):
         return "unexpanded filter preprocessor directive"
+    if line.startswith("!") or line.startswith("["):
+        return None
     if "$$" in line:
         return "AdGuard HTML filtering is not shared by all target engines"
 
@@ -192,11 +181,8 @@ def universal_rule_error(raw_rule: str) -> str | None:
     if pattern.startswith("/"):
         if not _portable_regex(pattern):
             return "regular expression uses syntax outside the conservative shared subset"
-    else:
-        # Reject control characters and constructs that cannot be safely
-        # interpreted as an ordinary ABP/EasyList URL pattern.
-        if any(ord(ch) < 32 for ch in pattern):
-            return "control character in network-filter pattern"
+    elif any(ord(ch) < 32 for ch in pattern):
+        return "control character in network-filter pattern"
 
     seen: set[str] = set()
     for token in modifiers:
@@ -223,9 +209,6 @@ def universal_rule_error(raw_rule: str) -> str | None:
                 return f"invalid or unsupported domain modifier: {value!r}"
             continue
 
-        # Deliberately excluded: $app, $network, DNS modifiers, redirect /
-        # script resources, CSP, removeparam, generic* exceptions, and uBO-
-        # specific options. Similar spelling does not prove equal semantics.
         return f"modifier {key!r} is not in the shared ABP/EasyList compatibility contract"
 
     return None
