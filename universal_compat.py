@@ -65,7 +65,7 @@ def _basic_css_selector(selector: str) -> bool:
     pseudo_pattern = re.compile(
         r":(?:not\([^()]*\)|nth-child\([^()]*\)|nth-of-type\([^()]*\)|"
         r"first-child|last-child|only-child|first-of-type|last-of-type|only-of-type|"
-        r"nth-last-child\\([^()]*\\)|nth-last-of-type\\([^()]*\\)|before|after|empty|root|checked|disabled|enabled|"
+        r"nth-last-child\([^()]*\\)|nth-last-of-type\([^()]*\\)|before|after|empty|root|checked|disabled|enabled|"
         r"focus|hover|active|visited|link|target|required|optional|valid|invalid|"
         r"read-only|read-write|focus-within)(?![a-z0-9_-])",
         re.I,
