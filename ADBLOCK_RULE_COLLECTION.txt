@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-21 00:24:15 (UTC+8)
-! Total rules: 1421982
+! Generated: 2026-11-21 02:00:21 (UTC+8)
+! Total rules: 1422012
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -127934,10 +127934,6 @@ comicschau.de###detect-modal
 comicsheatingup.net###custom_html-5
 comicsvalley.com##.sgpb-popup-dialog-main-div-wrapper
 comicsvalley.com,northlandfence.com##.sgpb-popup-dialog-main-div-wrapper
-comicxxx.eu###dclm_modal_content
-comicxxx.eu###dclm_modal_screen
-comicxxx.eu###tracking-url
-comicxxx.eu##^meta[http-equiv="refresh"]
 comidinhasdochef.com###compartilhamentoSocial
 comidinhasdochef.com##.snp-overlay
 comidoc.net#@#.googlead
@@ -127945,7 +127941,7 @@ comiko.net##.ob-widget-items-container
 comingsoon.it###tal
 comingsoon.it##.ffiPopCorn
 comingsoon.it##.tasti-social-top
-comix.to##[src*=".gif"]
+comix.to##.home-banner
 comma-store.de##div[data-cid="DATA_PRIVACY_BAR"]
 commaful.com##.bottom-section-signup
 commaful.com##.ios-app-promo
@@ -131276,6 +131272,7 @@ dailyegyptian.com##.sno-side-icons
 dailyegyptian.com,northernstar.info,theorion.com,theprospectordaily.com##.leaderboardwrap
 dailyevergreen.com##.sno-hac-desktop-1
 dailyevergreen.com,thewalrus.ca##.wppopups-whole
+dailyfaceoff.com##div[id^="injectedAd_"]
 dailyfly.com###zox-lead-top-in
 dailyfriend.co.za##.advert-leaderboard-element
 dailyfx.com###top-ref-box
@@ -431467,7 +431464,6 @@ lesdernieremotcde.firebaseapp.com
 lesdernieremotcde.web.app
 lesdiplomates-53800.firebaseapp.com
 lesdiplomates-53800.web.app
-lesecologistes.fr,htw-berlin.de##div[id^="gdpr-"]
 leseffetdehihjq002sqf.firebaseapp.com
 leseffetdehihjq002sqf.web.app
 lesen.amazon.de###cookies-popover-overlay
@@ -447007,6 +447003,9 @@ moxie-affirm.my.canva.site
 moxing.net##.pic_txt_list
 moxing.net##a[marked][href*=".taobao.com"]
 moxisyqi.top
+moyaexpress.pl,bricoman.pl,365daysofbakingandmore.com,medyascope.tv,matthewball.co,parismatch.com,monterail.com,revolutionrace.de,nonfungerbils.com##.newsletter-block
+moyaexpress.pl,mbbru.ru,remkresla.ru,remdivana.ru,spb-obivka-mebeli.ru,aquaphor.ru,gorodsreda.ru,allrivers.info,biletyplus.ru,vawoo.co.uk,atompark.com,fuqer.com##.cookies-block
+moyaexpress.pl,xda-developers.com,mebel4u.pl,berrybase.de,cleverbook.eu,vibe.com,gearjunkie.com,polygon.com,ianos.gr,geox.com,365daysofbakingandmore.com,lejournaldelamaison.fr,newsbomb.gr,hartsofstur.com,vg247.com,rockpapershotgun.com,eurogamer.net,silbonshop.com,dinos.co.jp,supermagnete.de,lampenwelt.de,oxfordlearning.com,caseking.de,lidyana.com,officedepot.co.cr##.footer-newsletter
 moyatours.com##.omb_login
 moyo.ua##.popupbanners
 moyo.ua##.widget-opener
@@ -449556,6 +449555,8 @@ nca.org.gh###growls-br
 ncaa.com###block-termsofservice
 ncaa.com###mobile-ad-fixed-bottom
 ncaa.com###ncaa-share-hanger
+ncaa.com##.footer-ad
+ncaa.com##.mobile-persistent-bottom
 ncaa.com##.ncaa-share-hanger
 ncaa.com##.ncaa-top-ad-wrapper
 ncaa.com##.tile-follow
@@ -450357,6 +450358,7 @@ newgrounds.com##.supporter-inter-pod
 newgrounds.com##div[id^="SuperbImaginativeBunting"]
 newhallhospital.co.uk##.popupbox
 newhambooks.co.uk
+newhaonline.com,lesecologistes.fr,htw-berlin.de##div[id^="gdpr-"]
 newhollandsp.ru##.policy_popup
 newhorizonsrehab.ke
 newhua.com##div.taobaoad,div.unionad,ins.adsbygoogle,div.adr,div.ad_center,div[class^="ad_ritht_"],DIV.ad_top,DIV.i1,DIV.i2,DIV.i3
@@ -502984,6 +502986,7 @@ windo.oss-cn-hongkong.aliyuncs.com
 windomstatetheater.com
 windowcleaningforums.co.uk##.ipsAdvertisement_large
 windows-defender.cc
+windows-faq.de###block-51
 windows-ledger-live.typedream.app
 windows-love.de###wl-cookie-datenschutz-message
 windows.com,visualstudio.com,office.com,xbox.com,microsoft.com,msra.cn###epb
@@ -637758,6 +637761,7 @@ zzzyk.com###Tinfo
 ||aiwanma99.com^
 ||aiwanma99.com^$popup
 ||aiwen.cc^
+||aiwsdkxqizteg.online^
 ||aix.apidocscar37.net.daraz.com^
 ||aixcdn.com^
 ||aixiaofan.cn/content/uploadfile/tpl_options//Ad_list_
@@ -638496,6 +638500,7 @@ zzzyk.com###Tinfo
 ||alerts.thedailystar.net^
 ||alerts.wolterskluwerfs.com^
 ||alertsatwork.americanexpress.com^
+||aleshotglairesdecodon.cfd^
 ||aletha.truthislifestyle.com^
 ||aletheanunlet.cfd^
 ||aletheianoesis.blogspot.jp^
@@ -653193,6 +653198,7 @@ zzzyk.com###Tinfo
 ||auslogics.com^$document
 ||ausmflow.com^
 ||auspiciousvp.com^
+||auspicypartage.rest^
 ||auspipe.com^
 ||auspost.customerserviceqh.com^
 ||aussiearcade.com/js/privacy-consent-banner.js
@@ -714768,6 +714774,7 @@ zzzyk.com###Tinfo
 ||comitescrew.qpon^
 ||comitiumanalytics.com^
 ||comitiumanalytics.com^$third-party
+||comix.to/assets/gotaku-banner
 ||comixporn.net/js/nvrblck.js
 ||comjsjfeel.tt.omtrdc.net^
 ||comkatmoviehd.0-132.net.daraz.com^
@@ -726926,6 +726933,7 @@ zzzyk.com###Tinfo
 ||cuiron.de^
 ||cuisineenvoyadvertise.com^
 ||cuisinevoyager.com^
+||cuissenwardage.rest^
 ||cuit.shop^
 ||cuivordvonnsy.site^
 ||cujgqmnqwsgjt.website^
@@ -748052,6 +748060,7 @@ zzzyk.com###Tinfo
 ||diagnostics.thermo.com^
 ||diagnostika.com.ar^
 ||diagprog4-com-pl.tt.omtrdc.net^
+||diagramgrog.cyou^
 ||diagramjawlineunhappy.com^
 ||diagramjawlineunhappy.com^$document
 ||diagramjawlineunhappy.com^$popup
@@ -748361,6 +748370,7 @@ zzzyk.com###Tinfo
 ||dibaj305.tt.omtrdc.net^
 ||dibbedschizosmarinal.cfd^
 ||dibbledbest.com^
+||dibblesrabbishsergei.cyou^
 ||dibels.net.daraz.com^
 ||dibg13.tt.omtrdc.net^
 ||dibgreadingbadmin.tt.omtrdc.net^
@@ -750604,6 +750614,7 @@ zzzyk.com###Tinfo
 ||dkwong3.sung.tt.omtrdc.net^
 ||dkwwiibjjvawu.website^
 ||dkxobcs.cn^
+||dkxqafejvrfai.website^
 ||dkxtzubbtmzie.space^
 ||dkxutggyyyajh.website^
 ||dkxwqu.annefontaine.com^
@@ -763758,6 +763769,7 @@ zzzyk.com###Tinfo
 ||dsidas.com^
 ||dsience.americansocietyofcli.tt.omtrdc.net^
 ||dsifi.toms.com^
+||dsifphfbfeazr.space^
 ||dsigmoid.tt.omtrdc.net^
 ||dsignedtsigned.bnpparibasfortis.tt.omtrdc.net^
 ||dsiill.com^
@@ -770205,6 +770217,7 @@ zzzyk.com###Tinfo
 ||eagerangle.com^
 ||eagerbrass.com^
 ||eagercandy.com^
+||eagerdish.org^
 ||eagereden.com^
 ||eagerflame.com^
 ||eagerknight.com^
@@ -1066311,6 +1066324,7 @@ zzzyk.com###Tinfo
 ||fmpub.net^
 ||fmpvj.wholesalejewelrywebsite.com^
 ||fmpws.tt.omtrdc.net^
+||fmpyblulujqff.online^
 ||fmqhr.shayandblue.com^
 ||fmqidg.letras.com^
 ||fmqidg.letras.mus.br^
@@ -1124883,6 +1124897,7 @@ zzzyk.com###Tinfo
 ||hongyingbbs.com/img/top.js
 ||hongyingbbs.com/jj/
 ||honhon.top^
+||honkeybatavi.cfd^
 ||honoka.design^
 ||honor.omrf.org^
 ||honorablehydrant.com^
@@ -1129347,6 +1129362,7 @@ zzzyk.com###Tinfo
 ||huatuo.weiyun.com^
 ||huavdntfzhprm.online^
 ||huavod.com/static/js/ntc.js
+||huavod.net/static/js/ntc.js
 ||huawei.com/*/hwautocomplete/
 ||huawei.mobzon.ru/adbp/
 ||huawuhui.club^
@@ -1150439,6 +1150455,7 @@ zzzyk.com###Tinfo
 ||ispta30.tt.omtrdc.net^
 ||ispta32.tt.omtrdc.net^
 ||ispta52a.tt.omtrdc.net^
+||ispuxelmvitav.space^
 ||ispyderm.net.daraz.com^
 ||ispyders-car10.net.daraz.com^
 ||isq.tt.omtrdc.net^
@@ -1151456,6 +1151473,7 @@ zzzyk.com###Tinfo
 ||ivr.com.tr^
 ||ivrnfvlcgubm.www.cefirates.com^
 ||ivs.c34.mytemp.website^
+||ivslbsnaxongp.space^
 ||ivstat.indavideo.hu^
 ||ivstracker.net^
 ||ivstracker.net^$third-party
@@ -1157636,6 +1157654,7 @@ zzzyk.com###Tinfo
 ||jweekuxflrgqj.site^
 ||jwegptdhydbhd.space^
 ||jweqai.amen.fr^
+||jwestzlioaqo.com^
 ||jwf8lxo7b.com^
 ||jwfaregtarvql.space^
 ||jwg2z2848kkshqry.docs.net.daraz.com^
@@ -1157851,6 +1157870,7 @@ zzzyk.com###Tinfo
 ||jyothycirrussaviation.com^
 ||jyotsacademy.co^
 ||jypcqvpgewajj.site^
+||jypgjzagcphbd.website^
 ||jyphhfkvrutek.site^
 ||jyprvthqonbxi.online^
 ||jyqckbryepksj.site^
@@ -1204279,6 +1204299,7 @@ zzzyk.com###Tinfo
 ||lufthansagroup.com/*/cookieman*.js
 ||lufudmcfxchay.space^
 ||lufulibaa.com/ad$script
+||lufurfkbeplol.site^
 ||lugansk-info.ru^
 ||lugansk-info.ru^$third-party
 ||lugasat.org.ua/media/js/abDetector.min.js
@@ -1226523,6 +1226544,7 @@ zzzyk.com###Tinfo
 ||miserly-phone.com^$popup
 ||miserly-wrap.com^
 ||miserybisksbishari.cyou^
+||misesbenton.rest^
 ||miseventos.orem.com.mx^
 ||misformchipsggr.cyou^
 ||misgrewgelding.cyou^
@@ -1231767,6 +1231789,7 @@ zzzyk.com###Tinfo
 ||mtag.markopolo.ai^
 ||mtag.mman.kr^
 ||mtagate8.tt-qe5.omtrdc.net^
+||mtagnpuxbkhon.site^
 ||mtaha.e1-np.community.tt.omtrdc.net^
 ||mtahb-out.ad.tt.omtrdc.net^
 ||mtahb1.email.tt.omtrdc.net^
@@ -1235781,6 +1235804,7 @@ zzzyk.com###Tinfo
 ||nauchniestati.ru/wp-content/themes/express/assets/js/chat.js
 ||naudy-verges.jour5783111.pro^
 ||nauervqyecwbx.space^
+||naugerbaffing.rest^
 ||naughtyblog.org/81bf26be.js
 ||naughtyblog.org/wp-content/cache/minify/b97f0.js
 ||naughtyblog.org/wp-content/images/k2s/
@@ -1238676,6 +1238700,7 @@ zzzyk.com###Tinfo
 ||nhukg.hyerboots.com^
 ||nhungmiu.me^
 ||nhutgg.io.vn/js/ads-blocked.js
+||nhvwznuygysno.site^
 ||nhwfqtzcftqxi.site^
 ||nhwlkqoodhlar.online^
 ||nhwqjyn.icu^
@@ -1249848,6 +1249873,7 @@ zzzyk.com###Tinfo
 ||ouhhc.frootbat.com^
 ||ouhoxibwjvwuz.site^
 ||ouiiadyzaieqx.space^
+||ouijarapper.com^
 ||ouiokaq.top^
 ||ouiwfrtqcwjeu.online^
 ||oujudpodmnumr.space^
@@ -1267909,6 +1267935,7 @@ zzzyk.com###Tinfo
 ||psthg.wiseandsilent.com^
 ||psthgeu.reduzer.tech^
 ||pstmrk.it^
+||pstopening.rest^
 ||pstreetma.com^
 ||pstt.mtb-news.de^
 ||pstv.tv/pstv.jpg
@@ -1307546,6 +1307573,7 @@ zzzyk.com###Tinfo
 ||smokersarupa.cyou^
 ||smokerywanle.cfd^
 ||smoketester.com^
+||smokoscobb.cfd^
 ||smon.activate.cz^
 ||smon.asianpacificheritage.gov^
 ||smon.blackhistorymonth.gov^
@@ -1340411,6 +1340439,7 @@ zzzyk.com###Tinfo
 ||tbmoxtvskajqz.space^
 ||tbmuriivgbidj.online^
 ||tbnhmzsszouqj.space^
+||tbnuacnbzsvgc.site^
 ||tbochagnhcwvf.site^
 ||tbp.be-performance.com^
 ||tbp.tescobank.com^
@@ -1388337,6 +1388366,7 @@ zzzyk.com###Tinfo
 ||wgalleryter.origgallery.net.daraz.com^
 ||wgbdkphdnh.com^
 ||wgchrrammzv.com^
+||wgcnxpayqnksw.website^
 ||wgcondominiums-detail.surge.sh^
 ||wgczby.foroffice.ru^
 ||wgdjti.sos-kinderdorf.de^
@@ -1411721,7 +1411751,6 @@ zzzyk.com###Tinfo
 ||yazhouweiyihefabocai.goasrv.com^
 ||yazhouyu.
 ||yazilim.net/alexa/
-||yazio-analytics.com^
 ||yazizim.com^
 ||yaznkj.cn^
 ||yazspspjorqhx.site^
@@ -1420697,6 +1420726,7 @@ zzzyk.com###Tinfo
 ||zvhct.zorrata.com^
 ||zvhjk.petite-plume.com^
 ||zvhkzb.ambiendo.de^
+||zvhruccgofmal.site^
 ||zvhtzl.icu^
 ||zviazda.by/banners/padpiska202025.jpg
 ||zvietcombank.com^
