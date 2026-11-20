@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-21 01:58:38 (UTC+8)
-! Total rules: 1301482
+! Generated: 2026-11-21 03:11:55 (UTC+8)
+! Total rules: 1301506
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -95115,6 +95115,11 @@ appleinsider.ru###ioimedia_app_banner
 appleinsider.ru###pushbanner
 appleinsider.ru,hi-news.ru##.sidebar-banner-telegram
 appleinsider.ru,hi-news.ru,androidinsider.ru##.banner_telegram
+applescoop.org##.as-ad
+applescoop.org##.as-adfree-card
+applescoop.org##.pro-bar
+applescoop.org##aside.as-widget-card
+applescoop.org##section.asf-news
 applesencia.com##div[id^="facebook-flyer"]
 applesencia.com,capitalibre.com,frenomotor.com,placeralplato.com,sportadictos.com,winphonemetro.com,xombit.com,xombitgames.com,xombitmusic.com##.top-button
 applesfera.com###editorialRecommendedPosts
@@ -102645,7 +102650,6 @@ bricklink.com##.anchor-to-top
 bricklink.com#@#.cookie-notice:not(body):not(html)
 brickset.com##.admin.buy
 bricoleurdudimanche.com###cookiesPopin
-bricoman.pl,365daysofbakingandmore.com,medyascope.tv,matthewball.co,parismatch.com,monterail.com,revolutionrace.de,nonfungerbils.com##.newsletter-block
 bricovideo.ovh##.social-icon
 bricozone.fr#@#.adsbygoogle
 bridebox.com###widget_sp_image-15
@@ -420315,7 +420319,6 @@ mbanc.com#@#.ccpa-banner
 mbasic.facebook.com,m.facebook.com##[data-ft*="quick_promotion_instance_log_data_encoded"]
 mbauniverse.com###block-views-home-page-banner-block
 mbauniverse.com##.shriresume-logo
-mbbru.ru,remkresla.ru,remdivana.ru,spb-obivka-mebeli.ru,aquaphor.ru,gorodsreda.ru,allrivers.info,biletyplus.ru,vawoo.co.uk,atompark.com,fuqer.com##.cookies-block
 mbc.net###DGPR
 mbc.net###mbc-policy
 mbc.net##.mbc-policy
@@ -473881,7 +473884,6 @@ xda-developers.com##.purchad,.ad-tag,.leaderboard
 xda-developers.com##.w-pencil-banner
 xda-developers.com#@#.ad-zone-container
 xda-developers.com,howtogeek.com,makeuseof.com##.quick-action-sidebar
-xda-developers.com,mebel4u.pl,berrybase.de,cleverbook.eu,vibe.com,gearjunkie.com,polygon.com,ianos.gr,geox.com,365daysofbakingandmore.com,lejournaldelamaison.fr,newsbomb.gr,hartsofstur.com,vg247.com,rockpapershotgun.com,eurogamer.net,silbonshop.com,dinos.co.jp,supermagnete.de,lampenwelt.de,oxfordlearning.com,caseking.de,lidyana.com,officedepot.co.cr##.footer-newsletter
 xdaforums.com###xdaforums_leaderboard_atf
 xdaforums.com###xdaforums_leaderboard_btf
 xdaforums.com###xdaforums_right_1
@@ -537643,6 +537645,7 @@ zzzyk.com###Tinfo
 ||aiwanma99.com^
 ||aiwanma99.com^$popup
 ||aiwen.cc^
+||aiwsdkxqizteg.online^
 ||aix.apidocscar37.net.daraz.com^
 ||aixcdn.com^
 ||aixiaofan.cn/content/uploadfile/tpl_options//Ad_list_
@@ -538337,6 +538340,7 @@ zzzyk.com###Tinfo
 ||alerts.thedailystar.net^
 ||alerts.wolterskluwerfs.com^
 ||alertsatwork.americanexpress.com^
+||aleshotglairesdecodon.cfd^
 ||aletha.truthislifestyle.com^
 ||aletheanunlet.cfd^
 ||alex-hacks.com^
@@ -551255,6 +551259,7 @@ zzzyk.com###Tinfo
 ||auslogics.com^$document
 ||ausmflow.com^
 ||auspiciousvp.com^
+||auspicypartage.rest^
 ||auspipe.com^
 ||aussiearcade.com/js/privacy-consent-banner.js
 ||aussieupload.com^
@@ -622201,6 +622206,7 @@ zzzyk.com###Tinfo
 ||cuiron.de^
 ||cuisineenvoyadvertise.com^
 ||cuisinevoyager.com^
+||cuissenwardage.rest^
 ||cuit.shop^
 ||cuivordvonnsy.site^
 ||cujgqmnqwsgjt.website^
@@ -642767,6 +642773,7 @@ zzzyk.com###Tinfo
 ||diagnostics.rakam.io^
 ||diagnostics.thermo.com^
 ||diagprog4-com-pl.tt.omtrdc.net^
+||diagramgrog.cyou^
 ||diagramjawlineunhappy.com^
 ||diagramjawlineunhappy.com^$document
 ||diagramjawlineunhappy.com^$popup
@@ -645228,6 +645235,7 @@ zzzyk.com###Tinfo
 ||dkwong3.sung.tt.omtrdc.net^
 ||dkwwiibjjvawu.website^
 ||dkxobcs.cn^
+||dkxqafejvrfai.website^
 ||dkxtzubbtmzie.space^
 ||dkxutggyyyajh.website^
 ||dkxwqu.annefontaine.com^
@@ -658026,6 +658034,7 @@ zzzyk.com###Tinfo
 ||dsidas.com^
 ||dsience.americansocietyofcli.tt.omtrdc.net^
 ||dsifi.toms.com^
+||dsifphfbfeazr.space^
 ||dsigmoid.tt.omtrdc.net^
 ||dsignedtsigned.bnpparibasfortis.tt.omtrdc.net^
 ||dsiill.com^
@@ -959340,6 +959349,7 @@ zzzyk.com###Tinfo
 ||fmpub.net^
 ||fmpvj.wholesalejewelrywebsite.com^
 ||fmpws.tt.omtrdc.net^
+||fmpyblulujqff.online^
 ||fmqhr.shayandblue.com^
 ||fmqidg.letras.com^
 ||fmqidg.letras.mus.br^
@@ -1016589,6 +1016599,7 @@ zzzyk.com###Tinfo
 ||hongyingbbs.com/img/top.js
 ||hongyingbbs.com/jj/
 ||honhon.top^
+||honkeybatavi.cfd^
 ||honoka.design^
 ||honor.omrf.org^
 ||honorablehydrant.com^
@@ -1042287,6 +1042298,7 @@ zzzyk.com###Tinfo
 ||ivqoc.eatzeats.com^
 ||ivr.com.tr^
 ||ivrnfvlcgubm.www.cefirates.com^
+||ivslbsnaxongp.space^
 ||ivstat.indavideo.hu^
 ||ivstracker.net^
 ||ivstracker.net^$third-party
@@ -1048235,6 +1048247,7 @@ zzzyk.com###Tinfo
 ||jweekuxflrgqj.site^
 ||jwegptdhydbhd.space^
 ||jweqai.amen.fr^
+||jwestzlioaqo.com^
 ||jwf8lxo7b.com^
 ||jwfaregtarvql.space^
 ||jwg2z2848kkshqry.docs.net.daraz.com^
@@ -1048445,6 +1048458,7 @@ zzzyk.com###Tinfo
 ||jynv.cn^
 ||jynwlg.veromoda.com^
 ||jypcqvpgewajj.site^
+||jypgjzagcphbd.website^
 ||jyphhfkvrutek.site^
 ||jyprvthqonbxi.online^
 ||jyqckbryepksj.site^
@@ -1093806,6 +1093820,7 @@ zzzyk.com###Tinfo
 ||lufthansagroup.com/*/cookieman*.js
 ||lufudmcfxchay.space^
 ||lufulibaa.com/ad$script
+||lufurfkbeplol.site^
 ||lugansk-info.ru^
 ||lugansk-info.ru^$third-party
 ||lugasat.org.ua/media/js/abDetector.min.js
@@ -1115141,6 +1115156,7 @@ zzzyk.com###Tinfo
 ||miserly-phone.com^$popup
 ||miserly-wrap.com^
 ||miserybisksbishari.cyou^
+||misesbenton.rest^
 ||miseventos.orem.com.mx^
 ||misformchipsggr.cyou^
 ||misgrewgelding.cyou^
@@ -1123823,6 +1123839,7 @@ zzzyk.com###Tinfo
 ||natvxgkbb.9pz1.tech^
 ||nauchniestati.ru/wp-content/themes/express/assets/js/chat.js
 ||nauervqyecwbx.space^
+||naugerbaffing.rest^
 ||naughtyblog.org/81bf26be.js
 ||naughtyblog.org/wp-content/cache/minify/b97f0.js
 ||naughtyblog.org/wp-content/images/k2s/
@@ -1126523,6 +1126540,7 @@ zzzyk.com###Tinfo
 ||nhukg.hyerboots.com^
 ||nhungmiu.me^
 ||nhutgg.io.vn/js/ads-blocked.js
+||nhvwznuygysno.site^
 ||nhwfqtzcftqxi.site^
 ||nhwlkqoodhlar.online^
 ||nhwqjyn.icu^
@@ -1137036,6 +1137054,7 @@ zzzyk.com###Tinfo
 ||ouhhc.frootbat.com^
 ||ouhoxibwjvwuz.site^
 ||ouiiadyzaieqx.space^
+||ouijarapper.com^
 ||ouiokaq.top^
 ||ouiwfrtqcwjeu.online^
 ||oujudpodmnumr.space^
@@ -1154045,6 +1154064,7 @@ zzzyk.com###Tinfo
 ||psthg.wiseandsilent.com^
 ||psthgeu.reduzer.tech^
 ||pstmrk.it^
+||pstopening.rest^
 ||pstreetma.com^
 ||pstt.mtb-news.de^
 ||pstv.tv/pstv.jpg
@@ -1190719,6 +1190739,7 @@ zzzyk.com###Tinfo
 ||smokersarupa.cyou^
 ||smokerywanle.cfd^
 ||smoketester.com^
+||smokoscobb.cfd^
 ||smon.activate.cz^
 ||smon.asianpacificheritage.gov^
 ||smon.blackhistorymonth.gov^
@@ -1222520,6 +1222541,7 @@ zzzyk.com###Tinfo
 ||tbmoxtvskajqz.space^
 ||tbmuriivgbidj.online^
 ||tbnhmzsszouqj.space^
+||tbnuacnbzsvgc.site^
 ||tbochagnhcwvf.site^
 ||tbp.be-performance.com^
 ||tbp.tescobank.com^
@@ -1271545,6 +1271567,7 @@ zzzyk.com###Tinfo
 ||wqfflc.plantopedia.de^
 ||wqfkxohimhtrj.online^
 ||wqfzqvxvvanlq.site^
+||wqgasujugxgoz.space^
 ||wqgkqkjxrhike.site^
 ||wqhcjdmfwykdm.site^
 ||wqhgmzdbdgasc.space^
@@ -1300213,6 +1300236,7 @@ zzzyk.com###Tinfo
 ||zvhct.zorrata.com^
 ||zvhjk.petite-plume.com^
 ||zvhkzb.ambiendo.de^
+||zvhruccgofmal.site^
 ||zvhtzl.icu^
 ||zviazda.by/banners/padpiska202025.jpg
 ||zvietcombank.com^
