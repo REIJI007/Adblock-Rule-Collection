@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-20 08:45:57 (UTC+8)
-! Total rules: 1420254
+! Generated: 2026-11-20 09:31:25 (UTC+8)
+! Total rules: 1420286
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -113192,6 +113192,7 @@ biserzagorja.hr,charlotte.hr,eper.com.hr,interpreta.hr###page-disable
 bisikletforum.com,fav10.net,maxicep.com,mc-tr.com,cabconmodding.com##.FloatingContainer
 bismarck.townsquaremedia.info$image
 bismarckchiropractor.com
+bismarcktribune.com,chippewa.com,columbustelegram.com,journalstar.com,pantagraph.com,qctimes.com,siouxcityjournal.com,wcfcourier.com###preferredSource
 bisnis.com##.download-disini
 bisnis.com##.epaper_side
 bisnis.com##.flying_carpet_div
@@ -422236,6 +422237,8 @@ indianexpress.com##div[data-slug="ie-insurance-form"]
 indianexpress.com##div[id*="google_ads_iframe"][id*="GDPR"]
 indianexpress.com,jansatta.com##.lvblg-sharebx
 indianexpress.com,jansatta.com#@##taboola-below-article-1
+indianmasterminds.com##.bodyAds
+indianmasterminds.com##.ftrstkyad
 indianmotorcycle.com##.formcontainerflyoutbase
 indianna-uplink.firebaseapp.com
 indianna-uplink.web.app
@@ -484023,6 +484026,7 @@ techopedia.com##.techo-adlabel
 techopedia.com##.trust_desktop
 techotopia.com###coverstyle
 techpack.com.pl,callusan.sklep.pl,chrissiecosmetics.com.pl##.m-cookie-alert-1
+techpartner.news##.badge-light
 techpartner.news##.follow-on-whatsapp__container
 techpartner.news##.gps-block
 techperiod.com##ins.adsbygoogle
@@ -502637,6 +502641,12 @@ whiskypreisvergleich.de,whiskyprices.co.uk,whiskyprijzen.be,whiskyprijzen.nl,whi
 whiskysite.nl##.apopup
 whiskysite.nl##.apopup-bg
 whisone.cc
+whispersinthecorridors.in##.wh-ad-slot
+whispersinthecorridors.in##.wh-after-header-ad
+whispersinthecorridors.in##.wh-rail-ad
+whispersinthecorridors.in##.wh-share
+whispersinthecorridors.in##.wh-share-box
+whispersinthecorridors.in##.wh-slider-banner-ad
 whistleout.com.au##.has-hover
 whistleout.com.au##div[data-adplacement]
 whistleout.com.au##div[data-subscribe]
@@ -676441,6 +676451,7 @@ zzzyk.com###Tinfo
 ||bumitekno.net.daraz.com^
 ||bumlam.com^
 ||bumlam.com^$third-party
+||bummestsplodgy.rest^
 ||bumpermash.com^
 ||bumpgaming.net^
 ||bumpyarses.rest^
@@ -688859,6 +688870,7 @@ zzzyk.com###Tinfo
 ||cdn.99kia.com^
 ||cdn.9gtb.com^
 ||cdn.9sfjd.com^
+||cdn.a9f3k7z2m1.com^
 ||cdn.aabdr.com^
 ||cdn.abc-gutachten.de^
 ||cdn.abcotvs.net/abcotv/assets/news/global/js/analytics/VideoHeartbeat.min.js
@@ -689544,6 +689556,7 @@ zzzyk.com###Tinfo
 ||cdn.lukebond.store^
 ||cdn.lumiflux.co^
 ||cdn.luyten-98c.com^
+||cdn.m2z7r9k4p1.com^
 ||cdn.makemula.ai/js/mula.js
 ||cdn.manga9.co^
 ||cdn.masbpi.com^
@@ -689758,6 +689771,7 @@ zzzyk.com###Tinfo
 ||cdn.q.gs/js/entry.js$script,third-party
 ||cdn.q.gs/js/link-converter.js$script,third-party
 ||cdn.q0losid.com^
+||cdn.q4x8n6b2t5.com^
 ||cdn.qa-pre.tt.omtrdc.net^
 ||cdn.qa.region.tt.omtrdc.net^
 ||cdn.qa.trial.tt.omtrdc.net^
@@ -689981,6 +689995,7 @@ zzzyk.com###Tinfo
 ||cdn.syinga.com^
 ||cdn.synthesys.io/js/synthesys_widget.js
 ||cdn.sypher.eu/consent/
+||cdn.t2037ulzqct5.com^
 ||cdn.t2037ulzqct5.com^$domain=grandforksherald.com
 ||cdn.taboola.com/libtrc/$domain=worldlifestyle.com
 ||cdn.taboola.com/libtrc/animeyttv/loader.js
@@ -690168,6 +690183,7 @@ zzzyk.com###Tinfo
 ||cdn.www.partner.net.daraz.com^
 ||cdn.wy916.com^
 ||cdn.wylin.ai/now-ai-chars/assets/fe-assets/index.min.js
+||cdn.x7k9m2q4z8r1.com^
 ||cdn.xbcpcn.com^
 ||cdn.xclick.app^
 ||cdn.xclick.app^$third-party
@@ -715994,6 +716010,7 @@ zzzyk.com###Tinfo
 ||connexity.net^$popup
 ||connexity.net^$third-party
 ||connext-cdn.azureedge.net^
+||connext-fd-gnbrate4fjhjb3f7.z01.azurefd.net^
 ||connextra.com^
 ||connexuscu.actonservice.com^
 ||connpass.com/static/img/top/side_ios
@@ -747066,6 +747083,7 @@ zzzyk.com###Tinfo
 ||digestiondrawer.com^
 ||digestivehistoriantwine.com^
 ||diget.xyz^
+||dightereparchs.cfd^
 ||digi-ping.com^
 ||digi.leerbeterschilderen.nl^
 ||digi.monkeyc.audio^
@@ -748699,6 +748717,7 @@ zzzyk.com###Tinfo
 ||djhrfus.xyz^
 ||djhuo.com/css/js/whosyourdaddy.js
 ||djhvqumujikde.site^
+||djhwcaxswszkl.website^
 ||djibjamowntzl.online^
 ||djicdn.com/uploads/ad_image_file/
 ||djimoh.prodigyhotels.com.br^
@@ -1054844,6 +1054863,7 @@ zzzyk.com###Tinfo
 ||fabulousbooking.com^
 ||fabulousbreeze.com^
 ||fabulousbridge.com^
+||fabulousclover.com^
 ||fabuye.vip/zhuanfa/
 ||fabwefnidsxul.site^
 ||fac.0-030.net.daraz.com^
@@ -1073615,6 +1073635,7 @@ zzzyk.com###Tinfo
 ||g2cvsmgash1f3fo0.10-marketing.net.daraz.com^
 ||g2dgmgl9dy.com^
 ||g2insights-cdn.azureedge.net^
+||g2insights-fd-a0gpgwa4fycxd9d4.z01.azurefd.net^
 ||g2ix1.tt.omtrdc.net^
 ||g2lilburn.develoapacment-dns1.freshegg.net.daraz.com^
 ||g2rest.tt-qe2.omtrdc.net^
@@ -1081644,6 +1081665,7 @@ zzzyk.com###Tinfo
 ||gigantti.fi.ssl.d1.sc.tt.omtrdc.net^
 ||gigapromo.de^
 ||gigared.tt.omtrdc.net^
+||gigasbeparchsaucers.cfd^
 ||gigays4.vip.tt.omtrdc.net^
 ||gigays87gay.vip.tt.omtrdc.net^
 ||gigcount.com^$third-party
@@ -1116448,6 +1116470,7 @@ zzzyk.com###Tinfo
 ||hammamfehmic.com^
 ||hammerhearing.com^
 ||hammeroathsecurity.com^
+||hammingpannam.rest^
 ||hammockclusterstumble.com^
 ||hamodia.co.uk/images/worldfirst-currencyconversion.jpg
 ||hamoney.xyz^
@@ -1173219,6 +1173242,7 @@ zzzyk.com###Tinfo
 ||lidllcs.shop^
 ||lidongyang.shop^
 ||lidsaich.net^$popup
+||lidsmarket.com^
 ||lidtcctobkneu.website^
 ||liduvxoyivocr.space^
 ||liebian888.site^
@@ -1264252,6 +1264276,7 @@ zzzyk.com###Tinfo
 ||pridelobalid3.click.s11.sfmc-osl.com^
 ||prideproms.com^
 ||pridingspaes.com^
+||prieglaiket.click^
 ||priel.co.kr^
 ||priem45.hse.ru/webAnalytics
 ||priestsuede.click^
@@ -1269991,6 +1270016,7 @@ zzzyk.com###Tinfo
 ||qemzuni-mpt-farvoro-a6h3ka91.pages.dev^
 ||qenb2pxx.xyz^
 ||qenfaro-mpt-vulqeni-h6x3ka78.pages.dev^
+||qenxaznflsysp.space^
 ||qepcdyswlsodj.space^
 ||qepeerkeskxhn.site^
 ||qepolax.com^
@@ -1338593,6 +1338619,7 @@ zzzyk.com###Tinfo
 ||tawk.bnnovate.com^
 ||tawk.to/*/audio/
 ||tawk.to^$third-party
+||tawsedbishops.cfd^
 ||tax-crypto-declare.com^
 ||tax-express.store^
 ||tax.eatleanbeans.com^
@@ -1361835,6 +1361862,7 @@ zzzyk.com###Tinfo
 ||ucc.co.jp/shared/js/gatrack.js
 ||uccfioqedzfom.site^
 ||uccxhrmt.johnbellcroyden.co.uk^
+||ucdeyqaaexbqd.online^
 ||ucdn.adgebra.co^
 ||ucdvze.gudrunsjoden.com^
 ||ucdwxztp.com^
@@ -1386720,6 +1386748,7 @@ zzzyk.com###Tinfo
 ||wgyeya.helalsitesi.com^
 ||wgyqjngndjhdl.website^
 ||wgytbefamiqoj.online^
+||wgyufmpvbblvj.online^
 ||wgzg0.cfd^
 ||wgzgarcunfpjq.space^
 ||wgztae.audials.com^
@@ -1386959,6 +1386988,8 @@ zzzyk.com###Tinfo
 ||whisperingsummit.com^
 ||whispermeeting.com^
 ||whisperofisaak.com^
+||whispersinthecorridors.in/api/ads/
+||whispersinthecorridors.in/public/js/analytics.js
 ||whistle88.com^
 ||whistledam.com^
 ||whistlegown.com^
@@ -1415916,6 +1415947,7 @@ zzzyk.com###Tinfo
 ||zjozr.underwearexpert.com^
 ||zjpmswrjggpxe.site^
 ||zjptg.com^
+||zjpvvpattrjxx.website^
 ||zjqbxcdwwtvtt.site^
 ||zjqhyx.cn^
 ||zjrbwb.markenschuhe.de^
