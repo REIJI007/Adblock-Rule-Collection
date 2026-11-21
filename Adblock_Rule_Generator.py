@@ -262,6 +262,7 @@ def classify_source(url: str) -> str:
         "easylist.to",
         "secure.fanboy.co.nz",
         "adguardteam.github.io",
+        "ublockorigin.github.io",
     }:
         return "adblock"
     if hostname == "malware-filter.gitlab.io":
@@ -2392,6 +2393,17 @@ urls = [
 	"https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_sounds_thirdparty.txt",
 	"https://raw.githubusercontent.com/easylist/antiadblockfilters/master/antiadblockfilters/antiadblock_chinese.txt",
 	"https://raw.githubusercontent.com/easylist/antiadblockfilters/master/antiadblockfilters/antiadblock_english.txt",
+	"https://ublockorigin.github.io/uAssets/filters/filters.min.txt",
+	"https://ublockorigin.github.io/uAssets/filters/privacy.min.txt",
+	"https://ublockorigin.github.io/uAssets/filters/badware.txt",
+	"https://ublockorigin.github.io/uAssets/filters/quick-fixes.txt",
+	"https://ublockorigin.github.io/uAssets/filters/unbreak.txt",
+	"https://ublockorigin.github.io/uAssets/filters/annoyances.txt",
+	"https://ublockorigin.github.io/uAssets/thirdparties/easylist.txt",
+	"https://ublockorigin.github.io/uAssets/thirdparties/easyprivacy.txt",
+	"https://ublockorigin.github.io/uAssets/thirdparties/easylist-annoyances.txt",
+	"https://ublockorigin.github.io/uAssets/thirdparties/easylist-cookies.txt",
+	"https://ublockorigin.github.io/uAssets/thirdparties/easylist-social.txt",
 	"https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
 	"https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-general.txt",
 	"https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters-mobile.txt",
