@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Load and validate the shared upstream URL manifest."""
+"""读取并校验 Main 与 Lite 共用的上游 URL 配置文件。"""
 
 from __future__ import annotations
 
@@ -13,14 +13,13 @@ SUPPORTED_PROFILES = {"main", "lite"}
 
 
 class UpstreamConfigError(ValueError):
-    """Raised when the centralized upstream manifest is invalid."""
+    """当集中式上游配置无法读取、结构不符合要求，或指定来源组未通过数据校验时抛出此异常。该异常继承 ValueError，便于调用方将配置错误与普通下载或规则编译错误区分处理。"""
 
 
 def load_upstream_urls(profile: str) -> list[str]:
-    """Return the ordered URL list for a generator profile.
+    """根据生成器配置组名称，读取并返回对应的上游 URL 列表，数组原有顺序会完整保留。
 
-    All source URLs live in upstream_sources.json. The two generators select
-    different named profiles while sharing the same manifest and validation.
+    Main 和 Lite 的订阅地址统一保存在同目录的 upstream_sources.json 中；调用方分别传入 main 或 lite，便可取得各自独立的来源清单。返回前会检查配置版本、分组结构、列表非空、字符串首尾空白、HTTPS 前缀和组内重复 URL；此函数只验证配置格式，不会实际访问上游站点或判断订阅是否在线。
     """
     if profile not in SUPPORTED_PROFILES:
         raise UpstreamConfigError(
