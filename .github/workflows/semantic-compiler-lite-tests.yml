@@ -6,6 +6,8 @@ on:
       - "Adblock_Rule_Generator.py"
       - "Adblock_Rule_Generator_Lite.py"
       - "universal_compat.py"
+      - "upstream_sources.py"
+      - "upstream_sources.json"
       - ".github/workflows/semantic-compiler-tests.yml"
       - ".github/workflows/semantic-compiler-lite-tests.yml"
   workflow_dispatch:
@@ -24,7 +26,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile Python source
-        run: python -m py_compile Adblock_Rule_Generator_Lite.py universal_compat.py
+        run: python -m py_compile Adblock_Rule_Generator_Lite.py upstream_sources.py universal_compat.py
       - name: Run semantic regression checks
         run: python Adblock_Rule_Generator_Lite.py --self-test
 
