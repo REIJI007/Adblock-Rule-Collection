@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "description": "Centralized upstream URL manifests. Edit this file to update upstream subscriptions; do not hard-code URLs in the Python generators.",
+  "description": "统一管理 Main 与 Lite 生成器使用的上游订阅 URL。日常新增、删除或替换订阅地址时，只需修改本文件；不要将上游 URL 列表重新硬编码到 Python 生成器中。",
   "sources": {
     "main": [
       "https://adaway.org/hosts.txt",
