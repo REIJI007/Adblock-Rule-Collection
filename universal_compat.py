@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Conservative syntax contract for the shared Main/Lite subscriptions.
+"""本模块定义 Main 与 Lite 生成器共用的 Universal 语法兼容契约。
 
-This is a publish-time safety gate for a portable ABP/EasyList subset, not a
-complete implementation of any browser's filter parser.
+它在规则发布前充当保守的安全门，只接受多个声明目标共同支持的 ABP/EasyList 网络过滤语法及有限的基础 CSS 选择器；对于脚本注入、程序化 CSS、HTML 过滤和引擎专有修饰符等无法确认跨平台等价性的语法，会给出排除原因。
+
+本模块不是 AdGuard、uBlock Origin 或任何浏览器过滤器解析器的完整实现；通过检查只表示规则符合项目当前定义的共同语法范围，并不构成所有运行时执行行为完全一致的证明。
 """
 from __future__ import annotations
 
@@ -10,10 +11,10 @@ import re
 
 UNIVERSAL_TARGETS = (
     "adguard-windows",
-    "chromium",               # AdGuard Browser Extension, MV2
-    "firefox",                # AdGuard Browser Extension, MV2
-    "ublock-origin-chromium", # uBlock Origin, MV2
-    "ublock-origin-firefox",  # uBlock Origin, MV2
+    "chromium",               # AdGuard 浏览器扩展中的 Chromium MV2 目标配置。
+    "firefox",                # AdGuard 浏览器扩展中的 Chromium MV2 目标配置。
+    "ublock-origin-chromium", # uBlock Origin 的 MV2 目标配置。
+    "ublock-origin-firefox",  # uBlock Origin 的 MV2 目标配置。
 )
 
 _RESOURCE_TYPES = {
@@ -49,7 +50,7 @@ def _valid_domain_modifier(value: str) -> bool:
     return True
 
 def _basic_css_selector(selector: str) -> bool:
-    """Accept ordinary CSS selectors; reject scriptlets and procedural syntax."""
+    """仅接受基础、可跨目标复用的 CSS 选择器，并拒绝脚本注入及程序化选择器语法。此处的限制用于排除依赖特定引擎脚本库或 DOM 操作能力的规则，避免将不同运行时中行为不确定的语法发布到 Universal 订阅。"""
     selector = selector.strip()
     if not selector or any(ch in selector for ch in "{};\n\r"):
         return False
@@ -157,7 +158,7 @@ def _portable_regex(pattern: str) -> bool:
     return True
 
 def universal_rule_error(raw_rule: str) -> str | None:
-    """Return why a rule is outside the shared AdGuard/uBO MV2 contract."""
+    """检查单条规则是否超出 AdGuard 与 uBlock Origin MV2 目标共同采用的兼容性契约。返回 None 表示该规则通过当前保守语法检查；返回原因字符串表示该规则应被排除并写入审计记录。通过检查不等于证明所有目标运行时的执行细节完全一致。"""
     line = raw_rule.strip()
     if not line:
         return None
