@@ -1663,6 +1663,7 @@ def run_regression_tests() -> None:
     check("URLhaus AGH online feed is classified as DNS", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh-online.txt"), "dns")
     check("URLhaus online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"), "adblock")
     check("URLhaus AdGuard online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag-online.txt"), "adblock")
+    check("uBlock Origin hosted filters are classified as Adblock", classify_source("https://ublockorigin.github.io/uAssets/filters/filters.min.txt"), "adblock")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
     check("AdGuardSDNSFilter exclusions are metadata, not block rules",
