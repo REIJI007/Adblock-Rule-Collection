@@ -182,6 +182,13 @@ def classify_source(url: str) -> str:
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
 
+    # URLhaus hosts feeds use hosts-file mappings rather than Adblock syntax.
+    if hostname == "malware-filter.gitlab.io" and basename in {
+        "urlhaus-filter-hosts.txt",
+        "urlhaus-filter-hosts-online.txt",
+    }:
+        return "hosts"
+
     # exclusions.txt 是来源排除元数据，不是实际拦截规则。
 
     if (
@@ -194,7 +201,7 @@ def classify_source(url: str) -> str:
     if (
         "adguardteam/adguardsdnsfilter/" in lowered
         or "filter_15_dnsfilter/" in lowered
-        or (hostname == "malware-filter.gitlab.io" and basename.endswith("-agh.txt"))
+        or (hostname == "malware-filter.gitlab.io" and basename.endswith(("-agh.txt", "-agh-online.txt")))
     ):
         return "dns"
 
@@ -262,6 +269,7 @@ def classify_source(url: str) -> str:
         "easylist.to",
         "secure.fanboy.co.nz",
         "adguardteam.github.io",
+        "ublockorigin.github.io",
     }:
         return "adblock"
     if hostname == "malware-filter.gitlab.io":
@@ -1651,6 +1659,12 @@ def run_regression_tests() -> None:
     else:
         raise AssertionError("required exclusion metadata must not be bypassed")
     check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
+    check("URLhaus hosts-online feed is classified as hosts", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts-online.txt"), "hosts")
+    check("URLhaus hosts feed is classified as hosts", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts.txt"), "hosts")
+    check("URLhaus AGH online feed is classified as DNS", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh-online.txt"), "dns")
+    check("URLhaus online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"), "adblock")
+    check("URLhaus AdGuard online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag-online.txt"), "adblock")
+    check("uBlock Origin hosted filters are classified as Adblock", classify_source("https://ublockorigin.github.io/uAssets/filters/filters.min.txt"), "adblock")
     check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
     check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
     check("AdGuardSDNSFilter exclusions are metadata, not block rules",
