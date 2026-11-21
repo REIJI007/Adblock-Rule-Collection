@@ -181,7 +181,13 @@ def classify_source(url: str) -> str:
 
     if lowered == "https://adaway.org/hosts.txt":
         return "hosts"
-\n    # URLhaus hosts feeds use hosts-file mappings rather than Adblock syntax.\n    if hostname == "malware-filter.gitlab.io" and basename in {\n        "urlhaus-filter-hosts.txt",\n        "urlhaus-filter-hosts-online.txt",\n    }:\n        return "hosts"
+
+    # URLhaus hosts feeds use hosts-file mappings rather than Adblock syntax.
+    if hostname == "malware-filter.gitlab.io" and basename in {
+        "urlhaus-filter-hosts.txt",
+        "urlhaus-filter-hosts-online.txt",
+    }:
+        return "hosts"
 
     # exclusions.txt 是来源排除元数据，不是实际拦截规则。
 
