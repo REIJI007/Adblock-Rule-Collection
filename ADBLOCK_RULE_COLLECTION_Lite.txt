@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-23 10:37:08 (UTC+8)
-! Total rules: 1302131
+! Generated: 2026-11-23 11:39:26 (UTC+8)
+! Total rules: 1302155
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -51249,6 +51249,7 @@
 /\.com\/[A-Za-z]{3}\.png$/$image,domain=videotoolbox.com,~third-party
 /\.com\/[A-Za-z]{9,}\/[A-Za-z]{9,}\.js$/$script,~third-party,domain=zetporn.com
 /\.com\/[_0-9a-zA-Z]+\.jpg$/$image,~third-party,domain=hottystop.com
+/\.com\/[_a-zA-Z0-9]+\.js\?/$script,match-case,~third-party,domain=gayck.com|gayhaus.com
 /\.com\/[a-zA-Z]{10}\.js$/$script,~third-party,domain=povaddict.com
 /\.goplay\.su\/[a-z][0-9A-Za-z]{10,}\/\d{3,6}$/$xmlhttprequest,match-case
 /\.gsmarena\.com\/[0-9]+\.[a-z]+\?s?Search=/$xmlhttprequest,domain=gsmarena.com
@@ -51348,7 +51349,6 @@
 /^https:\/\/cs\d{3}\.\w+\.com\/cscript\/\d{3}\/[\w\d]+\.js$/$script,third-party,match-case
 /^https:\/\/engine\.[a-z]+\.com\/\?[0-9]+$/$xmlhttprequest,third-party
 /^https:\/\/engine\.[a-z]+\.live\/\?[0-9]+$/$xmlhttprequest,third-party
-/^https:\/\/gayhaus\.com\/[_a-zA-Z0-9]+\.js\?/$script,domain=gayhaus.com
 /^https:\/\/hitcast\.st\/[a-zA-Z0-9]{8}\.js$/$script,match-case,domain=hitcast.st
 /^https:\/\/ik\.imagekit\.io\/[a-z0-9]+\/[a-zA-Z0-9_]+\.(jpg|png)\?updatedAt=/$match-case,image,domain=converter.app
 /^https:\/\/m\.2shuqu\.net\/static\/[a-z0-9]+\/[a-z0-9]+\.js/$script,domain=m.2shuqu.net
@@ -393411,7 +393411,10 @@ gay.bingo##div[data-title="Advertisement"]
 gay4porn.com##.exbanner
 gayboystube.com,gayporntube.com###action-up
 gaycitynews.com,weighttraining.guide,decoded.avast.io,freebrightsoft.com,italiasw.com,webhaberim.com,orfogra.ru,stuker.com,avtotachki.com##.meks_ess
+gayck.com##.related-videos:not([id])
+gayck.com##.simaspt
 gayck.com##.simple-adv-spot
+gayck.com##.tblgck
 gaydam.net##.playover
 gayemagazine.com###POPUPS_ROOT
 gayexpress.co.nz##.backstretch
@@ -406786,6 +406789,7 @@ justetf.com##.borker-ad
 justetf.com##.etf-ad-row
 justetf.com##.publift-ad-container
 justetf.com##.wAd
+justetf.com##div[data-testid="select-bank-panel_static-ad"]
 justetf.com##tr[onclick^="gaW"]
 justfacts.com###signUpBoxSticky
 justfix.org##.jf-cookies-banner
@@ -428521,6 +428525,7 @@ niagarafallsreview.ca,stcatharinesstandard.ca,thepeterboroughexaminer.com,therec
 niagarafallsreview.ca,stcatharinesstandard.ca,thepeterboroughexaminer.com,therecord.com,thespec.com,wellandtribune.ca##.promo-designer-modal
 niagarafallsreview.ca,stcatharinesstandard.ca,therecord.com,thespec.com,thestar.com,wellandtribune.ca##.article-pe-video-wrapper
 niagarafallsreview.ca,stcatharinesstandard.ca,therecord.com,thespec.com,thestar.com,wellandtribune.ca##.globalHeaderBillboard
+niagarafallsreview.ca,thespec.com,yorkregion.com,waterloochronicle.ca##custom-tooltip[tooltip-id="preferred-source-google"]
 niagarathisweek.com##.sticky-parent
 niakhera.es##.igkc-cookie-info
 nianticlabs.com##.nl-cpb
@@ -438570,6 +438575,7 @@ porncomics.me##.imbar
 porncomics.pics,freecomics.xxx##.xad
 porncoven.com,xxxboard.net###ad_global_below_navbar
 porndd.com##.winter-topbar
+porndiff.com##div[x-data^="vixeeAdSlot"]
 porndig.com###co_sponsor
 porndig.com##.dt_porndig
 porndig.com##.js_footer_partner_container_wrapper
@@ -452166,7 +452172,6 @@ sticksnsushi.com##div[data-module="CookieBanner"]
 stiefelparadies.de#@#.icon-google-plus
 stiefelparadies.de#@#.social-sidebar
 stiftung-buchkunst.de##.consent_manager-background
-stiftung-evz.de,inbank.pl,tohurt.pl,overdrive.com,autoteile-markt.de,lodz-airport.pl,gemini.pl,ilmonet.fi,wurth.fr,isybank.com,hausderbibel.ch,fredolsen.es,longchamp.com,interactivebrokers.co.uk,skin79-sklep.pl,skin79.sk,skin79.net,kicksmaniac.com,carolynspring.com,vileda.hu,vileda.de,aok.de,omg.de,eshop.idsbk.sk,pojezierze24.pl,highlight-led.de,schaecke.at,haloursynow.pl,atlasformen.hu,atlasformen.sk,atlasformen.cz,atlasformen.nl,atlasformen.co.uk,atlasformen.ch,atlasformen.pl,atlasformen.com,epiphone.com,mohrsiebeck.com,vileda.com,vileda.com.tr,bodensee-airport.eu,schnelltest-apotheke.de,gibson.com,bahlsen.com,mymoments.de,atlasformen.de,socradar.io,inselflieger.de,globalfamilydoctor.com,bmeia.gv.at,nichtraucherhelden.de,aldi-sued.de,sued.aldi-liefert.de,felix1.de,panoramafirm.pl,hofer.at,dizioneri.com,m.n11.com,wuerth.de,deutsches-ausschreibungsblatt.de,sued.aldi-liefert.de,xn--giant-dsseldorf-5vb.de,plk-sa.pl,sutterhealth.org,freshcotton.com,rolmarket.pl,neubaukompass.de,dr-brinkmann.com,bezpiecznedane.gov.pl,odido.nl,hife.es,hurt-orange.pl,hitech-gamer.com,cicloscorredor.com##.modal-backdrop
 stiftung-evz.de,plk-sa.pl,dge.de,mohrsiebeck.com,lempertz.com,starnbergammersee.de,merten.de,bwi.de,medizinischerdienst.de,kunstmuseum-moritzburg.de,bmeia.gv.at,integrationsfonds.at,landesentwicklung-bayern.de,landsberg.de,w-hs.de,stmwi.bayern.de###cookieman-modal
 stiga.com##.am-notification-wrapper
 stiga.com##.pagebuilder-newsletter
@@ -557405,6 +557410,7 @@ zzzyk.com###Tinfo
 ||bdutrfpls.com^
 ||bduwesnxbmmjq.site^
 ||bdv.bidvertiser.com^
+||bdvcnxgolgaft.website^
 ||bdvenlinea*.pages.dev^$document
 ||bdvmetricas.banvenez.com.ve^
 ||bdvrv.fatbraintoys.com^
@@ -573798,6 +573804,7 @@ zzzyk.com###Tinfo
 ||bsuwaczsfertl.site^
 ||bsuzrzbpyviyv.online^
 ||bsvhinycewtko.space^
+||bsvjhqbhbkfga.space^
 ||bsvwgb.justfab.de^
 ||bswpedrupvagj.website^
 ||bswpzhhfjjqxv.website^
@@ -614859,6 +614866,7 @@ zzzyk.com###Tinfo
 ||contalt2inercalt2r13.net.daraz.com^
 ||contamdmner-csr31.net.daraz.com^
 ||contamgmtvisioner-csr31.net.daraz.com^
+||contamvidduystorm.cfd^
 ||contamx1er-csr31.net.daraz.com^
 ||contan6x026er-csr12.net.daraz.com^
 ||contanalytics-yancancookiner-csr12.net.daraz.com^
@@ -673136,6 +673144,7 @@ zzzyk.com###Tinfo
 ||els1.novo.tt.omtrdc.net^
 ||els298548211.medtronic.com^
 ||elsa7dev.tt.omtrdc.net^
+||elsaaffixt.com^
 ||elsbfby.com^$popup,third-party
 ||elseconcerning.com^
 ||elseengine.com^
@@ -981473,6 +981482,7 @@ zzzyk.com###Tinfo
 ||gluservices.s3.amazonaws.com/PushNotifications
 ||glusidesneezes.rest^
 ||gluster4.tt.omtrdc.net^
+||glutencarlins.cfd^
 ||glutenfreebakeryfranchise.net.daraz.com^
 ||glutenfreeonashoestring.com/wp-content/*/analytics*.min.js
 ||glutenmuttsensuous.com^
@@ -1008281,6 +1008291,7 @@ zzzyk.com###Tinfo
 ||gvokvcwudjzfb.website^
 ||gvokwoqawlwym.space^
 ||gvooqtrsbfueb.site^
+||gvoyfyvhfomnq.website^
 ||gvpsqmzbelfpr.website^
 ||gvpxiznmcfdzg.space^
 ||gvqml.starwank.com^
@@ -1018888,6 +1018899,7 @@ zzzyk.com###Tinfo
 ||hpwjnaonrpzjs.site^
 ||hpww-fr1.tt.tt.omtrdc.net^
 ||hpww.tt.omtrdc.net^
+||hpxcdn.com^
 ||hpxdnb.willstore.co.kr^
 ||hpxsci.miista.com^
 ||hpxzpzdpwnhxj.online^
@@ -1053965,6 +1053977,7 @@ zzzyk.com###Tinfo
 ||kantv6.com/index.php/Popularize/
 ||kanuti199.tt.omtrdc.net^
 ||kanuties.xr.tt.omtrdc.net^
+||kanwareyewink.rest^
 ||kanwarmillerheinies.qpon^
 ||kanwby.com^
 ||kanxiao.net^$third-party
@@ -1056107,6 +1056120,7 @@ zzzyk.com###Tinfo
 ||kjcy.tt.omtrdc.net^
 ||kjdegeotelm.com^
 ||kjdfho.eidaihouse.com^
+||kjdgirbgkrwqg.space^
 ||kjdsfjisdfjr23.azurewebsites.net^
 ||kjdw.com.cn^
 ||kje9v2ic57.com^
@@ -1057733,6 +1057747,7 @@ zzzyk.com###Tinfo
 ||krlia.diodedynamics.com^
 ||krlolheb.com^
 ||krm22.actonservice.com^
+||krmamtqazopbo.website^
 ||krmboxedge36.tt.omtrdc.net^
 ||krmnk.com^
 ||krmobilens.emailvision.net.daraz.com^
@@ -1060326,6 +1060341,7 @@ zzzyk.com###Tinfo
 ||kzeaa.com^
 ||kzeaxmzil.in^
 ||kzecc.com^
+||kzecc6yuloy9gt.cfd^
 ||kzerr.com^
 ||kzesecpepxylm.website^
 ||kzfkau.wlw.at^
@@ -1101555,6 +1101571,7 @@ zzzyk.com###Tinfo
 ||marae29eting.net.daraz.com^
 ||maraemudhook.com^
 ||marafonec.com/jquerys.js
+||maraisbowtie.com^
 ||marascaliny.cyou^
 ||marasoku.info/rss_
 ||marathondataco.com^
@@ -1148460,6 +1148477,7 @@ zzzyk.com###Tinfo
 ||piquantprice.com^
 ||piquantstove.com^
 ||piquantvortex.com^
+||piquedbenumbrebs.cfd^
 ||pir.zspb.ru^
 ||piragiciel.com^
 ||piranha.jsmobiledev.com^
@@ -1151142,6 +1151160,7 @@ zzzyk.com###Tinfo
 ||porncoven.com/files/aichat.gif
 ||porndd.com/static/js/popunder-inject.js
 ||porndeals.com^$subdocument,third-party
+||porndiff.com/api/vixee/
 ||porndig.com/sw33.js
 ||porndoe.com/banner/
 ||porndoe.com/misc^$third-party
@@ -1163708,6 +1163727,7 @@ zzzyk.com###Tinfo
 ||rgfftupf.
 ||rggctiphxzoco.space^
 ||rggeolibxevzn.website^
+||rggzaqizlixgs.space^
 ||rghpjl.tsuchiya-kaban.jp^
 ||rgiixp.sperry.com^
 ||rgithub.com^$document,domain=~you-were-likely-looking-for-githubusercontent.com
@@ -1170107,6 +1170127,7 @@ zzzyk.com###Tinfo
 ||sacombank.tt.omtrdc.net^
 ||sacombank.vn-ne.top^
 ||sacombankvn.com^
+||sacralsbusby.com^
 ||sacramentexpensivestretching.com^
 ||sacrificecare.com^
 ||sacrifymalist.com^
@@ -1261155,6 +1261176,7 @@ zzzyk.com###Tinfo
 ||vivrescomamie.com^
 ||vivunosxnnyff.space^
 ||viwjmqbtib.com^
+||vixee.ai/*/vixee-ad-
 ||vixenlive.com/api/metrics
 ||vixii.co^$document
 ||vixtfpxoqqibk.space^
@@ -1292377,6 +1292399,7 @@ zzzyk.com###Tinfo
 ||ydjrmrsvrhkrb.site^
 ||ydkfiwfeunayp.website^
 ||ydkwim.targobank.de^
+||ydkwmya.com^
 ||ydkxuqwwpzivm.space^
 ||ydlvc.sexplorapr.com^
 ||ydnacdn.tt-stage3.omtrdc.net^
@@ -1296703,6 +1296726,7 @@ zzzyk.com###Tinfo
 ||zerostats.com^$third-party
 ||zerqmpdqbccvi.site^
 ||zerw.org^
+||zesdnqweaomtj.website^
 ||zesep.com^
 ||zesep.com^$third-party
 ||zesgky.belambra.fr^
