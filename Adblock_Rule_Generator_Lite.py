@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Iterable
 
 from universal_compat import UNIVERSAL_TARGETS, universal_rule_error
+from upstream_source_classifier import SourceFormatDetectionError, classify_source_content
 from upstream_sources import load_upstream_urls
 
 OUTPUT_DEFAULT = "ADBLOCK_RULE_COLLECTION_Lite.txt"
@@ -55,16 +56,9 @@ SYSTEM_HOST_ALIASES = {
 DOMAIN_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\Z", re.IGNORECASE)
 HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
-# 如果某个上游 URL 无法通过域名、路径或文件名可靠判定格式，应在 SOURCE_FORMAT_OVERRIDES 中按完整 URL 显式指定；不要让未知格式静默落入默认类型。
-
 # domains 会生成覆盖根域及其所有子域的域名锚定规则；domains-exact 则生成只匹配指定主机名的 HTTP(S) 规则，不会扩大到子域。
 
 # 来源格式由下列类型显式标记：adblock、hosts、domains、domains-exact、dns、cname 和 exclusions；不同类型采用不同解析器，不能仅凭内容外观随意互换。
-SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
-SUPPORTED_SOURCE_KINDS = {
-    "adblock", "hosts", "domains", "domains-exact", "dns", "cname", "exclusions"
-}
-
 # 上游过滤器中的 !#if、!#else 等条件指令会根据所选目标配置的能力标志求值；只有该目标启用的分支才会进入对应编译结果。
 
 KNOWN_CONDITION_FLAGS = {
@@ -164,127 +158,10 @@ class CompileState:
     target_exclusions: list[dict[str, object]] = field(default_factory=list)
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
-def classify_source(url: str) -> str:
-    """根据完整 URL 的主机名、路径、文件名以及显式格式覆盖表识别上游来源类型。只有被明确归入支持类型的来源才允许进入对应解析器；无法识别的 URL 会报错，避免未知格式被错误地按其他语法编译。"""
-    override = SOURCE_FORMAT_OVERRIDES.get(url)
-    if override is not None:
-        if override not in SUPPORTED_SOURCE_KINDS:
-            raise CompilationError(
-                f"Invalid source-format override {override!r} for {url!r}; "
-                f"expected one of {sorted(SUPPORTED_SOURCE_KINDS)}"
-            )
-        return override
-
-    parsed = urllib.parse.urlparse(url)
-    lowered = url.lower()
-    hostname = (parsed.hostname or "").lower()
-    path = parsed.path.lower()
-    basename = path.rsplit("/", 1)[-1]
-
-    if lowered == "https://adaway.org/hosts.txt":
-        return "hosts"
-
-    # URLhaus 的这两个 hosts 订阅采用 Hosts 文件的“地址—主机名”映射格式，而不是 Adblock 规则语法，因此必须交给 Hosts 解析器处理。
-    if hostname == "malware-filter.gitlab.io" and basename in {
-        "urlhaus-filter-hosts.txt",
-        "urlhaus-filter-hosts-online.txt",
-    }:
-        return "hosts"
-
-    # exclusions.txt 保存的是上游来源与排除模式之间的元数据，不包含应直接发布的拦截规则；编译时应读取它来筛除关联来源中的条目，而不是将其内容写入订阅。
-
-    if (
-        hostname == "raw.githubusercontent.com"
-        and path.startswith("/adguardteam/adguardsdnsfilter/")
-        and path.endswith("/filters/exclusions.txt")
-    ):
-        return "exclusions"
-
-    if (
-        "adguardteam/adguardsdnsfilter/" in lowered
-        or "filter_15_dnsfilter/" in lowered
-        or (hostname == "malware-filter.gitlab.io" and basename.endswith(("-agh.txt", "-agh-online.txt")))
-    ):
-        return "dns"
-
-    if hostname == "adguardteam.github.io" and path.startswith("/cname-trackers/data/"):
-        # CNAME Tracker 数据必须按语义区分：disguised 跟踪器列表可在具备相应规则表达能力时转换为浏览器过滤规则；original 跟踪器和 microsites 则依赖 DNS/CNAME 解析关系，不能简单当作普通浏览器域名列表。
-
-        if (
-            "/data/microsites/" in path
-            or "/data/combined_original_trackers" in path
-            or "/data/combined_disguised_microsites" in path
-        ):
-            return "cname"
-        if path.endswith("_justdomains.txt"):
-            return "domains"
-        if (
-            any(part in path for part in (
-                "/data/ads/",
-                "/data/clickthroughs/",
-                "/data/trackers/",
-                "/data/mail_trackers/",
-            ))
-            or "/data/combined_disguised_" in path
-        ):
-            return "adblock"
-        raise CompilationError(
-            f"Unknown AdGuard CNAME tracker source family: {url!r}"
-        )
-
-    if "adguardteam/cname-trackers/" in lowered:
-        # original 跟踪器和 microsites 数据描述的是 DNS 别名或 CNAME 关联关系；即使提供 justdomains 文件，也不能因此假定其含义与普通域名阻断列表完全一致。
-
-        if (
-            "/data/combined_original_trackers" in path
-            or "/data/combined_disguised_microsites" in path
-        ):
-            return "cname"
-        if path.endswith("_justdomains.txt"):
-            return "domains"
-
-        return "adblock"
-
-    # 对于不属于上述 CNAME 特例的来源，文件名以 _justdomains.txt 结尾时按纯域名列表解析；其条目会经过域名校验后再转换。
-
-    if basename.endswith("_justdomains.txt"):
-        return "domains"
-
-    raw_repo = ""
-    if hostname == "raw.githubusercontent.com":
-        segments = [segment for segment in path.split("/") if segment]
-        if len(segments) >= 2:
-            raw_repo = "/".join(segments[:2]).lower()
-    native_repositories = {
-        "easylist/easylist",
-        "adguardteam/adguardfilters",
-        "adguardteam/filtersregistry",
-        "ublockorigin/uassets",
-        "easylist/antiadblockfilters",
-        "easylist/easylistchina",
-    }
-    if raw_repo in native_repositories:
-        return "adblock"
-
-    if hostname in {
-        "filters.adavoid.org",
-        "easylist.to",
-        "secure.fanboy.co.nz",
-        "adguardteam.github.io",
-        "ublockorigin.github.io",
-    }:
-        return "adblock"
-    if hostname == "malware-filter.gitlab.io":
-        return "adblock"
-
-    raise CompilationError(
-        f"No source-format mapping for {url!r}; classify this source explicitly "
-        "before adding it to the upstream manifest."
-    )
-
 def build_sources(urls: Iterable[str]) -> list[Source]:
-    sources = [Source(url=url, kind=classify_source(url)) for url in urls]
-    if len({s.url for s in sources}) != len(sources):
+    # URL 清单只负责描述下载位置；格式必须等下载后由内容识别器判定。
+    sources = [Source(url=url, kind="auto") for url in urls]
+    if len({source.url for source in sources}) != len(sources):
         raise CompilationError("The upstream manifest contains duplicate URLs")
     return sources
 
@@ -905,6 +782,13 @@ def fetch_source(source: Source) -> tuple[Source, str]:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as error:
         raise CompilationError(f"upstream is not valid UTF-8: {error}") from error
+    if source.kind == "auto":
+        try:
+            source = Source(source.url, classify_source_content(text))
+        except SourceFormatDetectionError as error:
+            raise CompilationError(
+                f"unable to identify upstream content format for {source.url}: {error}"
+            ) from error
     return source, text
 
 def add_issue(state: CompileState, summary: SourceSummary, line_number: int, original: str, reason: str) -> None:
@@ -1117,16 +1001,8 @@ def expand_filter_preprocessor(
                     f"{source.url}:{line_number}: cross-origin !#include is not allowlisted: {include_url}"
                 )
             if include_url not in cache:
-                try:
-                    include_kind = classify_source(include_url)
-                except CompilationError:
-                    # 同源 !#include 通常可视为当前来源的语法片段，并在无法单独识别格式时沿用父来源类型；跨域 include 则必须能被来源分类器明确识别，禁止猜测其格式。
-
-                    if not same_origin(source.url, include_url):
-                        raise
-                    include_kind = source.kind
-                included_source = Source(include_url, include_kind)
-                _, included_text = fetch_source(included_source)
+                # include 片段也必须独立通过内容识别；不再因同源关系沿用父来源格式。
+                included_source, included_text = fetch_source(Source(include_url, "auto"))
                 cache[include_url] = (included_source, included_text)
             included_source, included_text = cache[include_url]
             output.extend(
@@ -1659,18 +1535,38 @@ def run_regression_tests() -> None:
         tests.append(("missing required exclusion metadata source fails closed", True, True))
     else:
         raise AssertionError("required exclusion metadata must not be bypassed")
-    check("AdAway is classified as hosts", classify_source("https://adaway.org/hosts.txt"), "hosts")
-    check("URLhaus hosts-online feed is classified as hosts", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts-online.txt"), "hosts")
-    check("URLhaus hosts feed is classified as hosts", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-hosts.txt"), "hosts")
-    check("URLhaus AGH online feed is classified as DNS", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-agh-online.txt"), "dns")
-    check("URLhaus online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt"), "adblock")
-    check("URLhaus AdGuard online feed is classified as Adblock", classify_source("https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-ag-online.txt"), "adblock")
-    check("uBlock Origin hosted filters are classified as Adblock", classify_source("https://ublockorigin.github.io/uAssets/filters/filters.min.txt"), "adblock")
-    check("CNAME disguised ads use ordinary browser syntax", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads.txt"), "adblock")
-    check("CNAME original trackers require CNAME-aware scanning", classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"), "cname")
-    check("AdGuardSDNSFilter exclusions are metadata, not block rules",
-          classify_source("https://raw.githubusercontent.com/AdguardTeam/ADguardSDNSFilter/master/Filters/exclusions.txt"),
-          "exclusions")
+    check("hosts mappings are detected from content",
+          classify_source_content("0.0.0.0 ads.example.com\n"), "hosts")
+    check("plain domain lists require explicit subdomain scope metadata",
+          classify_source_content("! Title: Domain filter\n! Description: blocks domains and all their subdomains\ntracker.example.com\nads.example.net\n"), "domains")
+    try:
+        classify_source_content("tracker.example.com\nads.example.net\n")
+    except SourceFormatDetectionError:
+        tests.append(("ambiguous bare-domain scope fails closed", True, True))
+    else:
+        raise AssertionError("bare domains without scope metadata must not be guessed")
+    check("native network rules are detected from content",
+          classify_source_content("[Adblock Plus]\n! Title: Example filter\n||ads.example.com^\n"), "adblock")
+    check("DNS-specific modifiers are detected from content",
+          classify_source_content("||ads.example.com^$dnstype=A\n"), "dns")
+    check("CNAME original-tracker metadata is detected from content",
+          classify_source_content("! Title: AdGuard CNAME original trackers list\n! Description: used only by software capable of scanning CNAME records\n||tracker.example.com^\n"), "cname")
+    check("CNAME disguised-microsite metadata is detected from content",
+          classify_source_content("! Title: AdGuard CNAME disguised microsites list\n||site.example.com^\n"), "cname")
+    check("ordinary disguised CNAME ads retain browser-filter semantics",
+          classify_source_content("! Title: AdGuard CNAME disguised ads list\n||ads.example.com^\n"), "adblock")
+    exclusion_fixture = "\n".join(
+        "! https://github.com/AdguardTeam/AdguardDNS/issues/" + str(index) + "\ntracker" + str(index) + ".example.com"
+        for index in range(30)
+    )
+    check("AdGuard DNS exclusion metadata is detected from its content signature",
+          classify_source_content(exclusion_fixture), "exclusions")
+    try:
+        classify_source_content("unrecognized mixed input\n||ads.example.com^\n")
+    except SourceFormatDetectionError:
+        tests.append(("ambiguous mixed content fails closed", True, True))
+    else:
+        raise AssertionError("ambiguous source content must not be guessed")
     check("Chromium MV2 preprocessor condition evaluates true",
           evaluate_filter_condition("adguard && adguard_ext_chromium && !adguard_ext_safari", target_condition_flags("chromium")), True)
     check("Chromium MV3 gets the MV3 condition, not the MV2 condition",
@@ -1728,7 +1624,7 @@ def run_regression_tests() -> None:
               "https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt",
           ), True)
     check("disguised CNAME ad-domain lists keep ordinary browser-filter semantics",
-          classify_source("https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"),
+          classify_source_content("||galaksion.com^\\n"),
           "adblock")
     include_parent_url = (
         "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/"
@@ -1736,7 +1632,7 @@ def run_regression_tests() -> None:
     )
     include_fragment_url = "https://adguardteam.github.io/cname-trackers/data/ads/galaksion.txt"
     include_parent = Source(include_parent_url, "adblock")
-    include_fragment = Source(include_fragment_url, classify_source(include_fragment_url))
+    include_fragment = Source(include_fragment_url, classify_source_content("||tracker.example^"))
     include_text = f"!#include {include_fragment_url}\n"
     include_cache = {
         include_parent_url: (include_parent, include_text),
@@ -1748,30 +1644,19 @@ def run_regression_tests() -> None:
     check("official disguised CNAME rules stay in browser filtering after include expansion",
           [(line.source.kind, line.text.strip()) for line in expanded_include],
           [("adblock", "||tracker.example^")])
-    check("CNAME justdomains feeds use the domain-list adapter",
-          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_ads_justdomains.txt"),
-          "domains")
-    check("original CNAME tracker justdomains remains DNS-aware",
-          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers_justdomains.txt"),
-          "cname")
-    check("disguised microsite list requires DNS-aware inspection",
-          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_disguised_microsites.txt"),
-          "cname")
-    check("CNAME microsite lists retain DNS-aware semantics",
-          classify_source("https://adguardteam.github.io/cname-trackers/data/microsites/example.txt"),
-          "cname")
+    check("exact-host domain metadata is detected from content",
+          classify_source_content("! Title: Exact hosts only\nexample.com\n"), "domains-exact")
     check("arbitrary cross-origin preprocessor include is rejected",
           allow_preprocessor_include(
               "https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt",
               "https://evil.example/list.txt",
           ), False)
-    unknown_cname_include = "https://adguardteam.github.io/cname-trackers/data/unknown/example.txt"
     try:
-        classify_source(unknown_cname_include)
-    except CompilationError:
-        tests.append(("unknown official CNAME source format fails closed", True, True))
+        classify_source_content("not a valid filter format")
+    except SourceFormatDetectionError:
+        tests.append(("unknown source content fails closed", True, True))
     else:
-        raise AssertionError("unknown CNAME source format must not default to Adblock syntax")
+        raise AssertionError("unknown source content must not default to Adblock syntax")
     check("Chromium preprocessor excludes Safari-only rules",
           evaluate_filter_condition("adguard_ext_safari", target_condition_flags("chromium")), False)
     conditional_source = Source("https://example.com/filter.txt", "adblock")
@@ -1785,10 +1670,8 @@ def run_regression_tests() -> None:
     check("preprocessor selects only active target rules",
           [line.text.strip() for line in conditional_lines],
           ["||chromium.example^"])
-    check("AdGuard DNS filter is classified as DNS", classify_source("https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt"), "dns")
-    check("CNAME tracker list is classified by its source semantics",
-          classify_source("https://raw.githubusercontent.com/AdguardTeam/cname-trackers/master/data/combined_original_trackers.txt"),
-          "cname")
+    check("DNS list metadata overrides generic network syntax",
+          classify_source_content("! Title: AdGuard DNS filter\n||dns.example^\n"), "dns")
     check("CNAME network-filter syntax is preserved verbatim",
           compile_line("cname", "||tracker.Example.com^")[0],
           ["||tracker.Example.com^"])
@@ -1850,24 +1733,11 @@ def run_regression_tests() -> None:
           "||tracker.example.net^" in mixed_state.records, True)
 
     try:
-        classify_source("https://example.invalid/new-list.txt")
-    except CompilationError:
-        tests.append(("unknown source format rejected", True, True))
+        classify_source_content("format is not inferable from this text")
+    except SourceFormatDetectionError:
+        tests.append(("unrecognized source content rejected", True, True))
     else:
-        raise AssertionError("unknown source format must not silently default to Adblock")
-    override_url = "https://example.invalid/domains.txt"
-    SOURCE_FORMAT_OVERRIDES[override_url] = "domains"
-    try:
-        check("explicit override enables a domains-only source", classify_source(override_url), "domains")
-    finally:
-        del SOURCE_FORMAT_OVERRIDES[override_url]
-    exact_override_url = "https://example.invalid/domains-exact.txt"
-    SOURCE_FORMAT_OVERRIDES[exact_override_url] = "domains-exact"
-    try:
-        check("explicit override enables an exact-host domains source",
-              classify_source(exact_override_url), "domains-exact")
-    finally:
-        del SOURCE_FORMAT_OVERRIDES[exact_override_url]
+        raise AssertionError("unrecognized source content must fail closed")
     check("plain domain-list entries block the domain and its subdomains",
           compile_line("domains", "Example.COM")[0],
           ["||example.com^"])
@@ -2007,11 +1877,10 @@ def run_regression_tests() -> None:
     else:
         raise AssertionError("DNS-only modifiers must not be silently published as browser rules")
     configured_sources = build_sources(urls)
-    check("all configured upstreams have an explicit format family", len(configured_sources), len(urls))
     check("Lite manifest URLs are unique", len({source.url for source in configured_sources}), len(urls))
-    check("Lite manifest source families are explicitly classified",
-          sorted({source.kind for source in configured_sources}),
-          ["adblock", "cname", "dns", "exclusions"])
+    check("all Lite manifest sources remain pending content detection",
+          [source.kind for source in configured_sources],
+          ["auto"] * len(urls))
     print(f"Passed {len(tests)} semantic regression checks.")
 
 def main() -> int:
@@ -2047,10 +1916,12 @@ def main() -> int:
             except Exception as error:
                 message = f"{type(error).__name__}: {error}"
                 source_failures.append({"url": source.url, "format": source.kind, "error": message})
-                print(f"[FETCH FAILED] {source.kind}: {source.url}: {message}", file=sys.stderr)
+                label = "SOURCE FORMAT FAILED" if "unable to identify upstream content format" in message else "FETCH FAILED"
+                print(f"[{label}] {source.kind}: {source.url}: {message}", file=sys.stderr)
 
     # 下载任务虽然并发执行，但完成先后受网络延迟影响；这里重新按配置清单中的原始顺序排列来源，确保后续统计和生成过程不受并发时序干扰。
-    fetched.sort(key=lambda item: sources.index(item[0]))
+    source_order = {source.url: index for index, source in enumerate(sources)}
+    fetched.sort(key=lambda item: source_order[item[0].url])
 
     # 在正式编译前，先按上游元数据中明确关联的来源应用排除模式；如果存在必需的排除元数据，就必须确保该元数据成功读取。
     # 必需元数据加载失败时，只能执行诊断性编译并生成报告，不能在缺少上游排除语义的情况下发布可能包含错误规则的产物。
@@ -2059,7 +1930,7 @@ def main() -> int:
         state, metadata_pattern_counts, metadata_config_url = compile_sources_with_metadata(
             fetched,
             args.target,
-            require_metadata=any(source.kind == "exclusions" for source in sources),
+            require_metadata=any(source.kind == "exclusions" for source, _ in fetched),
         )
     except Exception as error:
         message = f"{type(error).__name__}: {error}"
@@ -2086,6 +1957,18 @@ def main() -> int:
     if metadata_failures:
         print(
             "ABORTED: required source-exclusion metadata is unavailable. "
+            f"Existing output was not changed. Review {report_path}.",
+            file=sys.stderr,
+        )
+        return 2
+
+    format_detection_failures = [
+        failure for failure in source_failures
+        if "unable to identify upstream content format" in failure["error"]
+    ]
+    if format_detection_failures:
+        print(
+            f"ABORTED: {len(format_detection_failures)} source(s) have unknown or ambiguous formats. "
             f"Existing output was not changed. Review {report_path}.",
             file=sys.stderr,
         )
