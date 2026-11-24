@@ -15,6 +15,7 @@ SUPPORTED_SOURCE_KINDS = {
     "dns",
     "cname",
     "exclusions",
+    "empty",
 }
 
 
@@ -75,13 +76,25 @@ def _is_hosts_mapping(line: str) -> bool:
 
 
 def _looks_like_native_rule(line: str) -> bool:
-    lowered = line.lower()
-    return (
-        line.startswith(("||", "@@||", "|", "*", "/"))
-        or any(marker in line for marker in _NATIVE_RULE_MARKERS[2:])
-        or re.search(r"\S+#(?:@)?\$?#", line) is not None
-        or lowered.startswith(("@@|", "||"))
-    )
+    """判断单行是否符合 ABP/EasyList 网络或元素过滤规则的基本词法形态。
+
+    ABP 的网络过滤 pattern 可以是任意无空白 URL 子串，不要求必须以 || 开头；
+    因此 -ads、.ashx?adid=、://tracker.example/、page_view_count 等均是合法
+    pattern。带空白的行只有在包含已知 cosmetic/extended-CSS 操作符时才接受。
+    """
+    if not line or line != line.strip():
+        return False
+    if line.startswith(("||", "@@||", "|", "@@|", "*", "/")):
+        return True
+    if any(marker in line for marker in _NATIVE_RULE_MARKERS[2:]):
+        return True
+    if re.search(r"\S+#(?:@)?\$?#", line) is not None:
+        return True
+    if "://" in line:
+        return True
+    if re.fullmatch(r"\S+", line):
+        return True
+    return False
 
 
 def classify_source_content(content: str) -> str:
@@ -125,9 +138,8 @@ def classify_source_content(content: str) -> str:
         active.append(line)
 
     if not active:
-        raise SourceFormatDetectionError(
-            "no active entries found; comments or headers alone cannot identify a source"
-        )
+        # 空清单没有待解析的规则，因此无需猜测格式；编译器会把它作为 no-op 记录，不输出任何规则。
+        return "empty"
 
     metadata_text = f"{title} {description}".lower()
 
