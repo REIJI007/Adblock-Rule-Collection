@@ -885,7 +885,7 @@ def detect_source_format(content: str) -> str:
         raise CompilationError("source is empty or contains no recognizable rules")
     sample = meaningful[:500]
     header = content[:8192].lower()
-    adblock_rules = sum(bool(re.match(r"^(?:@@)?(?:\\|\\||/|\\*)", line) or "##" in line or "#@#" in line) for line in sample)
+    adblock_rules = sum(bool(re.match(r"^(?:@@)?(?:\|\||/|\*)", line) or "##" in line or "#@#" in line) for line in sample)
     if "[adblock plus]" in header or "! format: adblock" in header or adblock_rules >= max(1, int(len(sample) * 0.6)):
         return "adblock"
     hosts_rules = 0
@@ -1869,11 +1869,11 @@ def run_regression_tests() -> None:
     check("unknown source URL is deferred to content detection",
           classify_source("https://example.invalid/new-list.txt"), "auto")
     check("Adblock feed is detected from its payload",
-          detect_source_format("! Title: Example\\n! Format: Adblock; version=1\\n||example.com^"), "adblock")
+          detect_source_format("! Title: Example\n! Format: Adblock; version=1\n||example.com^"), "adblock")
     check("Hosts feed is detected from its payload",
-          detect_source_format("0.0.0.0 ads.example.com\\n127.0.0.1 tracker.example.net"), "hosts")
+          detect_source_format("0.0.0.0 ads.example.com\n127.0.0.1 tracker.example.net"), "hosts")
     check("plain domain feed is detected from its payload",
-          detect_source_format("ads.example.com\\ntracker.example.net"), "domains")
+          detect_source_format("ads.example.com\ntracker.example.net"), "domains")
     check("plain domain-list entries block the domain and its subdomains",
           compile_line("domains", "Example.COM")[0],
           ["||example.com^"])
