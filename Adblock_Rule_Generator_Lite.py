@@ -1213,6 +1213,11 @@ def compile_fetched_sources(
             )
             continue
 
+        if source.kind == "empty":
+            summary.status = "empty-noop"
+            summary.target_skip_reason = "The upstream contains no active filter entries."
+            continue
+
         if target == "universal" and source.kind == "cname":
             summary.status = "skipped-target-mismatch"
             summary.input_lines_skipped_by_target = summary.input_lines
@@ -1547,6 +1552,10 @@ def run_regression_tests() -> None:
         raise AssertionError("bare domains without scope metadata must not be guessed")
     check("native network rules are detected from content",
           classify_source_content("[Adblock Plus]\n! Title: Example filter\n||ads.example.com^\n"), "adblock")
+    check("unanchored Adblock URL patterns are detected from content",
+          classify_source_content("! Title: Example EasyList filter\n-ads/assets/$script\npage_view_count\n"), "adblock")
+    check("empty or comment-only upstreams are treated as no-op",
+          classify_source_content("! This source currently has no active entries\n"), "empty")
     check("DNS-specific modifiers are detected from content",
           classify_source_content("||ads.example.com^$dnstype=A\n"), "dns")
     check("CNAME original-tracker metadata is detected from content",
@@ -1687,6 +1696,15 @@ def run_regression_tests() -> None:
         [(dns_source, "||ads.example^\n||types.example^$dnstype=A\n")],
         "chromium-mv3",
     )
+    empty_source = Source("https://example.invalid/empty-list.txt", "empty")
+    empty_state = compile_fetched_sources(
+        [(empty_source, "! empty list\\n")],
+        "chromium-mv3",
+    )
+    check("empty source is recorded without parser guessing",
+          empty_state.summaries[empty_source.url].status, "empty-noop")
+    check("empty source does not emit rules", len(empty_state.records), 0)
+
     check("native DNS-source rule is retained in the network filter",
           "||ads.example^" in dns_state.records, True)
     check("DNS-only modifier is excluded individually",
