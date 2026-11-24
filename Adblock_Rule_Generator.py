@@ -60,7 +60,6 @@ HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 # domains 会生成覆盖根域及其所有子域的域名锚定规则；domains-exact 则生成只匹配指定主机名的 HTTP(S) 规则，不会扩大到子域。
 
 # 来源格式由下列类型显式标记：adblock、hosts、domains、domains-exact、dns、cname 和 exclusions；不同类型采用不同解析器，不能仅凭内容外观随意互换。
-SOURCE_FORMAT_OVERRIDES: dict[str, str] = {}
 SUPPORTED_SOURCE_KINDS = {
     "adblock", "hosts", "domains", "domains-exact", "dns", "cname", "exclusions"
 }
@@ -166,15 +165,6 @@ class CompileState:
 
 def classify_source(url: str) -> str:
     """根据完整 URL 的主机名、路径、文件名以及显式格式覆盖表识别上游来源类型。只有被明确归入支持类型的来源才允许进入对应解析器；无法识别的 URL 会报错，避免未知格式被错误地按其他语法编译。"""
-    override = SOURCE_FORMAT_OVERRIDES.get(url)
-    if override is not None:
-        if override not in SUPPORTED_SOURCE_KINDS:
-            raise CompilationError(
-                f"Invalid source-format override {override!r} for {url!r}; "
-                f"expected one of {sorted(SUPPORTED_SOURCE_KINDS)}"
-            )
-        return override
-
     parsed = urllib.parse.urlparse(url)
     lowered = url.lower()
     hostname = (parsed.hostname or "").lower()
@@ -277,10 +267,8 @@ def classify_source(url: str) -> str:
     if hostname == "malware-filter.gitlab.io":
         return "adblock"
 
-    raise CompilationError(
-        f"No source-format mapping for {url!r}; classify this source explicitly "
-        "before adding it to the upstream manifest."
-    )
+    # Unknown feeds are classified from downloaded content, not URL-specific overrides.
+    return "auto"
 
 def build_sources(urls: Iterable[str]) -> list[Source]:
     sources = [Source(url=url, kind=classify_source(url)) for url in urls]
@@ -891,6 +879,35 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
 
     raise CompilationError(f"unknown source format: {kind}")
 
+def detect_source_format(content: str) -> str:
+    """Infer an unknown source format from its payload; ambiguous or unsupported data fails closed."""
+    meaningful = [line.strip() for line in content.splitlines() if line.strip() and not line.lstrip().startswith(("!", "#"))]
+    if not meaningful:
+        raise CompilationError("source is empty or contains no recognizable rules")
+    sample = meaningful[:500]
+    header = content[:8192].lower()
+    adblock_rules = sum(bool(re.match(r"^(?:@@)?(?:\\|\\||/|\\*)", line) or "##" in line or "#@#" in line) for line in sample)
+    if "[adblock plus]" in header or "! format: adblock" in header or adblock_rules >= max(1, int(len(sample) * 0.6)):
+        return "adblock"
+    hosts_rules = 0
+    domain_rules = 0
+    for line in sample:
+        fields = line.split()
+        if len(fields) >= 2:
+            try:
+                ipaddress.ip_address(fields[0])
+                if any(canonical_hostname(item, allow_single_label=False) for item in fields[1:]):
+                    hosts_rules += 1
+                    continue
+            except ValueError:
+                pass
+        if len(fields) == 1 and canonical_hostname(fields[0], allow_single_label=False):
+            domain_rules += 1
+    if hosts_rules >= max(1, int(len(sample) * 0.6)):
+        return "hosts"
+    if domain_rules >= max(1, int(len(sample) * 0.8)):
+        return "domains"
+    raise CompilationError("unable to infer source format from content; the feed is ambiguous or uses an unsupported format")
 def fetch_source(source: Source) -> tuple[Source, str]:
     request = urllib.request.Request(
         source.url,
@@ -905,6 +922,8 @@ def fetch_source(source: Source) -> tuple[Source, str]:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as error:
         raise CompilationError(f"upstream is not valid UTF-8: {error}") from error
+    if source.kind == "auto":
+        source = Source(url=source.url, kind=detect_source_format(text))
     return source, text
 
 def add_issue(state: CompileState, summary: SourceSummary, line_number: int, original: str, reason: str) -> None:
@@ -1848,25 +1867,14 @@ def run_regression_tests() -> None:
     check("domains-only source keeps domain-and-subdomain scope",
           "||tracker.example.net^" in mixed_state.records, True)
 
-    try:
-        classify_source("https://example.invalid/new-list.txt")
-    except CompilationError:
-        tests.append(("unknown source format rejected", True, True))
-    else:
-        raise AssertionError("unknown source format must not silently default to Adblock")
-    override_url = "https://example.invalid/domains.txt"
-    SOURCE_FORMAT_OVERRIDES[override_url] = "domains"
-    try:
-        check("explicit override enables a domains-only source", classify_source(override_url), "domains")
-    finally:
-        del SOURCE_FORMAT_OVERRIDES[override_url]
-    exact_override_url = "https://example.invalid/domains-exact.txt"
-    SOURCE_FORMAT_OVERRIDES[exact_override_url] = "domains-exact"
-    try:
-        check("explicit override enables an exact-host domains source",
-              classify_source(exact_override_url), "domains-exact")
-    finally:
-        del SOURCE_FORMAT_OVERRIDES[exact_override_url]
+    check("unknown source URL is deferred to content detection",
+          classify_source("https://example.invalid/new-list.txt"), "auto")
+    check("Adblock feed is detected from its payload",
+          detect_source_format("! Title: Example\\n! Format: Adblock; version=1\\n||example.com^"), "adblock")
+    check("Hosts feed is detected from its payload",
+          detect_source_format("0.0.0.0 ads.example.com\\n127.0.0.1 tracker.example.net"), "hosts")
+    check("plain domain feed is detected from its payload",
+          detect_source_format("ads.example.com\\ntracker.example.net"), "domains")
     check("plain domain-list entries block the domain and its subdomains",
           compile_line("domains", "Example.COM")[0],
           ["||example.com^"])
