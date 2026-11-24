@@ -2057,7 +2057,8 @@ def main() -> int:
                 print(f"[FETCH FAILED] {source.kind}: {source.url}: {message}", file=sys.stderr)
 
     # 下载任务虽然并发执行，但完成先后受网络延迟影响；这里重新按配置清单中的原始顺序排列来源，确保后续统计和生成过程不受并发时序干扰。
-    fetched.sort(key=lambda item: sources.index(item[0]))
+    source_order = {source.url: index for index, source in enumerate(sources)}
+    fetched.sort(key=lambda item: source_order[item[0].url])
 
     # 在正式编译前，先按上游元数据中明确关联的来源应用排除模式；如果存在必需的排除元数据，就必须确保该元数据成功读取。
     # 必需元数据加载失败时，只能执行诊断性编译并生成报告，不能在缺少上游排除语义的情况下发布可能包含错误规则的产物。
