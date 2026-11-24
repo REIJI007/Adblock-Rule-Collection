@@ -55,7 +55,6 @@ SYSTEM_HOST_ALIASES = {
 DOMAIN_LABEL_RE = re.compile(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\Z", re.IGNORECASE)
 HOSTS_LINE_RE = re.compile(r"^\s*(\S+)\s+(.+?)\s*$")
 
-# 如果某个上游 URL 无法通过域名、路径或文件名可靠判定格式，应在 SOURCE_FORMAT_OVERRIDES 中按完整 URL 显式指定；不要让未知格式静默落入默认类型。
 
 # domains 会生成覆盖根域及其所有子域的域名锚定规则；domains-exact 则生成只匹配指定主机名的 HTTP(S) 规则，不会扩大到子域。
 
@@ -164,7 +163,7 @@ class CompileState:
     summaries: dict[str, SourceSummary] = field(default_factory=dict)
 
 def classify_source(url: str) -> str:
-    """根据完整 URL 的主机名、路径、文件名以及显式格式覆盖表识别上游来源类型。只有被明确归入支持类型的来源才允许进入对应解析器；无法识别的 URL 会报错，避免未知格式被错误地按其他语法编译。"""
+    """识别已知来源家族；未知 URL 延后到下载后根据内容识别格式。"""
     parsed = urllib.parse.urlparse(url)
     lowered = url.lower()
     hostname = (parsed.hostname or "").lower()
