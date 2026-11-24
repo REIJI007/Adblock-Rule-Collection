@@ -1555,6 +1555,8 @@ def run_regression_tests() -> None:
           classify_source_content("! Title: Example EasyList filter\n-ads/assets/$script\npage_view_count\n"), "adblock")
     check("empty or comment-only upstreams are treated as no-op",
           classify_source_content("! This source currently has no active entries\n"), "empty")
+    check("zero-byte upstream content is treated as empty no-op",
+          classify_source_content(""), "empty")
     check("DNS-specific modifiers are detected from content",
           classify_source_content("||ads.example.com^$dnstype=A\n"), "dns")
     check("CNAME original-tracker metadata is detected from content",
