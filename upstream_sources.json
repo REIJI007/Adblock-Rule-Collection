@@ -319,7 +319,9 @@
       "https://malware-filter.gitlab.io/malware-filter/botnet-filter.txt",
       "https://malware-filter.gitlab.io/malware-filter/botnet-filter-ag.txt",
       "https://malware-filter.gitlab.io/malware-filter/botnet-filter-agh.txt",
-      "https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt"
+      "https://malware-filter.gitlab.io/malware-filter/tracking-filter.txt",
+      "https://raw.githubusercontent.com/phishdestroy/destroylist/main/rootlist/formats/primary_active/adblock.txt",
+      "https://www.phishing.army/download/phishing-army-adblock.txt"
     ],
     "lite": [
       "https://adguardteam.github.io/AdguardFilters/BaseFilter/sections/adservers.txt",
