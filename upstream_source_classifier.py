@@ -103,8 +103,12 @@ def classify_source_content(content: str) -> str:
     对存在多种合理解释的内容直接失败，不使用 URL 路径、域名、扩展名或
     来源清单中的位置推断语义。
     """
-    if not isinstance(content, str) or not content.strip():
-        raise SourceFormatDetectionError("upstream content is empty")
+    if not isinstance(content, str):
+        raise SourceFormatDetectionError("upstream content must be text")
+    if not content.strip():
+        # A genuinely empty feed has no active entries and needs no parser.
+        # The compiler records it as empty-noop; non-empty unknown content still fails closed.
+        return "empty"
 
     lines = content.lstrip("\ufeff").splitlines()
     title = ""
