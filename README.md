@@ -23,7 +23,7 @@
 
 ## 规则来源
 
-[AdAway](https://github.com/AdAway/AdAway) · [AdBlocker](https://adblockultimate.net/filters) · [AdGuard](https://github.com/AdguardTeam/AdGuardFilters) · [EasyList](https://github.com/easylist/easylist) · [uBlock Origin](https://github.com/uBlockOrigin/uAssets) · [malware-filter](https://gitlab.com/malware-filter)
+[AdAway](https://github.com/AdAway/AdAway) · [AdBlocker](https://adblockultimate.net/filters) · [AdGuard](https://github.com/AdguardTeam/AdGuardFilters) · [EasyList](https://github.com/easylist/easylist) · [uBlock Origin](https://github.com/uBlockOrigin/uAssets) · [malware-filter](https://gitlab.com/malware-filter) · [PhishDestroy](https://phishdestroy.io/) · [Phishing Army](https://www.phishing.army/)
 
 ## 注意事项
 
