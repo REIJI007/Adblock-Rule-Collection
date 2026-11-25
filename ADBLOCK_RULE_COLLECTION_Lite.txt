@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-25 10:30:25 (UTC+8)
-! Total rules: 1411414
+! Generated: 2026-11-25 11:02:57 (UTC+8)
+! Total rules: 1411419
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -114307,6 +114307,7 @@ connscameras.ie###cookiepref
 conobas.net###pum-20494
 conoha.jp##.boxContentsHeadInformation_share
 conoha.jp##.sidebarBlock_banner
+conoha.jp,now.com##.boxShare
 conotoxia.com,cinkciarz.pl##[on-save-fn-name="afterCookieAccept"]
 conowego.pl##a.gofollow[data-track]
 conqblade.com##.gw-cookies
@@ -449811,6 +449812,8 @@ ncaa.com##.tile-follow
 ncaa.com##.tile-newsletter
 ncaa.com##.tos-container
 ncars.com.ua##.lkdm_vw__container
+ncbank.co.jp##.p-single-index-sidebar-sns-list
+ncbank.co.jp##.p-single-share-wrap
 ncbi.nlm.nih.gov##.nCoV_shutdown
 ncc-ccn.gc.ca##.CookiePlacement
 nccgroup.com##.c-banner__social
@@ -452012,6 +452015,7 @@ nmac.to#@#div[id^="advads-"]
 nmas.com.mx##.SocialShareButtons_share__Gnof2
 nmas.com.mx##div[class*="SocialShareButtons"]
 nmb48-mtm.com,dev904.blog.fc2.com,origin873.blog.fc2.com##.rss-area
+nmct.ntt-east.co.jp,fixedcost.moneyforward.com,gamebiz.jp##.share-sns
 nme.com###taboola-below-article
 nme.com##.row-mobile-billboard
 nme.com##.site-footer-mailing-list
@@ -480905,6 +480909,7 @@ theringer.com,arrowheadpride.com,barcablaugranes.com,polygon.com##.c-social-butt
 thermaltake.com,smartcellular.co.uk###m-cookienotice
 thermengutscheine.at###cmp-container
 thermofisher.com##.specialMsg
+thermos.jp##.webmagazine-detail-share
 thermostaat.eu##.fancybox-overlay
 theroanoketribune.org##div[id^="thero-"]
 theroar.com.au###fan-tech-anchor
