@@ -1383,8 +1383,13 @@ def compile_fetched_sources(
                 continue
         # 对已经识别的目标不兼容规则，按单条记录来源、行号和排除原因后跳过；对于尚无法安全转换的未知语法，则保留为编译问题，由严格模式阻止发布，不能静默丢弃。
 
+        target_exclusion_candidate = (
+            normalize_native_slash_regex_rule(line)
+            if source.kind == "dns" and looks_like_native_network_filter_rule(line)
+            else line
+        )
         target_exclusion_reason = (
-            detect_nonportable_native_rule(line, target)
+            detect_nonportable_native_rule(target_exclusion_candidate, target)
             if (source.kind == "adblock" or (source.kind == "dns" and looks_like_native_network_filter_rule(line))) and line and not is_comment_or_header(line)
             else None
         )
@@ -1908,7 +1913,8 @@ def run_regression_tests() -> None:
         [(universal_dns_source,
           ".avito.www.booking.$all\n"
           r"/^142\.91\.159\.[12]?\d?\d$/$network" + "\n"
-          ".microsoft.com.chrome.$document\n")],
+          ".microsoft.com.chrome.$document\n"
+          + raw_path_dns_regex + "\n")],
         "universal",
     )
     check("DNS-source rules with nonportable $all and $network are excluded by target policy",
@@ -1917,6 +1923,8 @@ def run_regression_tests() -> None:
           len(universal_dns_state.issues), 0)
     check("DNS-source rule with shared $document semantics remains published",
           ".microsoft.com.chrome.$document" in universal_dns_state.records, True)
+    check("URL-path regex survives the full universal source compilation pipeline",
+          portable_path_dns_regex in universal_dns_state.records, True)
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
