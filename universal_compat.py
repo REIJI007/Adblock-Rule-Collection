@@ -108,36 +108,56 @@ def _cosmetic_rule_error(line: str) -> str | None:
         return "selector is not in the conservative shared native-CSS subset"
     return None
 
+def _find_slash_regex_end(body: str) -> int | None:
+    """查找后缀为空或紧跟修饰符列表的正则结束分隔符。"""
+    if not body.startswith("/"):
+        return None
+    escaped = False
+    for index in range(1, len(body)):
+        char = body[index]
+        if escaped:
+            escaped = False
+            continue
+        if char == "\\":
+            escaped = True
+            continue
+        if char == "/":
+            suffix = body[index + 1:]
+            if not suffix:
+                return index
+            if not suffix.startswith("$"):
+                continue
+            tokens = suffix[1:].split(",")
+            if tokens and all(
+                re.fullmatch(r"~?[A-Za-z][A-Za-z0-9_-]*(?:=.*)?", token.strip()) is not None
+                for token in tokens
+            ):
+                return index
+    return None
+
+
 def _split_network_pattern(line: str) -> tuple[str, list[str]] | None:
     body = line[2:] if line.startswith("@@") else line
     if not body:
         return None
 
     if body.startswith("/"):
-        escaped = False
-        end = None
-        for index in range(1, len(body)):
-            char = body[index]
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == "/":
-                end = index
-                break
-        if end is None:
+        end = _find_slash_regex_end(body)
+        if end is not None:
+            pattern = body[: end + 1]
+            tail = body[end + 1 :]
+            if not tail:
+                return pattern, []
+            return pattern, [part.strip() for part in tail[1:].split(",")]
+        # /^... 明确表示正则，但缺少可信的结束分隔符；不能降级成普通 URL 子串。
+        if body.startswith("/^"):
             return None
-        pattern = body[: end + 1]
-        tail = body[end + 1 :]
-        if not tail:
-            return pattern, []
-        if not tail.startswith("$"):
-            return None
-        return pattern, [part.strip() for part in tail[1:].split(",")]
 
+    # 未闭合的 /foo 形式可以是合法的普通 ABP URL 子串过滤模式。
     pattern, separator, tail = body.partition("$")
     modifiers = [part.strip() for part in tail.split(",")] if separator else []
     return pattern, modifiers
+
 
 def _portable_regex(pattern: str) -> bool:
     if len(pattern) < 2 or not pattern.startswith("/") or not pattern.endswith("/"):
@@ -180,9 +200,11 @@ def universal_rule_error(raw_rule: str) -> str | None:
     if not pattern or any(ch.isspace() for ch in pattern):
         return "empty or whitespace-containing network-filter pattern"
 
-    if pattern.startswith("/"):
+    if pattern.startswith("/") and pattern.endswith("/"):
         if not _portable_regex(pattern):
             return "regular expression uses syntax outside the conservative shared subset"
+    elif pattern.startswith("/^"):
+        return "regular expression is missing a trustworthy closing delimiter"
     elif any(ord(ch) < 32 for ch in pattern):
         return "control character in network-filter pattern"
 
