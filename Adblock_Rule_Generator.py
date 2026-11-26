@@ -336,8 +336,24 @@ def split_modifiers(modifier_text: str) -> list[str]:
         raise CompilationError("empty modifier in rule")
     return result
 
+def _valid_filter_modifier_suffix(suffix: str) -> bool:
+    """判断候选正则结束斜杠之后的内容是否为空或合法的修饰符列表。"""
+    if not suffix:
+        return True
+    if not suffix.startswith("$"):
+        return False
+    try:
+        tokens = split_modifiers(suffix[1:])
+    except CompilationError:
+        return False
+    return bool(tokens) and all(
+        re.fullmatch(r"~?[A-Za-z][A-Za-z0-9_-]*(?:=.*)?", token) is not None
+        for token in tokens
+    )
+
+
 def find_regex_rule_end(body: str) -> int | None:
-    """从以斜杠开头的正则正文中查找第一个未被反斜杠转义的结束斜杠，并返回其索引。若输入不是斜杠开头或不存在有效结束斜杠，则返回 None，供调用方识别格式错误。"""
+    """定位斜杠正则的结束分隔符；跳过 URL/路径中的斜杠，并要求其后只能是修饰符列表或行尾。"""
     if not body.startswith("/"):
         return None
     escaped = False
@@ -348,9 +364,71 @@ def find_regex_rule_end(body: str) -> int | None:
             continue
         if char == "\\":
             escaped = True
-        elif char == "/":
+        elif char == "/" and _valid_filter_modifier_suffix(body[index + 1:]):
             return index
     return None
+
+
+NATIVE_REQUEST_FILTER_MODIFIERS = {
+    "script", "image", "stylesheet", "object", "xmlhttprequest",
+    "subdocument", "font", "media", "popup", "other", "document",
+    "third-party", "3p", "match-case", "domain", "network", "all",
+    "removeparam",
+}
+
+
+def native_request_filter_modifier_keys(line: str) -> set[str]:
+    """提取用于区分网络请求过滤规则与 DNS 主机表达式的修饰符名称。"""
+    body = line[2:] if line.startswith("@@") else line
+    if body.startswith("/"):
+        closing = find_regex_rule_end(body)
+        if closing is not None:
+            suffix = body[closing + 1:]
+        elif body.startswith("/^"):
+            return set()
+        else:
+            _, separator, modifier_text = body.partition("$")
+            suffix = "$" + modifier_text if separator else ""
+    else:
+        _, separator, modifier_text = body.partition("$")
+        suffix = "$" + modifier_text if separator else ""
+
+    if not suffix.startswith("$"):
+        return set()
+    try:
+        tokens = split_modifiers(suffix[1:])
+    except CompilationError:
+        return set()
+    return {
+        token.partition("=")[0].strip().lower().lstrip("~")
+        for token in tokens
+    } & NATIVE_REQUEST_FILTER_MODIFIERS
+
+
+def normalize_native_slash_regex_rule(line: str) -> str:
+    """将正则正文中未转义的字面斜杠转义，避免目标引擎把 URL 路径斜杠误认作正则结束符。"""
+    exception = line.startswith("@@")
+    body = line[2:] if exception else line
+    closing = find_regex_rule_end(body)
+    if closing is None:
+        return line
+
+    regex_body = body[1:closing]
+    escaped_body: list[str] = []
+    escaped = False
+    for char in regex_body:
+        if char == "/" and not escaped:
+            escaped_body.append(r"\/")
+        else:
+            escaped_body.append(char)
+        if char == "\\" and not escaped:
+            escaped = True
+        else:
+            escaped = False
+
+    normalized = "/" + "".join(escaped_body) + body[closing:]
+    return ("@@" if exception else "") + normalized
+
 
 def compile_dns_hostname_regex(regex_body: str, *, exception: bool = False) -> str | None:
     """仅接受以 ^ 开头、以 $ 结尾且处于允许字符和分组范围内的主机名正则。验证通过后，在其外层加入 HTTP(S) 协议、可选用户信息、端口以及 URL 边界，使 DNS 主机名表达式能够用于请求 URL 匹配；不支持的正则语法返回 None。"""
@@ -658,13 +736,18 @@ def looks_like_native_network_filter_rule(line: str) -> bool:
     if candidate.startswith("/"):
         closing = find_regex_rule_end(candidate)
         if closing is None:
-            return False
+            # 未以 /^ 起始且没有正则结束分隔符的斜杠前缀，是合法的普通 URL 子串过滤模式；不把它误判为 DNS 正则。
+            return not candidate.startswith("/^")
         regex_body = candidate[1:closing]
-        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None:
+        if native_request_filter_modifier_keys(candidate):
             return True
-        # 没有主机起始锚点的正则本来就可以在 URL 文本中搜索；带主机锚点的 DNS 正则则需要先转换为 URL 主机部分的匹配表达式，才能用于浏览器请求过滤。
-        # 因此，本分支只把未锚定正则视为可直接作用于 URL 文本的模式；主机锚定正则必须由专用适配器补充协议、主机和 URL 边界。
+        if re.search(r"https?\s*:", regex_body, re.IGNORECASE) is not None or "/" in regex_body:
+            return True
+        # 没有主机起始锚点的正则可直接匹配 URL；纯主机名正则仍交由 DNS 适配器补充 URL authority 边界。
         return not regex_body.startswith("^")
+
+    if native_request_filter_modifier_keys(candidate):
+        return True
 
     if any(operator in candidate for operator in VALID_HASH_RULE_PREFIXES):
         return True
@@ -745,10 +828,11 @@ def compile_line(kind: str, raw_line: str, target: str = "generic") -> tuple[lis
 
     if kind == "dns":
         if looks_like_native_network_filter_rule(line):
-            reason = detect_nonportable_native_rule(line, target)
+            native_line = normalize_native_slash_regex_rule(line)
+            reason = detect_nonportable_native_rule(native_line, target)
             if reason:
                 raise CompilationError(reason)
-            return finalize([line], "native-dns")
+            return finalize([native_line], "native-dns")
 
         line = line.split("#", 1)[0].strip()
         if not line:
@@ -1802,6 +1886,36 @@ def run_regression_tests() -> None:
     check("DNS IPv4 address regex is URL-scoped",
           compile_line("dns", f"/^{test_ipv4_regex}:/")[0],
           [r"/^https?:\/\/(?:[^\/?#@]+@)?" + test_ipv4_regex + r":/"])
+
+    raw_path_dns_regex = r"/^.*\.(live|buzz)/.*&[a-z]{1,3}=[a-zA-Z0-9%]{250,}\$/$document"
+    portable_path_dns_regex = r"/^.*\.(live|buzz)\/.*&[a-z]{1,3}=[a-zA-Z0-9%]{250,}\$/$document"
+    check("DNS-source URL regex escapes literal path slashes without changing its match",
+          compile_line("dns", raw_path_dns_regex, target="universal")[0],
+          [portable_path_dns_regex])
+    check("slash-prefixed ABP substring rule is not mistaken for an unclosed DNS regex",
+          compile_line("dns", "/btn_share_fb.", target="universal")[0],
+          ["/btn_share_fb."])
+    check("DNS-source common request modifier is preserved as native filtering syntax",
+          compile_line("dns", ".microsoft.com.chrome.$document", target="universal")[0],
+          [".microsoft.com.chrome.$document"])
+    check("DNS-source slash-prefixed request rule with document modifier is preserved",
+          compile_line("dns", "/scan-update-and-protect-your-browser.html$document", target="universal")[0],
+          ["/scan-update-and-protect-your-browser.html$document"])
+
+    universal_dns_source = Source("https://example.invalid/universal-dns-rules.txt", "dns")
+    universal_dns_state = compile_fetched_sources(
+        [(universal_dns_source,
+          ".avito.www.booking.$all\n"
+          r"/^142\.91\.159\.[12]?\d?\d$/$network" + "\n"
+          ".microsoft.com.chrome.$document\n")],
+        "universal",
+    )
+    check("DNS-source rules with nonportable $all and $network are excluded by target policy",
+          len(universal_dns_state.target_exclusions), 2)
+    check("DNS-source rules rejected by target policy are not parser errors",
+          len(universal_dns_state.issues), 0)
+    check("DNS-source rule with shared $document semantics remains published",
+          ".microsoft.com.chrome.$document" in universal_dns_state.records, True)
 
     url_scoped_test_regex = r"/(https?:\/\/)" + test_ipv4_regex + r".{100,}/"
     check("URL-scoped regex remains a URL-scoped regex", compile_line("dns", url_scoped_test_regex)[0],
