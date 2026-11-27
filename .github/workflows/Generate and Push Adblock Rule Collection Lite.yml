@@ -11,6 +11,7 @@ on:
 jobs:
   generate_and_push:
     runs-on: ubuntu-latest  # 使用最新的Ubuntu环境
+    timeout-minutes: 60
 
     steps:
     - name: Checkout repository
@@ -37,12 +38,39 @@ jobs:
     - name: Run Adblock Rule Generator Lite
       run: python Adblock_Rule_Generator_Lite.py --target universal --allow-lossy  # 生成跨引擎通用精简规则（AdGuard Windows + AdGuard MV2 + uBO MV2）
 
+    - name: Restore Lite DNS validation cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .cache/dns-validation-lite.json
+        key: dns-validation-lite-${{ runner.os }}-${{ github.run_id }}
+        restore-keys: |
+          dns-validation-lite-${{ runner.os }}-
+
+    - name: Validate generated Lite Adblock domains (five unfiltered DNS resolvers)
+      run: >-
+        python dns_domain_validator.py ADBLOCK_RULE_COLLECTION_Lite.txt
+        --write
+        --cache .cache/dns-validation-lite.json
+        --report dns-validation-lite.json
+        --qps 10
+        --timeout 8
+        --cache-ttl-hours 0.25
+
+    - name: Save Lite DNS validation cache
+      uses: actions/cache/save@v4
+      with:
+        path: .cache/dns-validation-lite.json
+        key: dns-validation-lite-${{ runner.os }}-${{ github.run_id }}
+
+
     - name: Upload universal Lite compatibility audit
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: universal-lite-compatibility-audit
-        path: ADBLOCK_RULE_COLLECTION_Lite.semantic-report.json
+        path: |
+          ADBLOCK_RULE_COLLECTION_Lite.semantic-report.json
+          dns-validation-lite.json
         if-no-files-found: warn
 
     - name: Commit and safely push changes
