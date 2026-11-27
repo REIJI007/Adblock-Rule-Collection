@@ -4,17 +4,20 @@
 
 ## 使用的公共 DNS
 
-全部使用无广告/恶意域名过滤列表的递归解析端点：
+验证器只使用以下五家**无过滤公共递归 DNS**。为了避免依赖 DNS 名称本身，文档及验证器配置均使用 **DoH 的 IP 地址形式**：
 
-| 服务 | DoH 地址 | 配置说明 |
-|---|---|---|
-| Google Public DNS | `https://dns.google/dns-query` | Google 公共 DNS |
-| Cloudflare 1.1.1.1 | `https://cloudflare-dns.com/dns-query` | 标准无过滤解析器，不使用 Security / Family 变体 |
-| Tencent Public DNS | `https://doh.pub/dns-query` | 腾讯公共 DNS 免费版 |
-| Alibaba Public DNS | `https://dns.alidns.com/dns-query` | 阿里云公共 DNS |
-| AdGuard DNS | `https://unfiltered.adguard-dns.com/dns-query` | AdGuard 官方明确标注的 Non-filtering endpoint |
+| 服务 | IPv4 DoH | IPv6 DoH | 过滤配置 |
+|---|---|---|---|
+| Google Public DNS | `https://8.8.8.8/dns-query`、`https://8.8.4.4/dns-query` | `https://[2001:4860:4860::8888]/dns-query`、`https://[2001:4860:4860::8844]/dns-query` | 标准公共解析器，不使用过滤变体 citeturn352213search2turn352213search9 |
+| Cloudflare 1.1.1.1 | `https://1.1.1.1/dns-query`、`https://1.0.0.1/dns-query` | `https://[2606:4700:4700::1111]/dns-query`、`https://[2606:4700:4700::1001]/dns-query` | 标准 unfiltered resolver；不使用 Malware / Families 变体 citeturn352213search0turn352213search4 |
+| Tencent Public DNS | `https://119.29.29.29/dns-query`、`https://1.12.12.12/dns-query` | `https://[2402:4e00::]/dns-query`、`https://[2402:4e00:1::]/dns-query` | Public DNS 免费版 |
+| Alibaba Public DNS | `https://223.5.5.5/dns-query`、`https://223.6.6.6/dns-query` | `https://[2400:3200::1]/dns-query`、`https://[2400:3200:baba::1]/dns-query` | Public DNS |
+| AdGuard DNS | `https://94.140.14.140/dns-query`、`https://94.140.14.141/dns-query` | `https://[2a10:50c0::1:ff]/dns-query`、`https://[2a10:50c0::2:ff]/dns-query` | **Non-filtering**；不使用 Default / Family Protection citeturn352213search1turn352213search6 |
 
-不使用 Cloudflare Security/Family、AdGuard Default/Family、Quad9 Threat Blocking 或其他带过滤功能的解析端点。
+> **注意：** IPv6 地址放入 URL 的 authority 部分时必须使用方括号，例如 `https://[2001:4860:4860::8888]/dns-query`，否则 URL 解析器无法正确区分 IPv6 地址中的冒号与端口分隔符。
+
+AdGuard 的 Non-filtering 端点明确声明不会过滤 DNS 请求，其 IPv4 / IPv6 地址分别为 `94.140.14.140`、`94.140.14.141`、`2a10:50c0::1:ff`、`2a10:50c0::2:ff`。citeturn352213search1turn352213search6
+
 
 ## 查询与判定规则
 
