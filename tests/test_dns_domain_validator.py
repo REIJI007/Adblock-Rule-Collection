@@ -67,6 +67,15 @@ class FormatCoverageTests(unittest.TestCase):
             ),
         )
 
+    def test_compiler_generated_exact_host_regex_is_dns_validated(self):
+        exact = r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"
+        wrapped = r"/^https?:\/\/(?:[^\/?#@]+@)?(?:ads\.example\.com)(?::[0-9]+)?(?:[\/?#]|$)/"
+        self.assertEqual(parse_line(exact, "adblock"), ("single", ["ads.example.com"]))
+        self.assertEqual(parse_line(wrapped, "adblock"), ("single", ["ads.example.com"]))
+        self.assertIsNone(
+            rewrite_line(exact + "\n", {"ads.example.com"}, "adblock")
+        )
+
     def test_dns_anchored_and_bare_domain_rules(self):
         self.assertEqual(
             parse_line("@@||dead.example.com^$dnstype=A", "dns"),
