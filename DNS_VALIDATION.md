@@ -80,14 +80,14 @@ DNS 验证作为 Adblock 生成流水线中的统一质量门，而不是独立�
 | 状态 | 含义 | 本轮行为 |
 |---|---|---|
 | \`valid\` | 至少一个查询返回可用 IP | 保留规则并清除旧的负向确认记录 |
-| \`no_address\` | 健康解析器的 A / AAAA 查询均完整结束，但没有可用 IP | 记录一次负向观测，等待下一轮确认 |
+| \`no_address\` | 健康解析器（至少 2/3 家）的 A / AAAA 查询均完整结束，但没有可用 IP | 记录一次负向观测，等待下一轮确认 |
 | \`pending_confirmation\` | 已有无地址观测，但尚未达到删除门槛 | 保留规则，等待复查 |
 | \`temporary_failure\` | 网络、服务、限流、协议或解析器健康状态异常 | 保留规则；不将故障当作失效证据 |
 
 删除必须同时满足：
 
 1. \`example.com\` A / AAAA 健康探针至少有 **3 家解析器**返回可用 IP。
-2. 目标域名在参与判定的健康解析器中，A / AAAA 查询均返回完整 DNS 结果（NXDOMAIN 或 NOERROR 无地址）。
+2. 目标域名在参与判定的健康解析器（至少 2/3 家）中，A / AAAA 查询均返回完整 DNS 结果（NXDOMAIN 或 NOERROR 无地址）。
 3. 没有任何一家解析器返回有效 IP。
 4. 在 24 小时观察窗口内，至少取得 **3 次独立的 no-address 观测**。
 5. 观测之间至少间隔 15 分钟，第一次与第三次至少间隔 30 分钟。
@@ -151,7 +151,7 @@ Main / Lite 原始生成器脚本和命令行参数保持不变；独立手动�
 - 如果任一输出的拟删除活动行比例超过 20%，则质量门阻止所有 Adblock 文件写入。
 - 如果某个输出将被删成空文件，也阻止写入。
 - DNS 报告和验证缓存仍会写出，便于检查异常与继续负向确认。
-- 报告包含目标主机数量、缓存命中数、健康解析器、各状态计数、每家解析器的 RCODE / 地址 / TTL、文件删除比例和质量门错误。
+- 报告包含目标主机数量、缓存命中数、健康解析器（至少 2/3 家）、各状态计数、每家解析器的 RCODE / 地址 / TTL、文件删除比例和质量门错误。
 - 工作流上传兼容性审计和 DNS 报告作为 Artifact。
 
 ## 本地使用
@@ -172,7 +172,7 @@ python dns_domain_validator.py --both-adblock --write \
   --report dns-validation-report.json \
   --qps 15 --timeout 8 \
   --cache-ttl-hours 6 \
-  --min-healthy-resolvers 3 \
+  --min-healthy-resolvers 2 \
   --max-removal-ratio 0.20
 \`\`\`
 
