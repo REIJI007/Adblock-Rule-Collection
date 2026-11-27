@@ -181,6 +181,10 @@ def _extract_generated_exact_regex_domain(line: str) -> str | None:
     if not body.startswith(prefix) or not body.endswith(suffix):
         return None
     escaped_host = body[len(prefix):-len(suffix)]
+    # compile_dns_hostname_regex() wraps an exact hostname in one
+    # non-capturing group. Accept it only when the inner value is literal.
+    if escaped_host.startswith("(?:") and escaped_host.endswith(")"):
+        escaped_host = escaped_host[3:-1]
     # re.escape() renders dots as a backslash-dot pair. Reject every other
     # regex operator instead of trying to interpret a general regular expression.
     labels = escaped_host.split(r"\.")
