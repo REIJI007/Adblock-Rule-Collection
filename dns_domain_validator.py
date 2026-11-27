@@ -15,10 +15,13 @@ from __future__ import annotations
 import argparse
 import base64
 import concurrent.futures
+import http.client
 import ipaddress
 import json
 import os
 import re
+import socket
+import ssl
 import struct
 import sys
 import tempfile
@@ -36,29 +39,44 @@ NEGATIVE_CONFIRMATION_INTERVAL_SECONDS = 15 * 60
 NEGATIVE_CONFIRMATION_WINDOW_SECONDS = 24 * 60 * 60
 QUERY_TYPES = {"A": 1, "AAAA": 28}
 
-# Only non-filtering public recursive DNS endpoints are used.
-# AdGuard explicitly documents the unfiltered endpoint as not blocking any DNS
-# requests. Tencent and Alibaba endpoints below are their public DNS services.
+# All resolver traffic uses RFC 8484 DoH. Connections are made directly to
+# numeric resolver IPs; the original service hostname is retained for HTTP
+# Host, TLS SNI and certificate hostname verification.
 DNS_PROVIDERS = {
     "google": {
         "transport": "doh",
-        "endpoint": "https://dns.google/dns-query",
+        "tls_server_name": "dns.google",
+        "path": "/dns-query",
+        "bootstrap_ipv4": ["8.8.8.8", "8.8.4.4"],
+        "bootstrap_ipv6": ["2001:4860:4860::8888", "2001:4860:4860::8844"],
     },
     "cloudflare": {
         "transport": "doh",
-        "endpoint": "https://cloudflare-dns.com/dns-query",
+        "tls_server_name": "cloudflare-dns.com",
+        "path": "/dns-query",
+        "bootstrap_ipv4": ["1.1.1.1", "1.0.0.1"],
+        "bootstrap_ipv6": ["2606:4700:4700::1111", "2606:4700:4700::1001"],
     },
     "tencent": {
         "transport": "doh",
-        "endpoint": "https://doh.pub/dns-query",
+        "tls_server_name": "doh.pub",
+        "path": "/dns-query",
+        "bootstrap_ipv4": ["119.29.29.29"],
+        "bootstrap_ipv6": ["2402:4e00::", "2402:4e00:1::"],
     },
     "alidns": {
         "transport": "doh",
-        "endpoint": "https://dns.alidns.com/dns-query",
+        "tls_server_name": "dns.alidns.com",
+        "path": "/dns-query",
+        "bootstrap_ipv4": ["223.5.5.5", "223.6.6.6"],
+        "bootstrap_ipv6": ["2400:3200::1", "2400:3200:baba::1"],
     },
     "adguard_unfiltered": {
         "transport": "doh",
-        "endpoint": "https://unfiltered.adguard-dns.com/dns-query",
+        "tls_server_name": "unfiltered.adguard-dns.com",
+        "path": "/dns-query",
+        "bootstrap_ipv4": ["94.140.14.140", "94.140.14.141"],
+        "bootstrap_ipv6": ["2a10:50c0::1:ff", "2a10:50c0::2:ff"],
     },
 }
 
@@ -532,6 +550,108 @@ def parse_dns_response(
         return None
 
 
+class _PinnedHTTPSConnection(http.client.HTTPSConnection):
+    """HTTPS connection pinned to a numeric IP while verifying the DNS TLS name."""
+
+    def __init__(
+        self,
+        host: str,
+        *,
+        bootstrap_ip: str,
+        tls_server_name: str,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(host, **kwargs)
+        self.bootstrap_ip = bootstrap_ip
+        self.tls_server_name = tls_server_name
+
+    def connect(self) -> None:
+        if self._tunnel_host:
+            raise OSError("HTTPS proxy tunneling is not supported by pinned DoH transport")
+        raw_socket = socket.create_connection(
+            (self.bootstrap_ip, self.port),
+            self.timeout,
+            self.source_address,
+        )
+        try:
+            self.sock = self._context.wrap_socket(
+                raw_socket,
+                server_hostname=self.tls_server_name,
+            )
+        except Exception:
+            raw_socket.close()
+            raise
+
+
+class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
+    """urllib handler that keeps TLS SNI/certificate validation while pinning IP."""
+
+    def __init__(self, bootstrap_ip: str, tls_server_name: str) -> None:
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
+        super().__init__(context=context, check_hostname=True)
+        self.bootstrap_ip = bootstrap_ip
+        self.tls_server_name = tls_server_name
+
+    def https_open(self, request: urllib.request.Request):
+        def connection_factory(host: str, **kwargs: Any):
+            return _PinnedHTTPSConnection(
+                host,
+                bootstrap_ip=self.bootstrap_ip,
+                tls_server_name=self.tls_server_name,
+                **kwargs,
+            )
+
+        return self.do_open(
+            connection_factory,
+            request,
+            context=self._context,
+            check_hostname=self._check_hostname,
+        )
+
+
+_PINNED_OPENERS: dict[tuple[str, str], urllib.request.OpenerDirector] = {}
+_PINNED_OPENERS_LOCK = threading.Lock()
+_BOOTSTRAP_ROTATION: dict[str, int] = {}
+_BOOTSTRAP_ROTATION_LOCK = threading.Lock()
+
+
+def _doh_url(bootstrap_ip: str, path: str, encoded_query: str) -> str:
+    address = ipaddress.ip_address(bootstrap_ip)
+    authority = f"[{address}]" if address.version == 6 else str(address)
+    return f"https://{authority}{path}?dns={encoded_query}"
+
+
+def _ordered_bootstrap_ips(provider: str) -> list[str]:
+    config = DNS_PROVIDERS[provider]
+    ipv4 = list(config["bootstrap_ipv4"])
+    ipv6 = list(config["bootstrap_ipv6"])
+    with _BOOTSTRAP_ROTATION_LOCK:
+        start = _BOOTSTRAP_ROTATION.get(provider, 0)
+        if ipv4:
+            _BOOTSTRAP_ROTATION[provider] = (start + 1) % len(ipv4)
+    if ipv4:
+        ipv4 = ipv4[start:] + ipv4[:start]
+    return ipv4 + ipv6
+
+
+def _pinned_opener(provider: str, bootstrap_ip: str) -> urllib.request.OpenerDirector:
+    key = (provider, bootstrap_ip)
+    with _PINNED_OPENERS_LOCK:
+        opener = _PINNED_OPENERS.get(key)
+        if opener is None:
+            config = DNS_PROVIDERS[provider]
+            opener = urllib.request.build_opener(
+                urllib.request.ProxyHandler({}),
+                _PinnedHTTPSHandler(
+                    bootstrap_ip,
+                    config["tls_server_name"],
+                ),
+            )
+            _PINNED_OPENERS[key] = opener
+        return opener
+
+
 def _query_doh(
     provider: str,
     domain: str,
@@ -540,26 +660,49 @@ def _query_doh(
 ) -> dict[str, Any] | None:
     packet, query_id = make_dns_query(domain, qtype)
     encoded = base64.urlsafe_b64encode(packet).rstrip(b"=").decode("ascii")
-    endpoint = DNS_PROVIDERS[provider]["endpoint"]
-    request = urllib.request.Request(
-        endpoint + "?dns=" + encoded,
-        headers={"Accept": "application/dns-message"},
-    )
-    for attempt in range(2):
+    config = DNS_PROVIDERS[provider]
+    addresses = _ordered_bootstrap_ips(provider)
+
+    # Try IPv4 addresses first, then IPv6 as a network-family fallback.
+    # Each URL contains a numeric IP; Host/SNI and certificate verification
+    # continue to use the provider's canonical DoH hostname.
+    for attempt, bootstrap_ip in enumerate(addresses[:3]):
+        request = urllib.request.Request(
+            _doh_url(bootstrap_ip, config["path"], encoded),
+            headers={
+                "Accept": "application/dns-message",
+                "Host": config["tls_server_name"],
+            },
+        )
         _RATE_LIMITERS[provider].wait()
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+            with _pinned_opener(provider, bootstrap_ip).open(
+                request,
+                timeout=timeout,
+            ) as response:
+                content_type = (
+                    response.headers.get("Content-Type", "")
+                    .split(";", 1)[0]
+                    .strip()
+                    .lower()
+                )
                 if content_type not in {"application/dns-message", "application/octet-stream"}:
                     return None
                 return parse_dns_response(response.read(), query_id, qtype, domain)
         except urllib.error.HTTPError as exc:
-            if exc.code not in {429, 500, 502, 503, 504} or attempt:
+            if exc.code == 429:
+                # Respect provider-side throttling rather than switching IPs
+                # to evade a rate limit.
+                retry_after = exc.headers.get("Retry-After")
+                if retry_after and retry_after.isdigit():
+                    time.sleep(min(int(retry_after), 10))
                 return None
-        except (urllib.error.URLError, TimeoutError, OSError):
-            if attempt:
+            if exc.code not in {500, 502, 503, 504} or attempt >= 2:
                 return None
-        time.sleep(0.25 * (attempt + 1))
+        except (urllib.error.URLError, TimeoutError, OSError, ssl.SSLError):
+            if attempt >= 2:
+                return None
+        time.sleep(0.2 * (attempt + 1))
     return None
 
 
