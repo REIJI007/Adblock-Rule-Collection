@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from dns_domain_validator import (
     DNS_PROVIDERS,
+    MANAGED_OUTPUTS,
     classify_domain,
     make_dns_query,
     normalize_domain,
@@ -40,10 +41,20 @@ class DomainNormalizationTests(unittest.TestCase):
 
 
 class FormatCoverageTests(unittest.TestCase):
-    def test_all_seven_providers_are_configured(self):
+    def test_exactly_five_unfiltered_providers_are_configured(self):
         self.assertEqual(
             set(DNS_PROVIDERS),
-            {"google", "cloudflare", "cisco", "quad9", "alidns", "tencent", "baidu"},
+            {"google", "cloudflare", "tencent", "alidns", "adguard_unfiltered"},
+        )
+        self.assertIn(
+            "https://unfiltered.adguard-dns.com/dns-query",
+            DNS_PROVIDERS["adguard_unfiltered"]["endpoint"],
+        )
+
+    def test_only_adblock_main_and_lite_outputs_are_accepted(self):
+        self.assertEqual(
+            set(MANAGED_OUTPUTS),
+            {"ADBLOCK_RULE_COLLECTION.txt", "ADBLOCK_RULE_COLLECTION_Lite.txt"},
         )
 
     def test_adblock_anchored_rule_and_domain_modifier(self):
@@ -52,7 +63,7 @@ class FormatCoverageTests(unittest.TestCase):
             parse_line(line, "adblock"),
             (
                 "single",
-                ["ads.example.com", "allow.example", "site.example"],
+                ["ads.example.com", "site.example"],
             ),
         )
 
@@ -152,14 +163,21 @@ class FilteringTests(unittest.TestCase):
             )
         )
 
-    def test_domain_modifier_is_sanitized(self):
+    def test_domain_modifier_removes_only_invalid_positive_scope(self):
         self.assertEqual(
             rewrite_line(
-                "||tracker.example.net^$script,domain=keep.example.com|~dead.example.com\n",
+                "||tracker.example.net^$script,domain=dead.example.com|keep.example.com\n",
                 {"dead.example.com"},
                 "adblock",
             ),
             "||tracker.example.net^$script,domain=keep.example.com\n",
+        )
+
+    def test_domain_modifier_preserves_invalid_negative_scope(self):
+        line = "||tracker.example.net^$script,domain=keep.example.com|~dead.example.com\n"
+        self.assertEqual(
+            rewrite_line(line, {"dead.example.com"}, "adblock"),
+            line,
         )
 
     def test_comments_wildcards_and_unrecognized_rules_are_unchanged(self):
@@ -181,6 +199,12 @@ class DnsWireFormatTests(unittest.TestCase):
         response[2:4] = flags.to_bytes(2, "big")
         self.assertEqual(parse_dns_response(bytes(response), query_id), 3)
 
+    def test_truncated_response_is_treated_as_query_failure(self):
+        query, query_id = make_dns_query("example.com", "A")
+        response = bytearray(query[:12])
+        response[2:4] = (0x8380).to_bytes(2, "big")  # QR=1, TC=1, NOERROR
+        self.assertIsNone(parse_dns_response(bytes(response), query_id))
+
     def test_mismatched_transaction_id_is_rejected(self):
         query, query_id = make_dns_query("example.com", "AAAA")
         response = bytearray(query[:12])
@@ -191,29 +215,47 @@ class DnsWireFormatTests(unittest.TestCase):
 
 class ConsensusTests(unittest.TestCase):
     @patch("dns_domain_validator.query_public_dns")
-    def test_all_seven_must_agree_on_a_and_aaaa_nxdomain(self, query):
+    def test_all_five_nxdomain_for_both_types_marks_domain_invalid(self, query):
         query.return_value = 3
         result = classify_domain("missing.example", 2, InlineExecutor())
-        self.assertEqual(result["status"], "nxdomain")
-        self.assertEqual(len(result["providers"]), 7)
+        self.assertEqual(result["status"], "invalid")
+        self.assertEqual(len(result["providers"]), 5)
+        self.assertEqual(query.call_count, 10)
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_all_five_query_failures_also_mark_domain_invalid(self, query):
+        query.return_value = None
+        result = classify_domain("offline.example", 2, InlineExecutor())
+        self.assertEqual(result["status"], "invalid")
+        self.assertEqual(query.call_count, 10)
 
     @patch("dns_domain_validator.query_public_dns")
     def test_any_noerror_prevents_deletion(self, query):
         def answer(provider, domain, qtype, timeout):
-            return 0 if (provider, qtype) == ("baidu", "A") else 3
+            return 0 if (provider, qtype) == ("cloudflare", "A") else 3
 
         query.side_effect = answer
         result = classify_domain("existing.example", 2, InlineExecutor())
         self.assertEqual(result["status"], "valid")
 
     @patch("dns_domain_validator.query_public_dns")
-    def test_any_unavailable_resolver_prevents_deletion(self, query):
+    def test_one_successful_noerror_response_is_enough_even_with_other_failures(self, query):
         def answer(provider, domain, qtype, timeout):
-            return None if (provider, qtype) == ("tencent", "AAAA") else 3
+            if (provider, qtype) == ("adguard_unfiltered", "AAAA"):
+                return 0
+            if provider == "tencent":
+                return None
+            return 3
 
         query.side_effect = answer
         result = classify_domain("uncertain.example", 2, InlineExecutor())
-        self.assertEqual(result["status"], "unknown")
+        self.assertEqual(result["status"], "valid")
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_noerror_nodata_is_a_successful_dns_response(self, query):
+        query.return_value = 0
+        result = classify_domain("nodata.example", 2, InlineExecutor())
+        self.assertEqual(result["status"], "valid")
 
 
 if __name__ == "__main__":
