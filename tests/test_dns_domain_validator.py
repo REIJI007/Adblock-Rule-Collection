@@ -2,7 +2,7 @@ import concurrent.futures
 import ipaddress
 import struct
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from dns_domain_validator import (
     CACHE_VERSION,
@@ -118,6 +118,39 @@ class FormatCoverageTests(unittest.TestCase):
         self.assertTrue(handler._check_hostname)
         self.assertTrue(handler._context.check_hostname)
         self.assertTrue(handler._context.verify_mode)
+
+    def test_pinned_connection_uses_numeric_socket_target_and_hostname_sni(self):
+        from dns_domain_validator import _PinnedHTTPSConnection
+
+        connection = _PinnedHTTPSConnection(
+            "8.8.8.8",
+            bootstrap_ip="8.8.8.8",
+            tls_server_name="dns.google",
+            timeout=3,
+        )
+        raw_socket = MagicMock()
+        tls_socket = MagicMock()
+        with patch(
+            "dns_domain_validator.socket.create_connection",
+            return_value=raw_socket,
+        ) as create_connection:
+            with patch.object(
+                connection._context,
+                "wrap_socket",
+                return_value=tls_socket,
+            ) as wrap_socket:
+                connection.connect()
+
+        create_connection.assert_called_once_with(
+            ("8.8.8.8", 443),
+            3,
+            None,
+        )
+        wrap_socket.assert_called_once_with(
+            raw_socket,
+            server_hostname="dns.google",
+        )
+        self.assertIs(connection.sock, tls_socket)
 
     def test_cache_schema_was_bumped_after_policy_change(self):
         self.assertEqual(CACHE_VERSION, 6)
