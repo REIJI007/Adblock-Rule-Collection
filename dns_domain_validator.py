@@ -29,7 +29,11 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-CACHE_VERSION = 5
+CACHE_VERSION = 6
+MIN_HEALTHY_RESOLVERS = 3
+NEGATIVE_CONFIRMATIONS_REQUIRED = 3
+NEGATIVE_CONFIRMATION_INTERVAL_SECONDS = 15 * 60
+NEGATIVE_CONFIRMATION_WINDOW_SECONDS = 24 * 60 * 60
 QUERY_TYPES = {"A": 1, "AAAA": 28}
 
 # Only non-filtering public recursive DNS endpoints are used.
@@ -240,7 +244,12 @@ def _domain_modifier_domains(line: str) -> list[str]:
 
 
 def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
-    """Return a rewrite strategy and exact DNS names referenced by this entry."""
+    """Return only DNS names that are actual blocked targets.
+
+    Positive/negative $domain= values and cosmetic-rule scopes describe where
+    a rule applies; they are not the hostname being blocked and must not be
+    DNS-pruned independently.
+    """
     body, _ = _split_newline(line)
     value = body.strip()
     if _is_comment(value):
@@ -262,15 +271,11 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
     if kind not in {"adblock", "dns"}:
         return None, []
 
-    cosmetic = _cosmetic_scope(value)
-    if cosmetic:
-        candidates = [
-            name for negated, name in cosmetic[2]
-            if not negated and name != "*"
-        ]
-        return ("cosmetic", candidates) if candidates else (None, [])
+    # Cosmetic scopes are contextual website selectors, not blocked hosts.
+    if any(marker in value for marker in COSMETIC_MARKERS):
+        return None, []
 
-    candidates = []
+    candidates: list[str] = []
     anchored = _extract_anchored_domain(value)
     if anchored:
         candidates.append(anchored)
@@ -278,12 +283,8 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
     if exact_regex_domain:
         candidates.append(exact_regex_domain)
 
-    # $domain= scopes are explicit DNS hostnames too. They can be removed
-    # independently without broadening a rule's scope.
-    candidates.extend(_domain_modifier_domains(value))
-
-    # DNS feeds also contain bare FQDN entries. Ordinary Adblock lists do not:
-    # a non-anchored token there may be an arbitrary URL substring or regex.
+    # $domain= modifier scopes are deliberately excluded here. Only the
+    # primary anchored hostname (the actual blocked request target) is tested.
     if kind == "dns" and not candidates:
         bare = value.split("$", 1)[0].split("#", 1)[0].strip()
         domain = normalize_domain(bare)
@@ -291,7 +292,6 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
             candidates.append(domain)
 
     return ("single" if candidates else None), sorted(set(candidates))
-
 
 def _rewrite_domain_modifiers(line: str, invalid: set[str]) -> str | None:
     """Remove nonexistent domains from explicit $domain= scope lists."""
@@ -330,7 +330,7 @@ def _rewrite_domain_modifiers(line: str, invalid: set[str]) -> str | None:
 
 
 def rewrite_line(line: str, invalid_domains: set[str], kind: str) -> str | None:
-    """Remove confirmed-invalid names while preserving unrelated rule syntax."""
+    """Remove confirmed-invalid target hosts without changing rule scopes."""
     body, newline = _split_newline(line)
     if _is_comment(body):
         return line
@@ -343,62 +343,21 @@ def rewrite_line(line: str, invalid_domains: set[str], kind: str) -> str | None:
         parsed = _parse_hosts(line)
         if not parsed:
             return line
-        prefix, names, suffix_newline = parsed
+        prefix, names, _suffix_newline = parsed
         kept = [
             name for name in names
             if normalize_domain(name) not in invalid
         ]
         if not kept:
             return None
-        suffix = suffix_newline
-        if suffix.endswith("\r\n"):
-            suffix = suffix[:-2] + "\r\n"
-        elif suffix.endswith(("\n", "\r")):
-            suffix = suffix[:-1] + suffix[-1]
-        # Keep inline comments. Do not remove single-label names such as localhost.
-        comment = ""
         raw_body = body.split("#", 1)
-        if len(raw_body) > 1:
-            comment = " #" + raw_body[1]
+        comment = (" #" + raw_body[1]) if len(raw_body) > 1 else ""
         return " ".join(prefix + kept) + comment + newline
 
-    if strategy == "cosmetic":
-        scope = _cosmetic_scope(body)
-        if not scope:
-            return line
-        position, marker, parts = scope
-        positive = [name for neg, name in parts if not neg and name != "*"]
-        kept_parts = [
-            (neg, name) for neg, name in parts
-            if neg or name == "*" or name not in invalid
-        ]
-        if positive and not any(not neg and name != "*" for neg, name in kept_parts):
-            return None
-        new_scope = ",".join(neg + name for neg, name in kept_parts)
-        return new_scope + body[position:] + newline
-
-    # Bare DNS entries and pure-domain-list entries are themselves the domain.
-    anchored = _extract_anchored_domain(body)
-    exact_regex_domain = _extract_generated_exact_regex_domain(body)
-    if exact_regex_domain and exact_regex_domain in invalid:
-        return None
-    if kind == "domains":
-        return None
-    if kind == "dns" and not anchored:
-        bare = body.split("$", 1)[0].split("#", 1)[0].strip()
-        bare_domain = normalize_domain(bare)
-        if bare_domain and bare_domain in invalid:
-            return None
-
-    # An invalid primary host anchor makes the complete rule irrelevant.
-    if anchored and anchored in invalid:
-        return None
-
-    rewritten = _rewrite_domain_modifiers(body, invalid)
-    if rewritten is None:
-        return None
-    return rewritten + newline
-
+    # Domain-list, anchored Adblock, exact generated host-regex and bare DNS
+    # entries are removed as a whole when their actual target is invalid.
+    # Website scopes ($domain= and cosmetic scopes) are never rewritten.
+    return None
 
 def make_dns_query(domain: str, qtype: str) -> tuple[bytes, int]:
     query_id = int.from_bytes(os.urandom(2), "big")
@@ -409,10 +368,11 @@ def make_dns_query(domain: str, qtype: str) -> tuple[bytes, int]:
     return header + question, query_id
 
 
-def _skip_dns_name(payload: bytes, offset: int) -> int:
-    """Skip a DNS-encoded name, following compression pointers safely."""
+def _read_dns_name(payload: bytes, offset: int) -> tuple[str, int]:
+    """Decode a DNS name, safely handling RFC 1035 compression pointers."""
     cursor = offset
     resume_offset: int | None = None
+    labels: list[str] = []
     visited: set[int] = set()
     while True:
         if cursor >= len(payload):
@@ -432,78 +392,142 @@ def _skip_dns_name(payload: bytes, offset: int) -> int:
         if length & 0xC0:
             raise ValueError("unsupported DNS label encoding")
         if length == 0:
-            return resume_offset if resume_offset is not None else cursor + 1
+            end = resume_offset if resume_offset is not None else cursor + 1
+            return ".".join(labels).lower(), end
         if length > 63 or cursor + 1 + length > len(payload):
             raise ValueError("invalid or truncated DNS label")
+        try:
+            labels.append(payload[cursor + 1:cursor + 1 + length].decode("ascii").lower())
+        except UnicodeDecodeError as exc:
+            raise ValueError("non-ASCII DNS wire label") from exc
         cursor += length + 1
+
+
+def _is_usable_address(address: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    """Reject special-purpose sinkhole/non-host addresses; private unicast is allowed."""
+    return not (
+        address.is_unspecified
+        or address.is_multicast
+        or address.is_loopback
+        or address.is_link_local
+        or address.is_reserved
+    )
 
 
 def parse_dns_response(
     payload: bytes,
     query_id: int,
     qtype: str,
+    query_domain: str,
 ) -> dict[str, Any] | None:
-    """Parse a DoH response and collect usable IPs from its Answer section.
-
-    NOERROR alone is not proof of a usable DNS answer. The response must contain
-    at least one IN-class A/AAAA RDATA matching the requested record type and
-    representing a usable unicast IP address.
-    """
+    """Parse a DoH response and validate address records on the queried CNAME chain."""
     if qtype not in QUERY_TYPES or len(payload) < 12:
         return None
+    expected_type = QUERY_TYPES[qtype]
+    expected_length = 4 if qtype == "A" else 16
+    normalized_query = normalize_domain(query_domain)
+    if not normalized_query:
+        return None
+
     try:
         response_id, flags, qdcount, ancount, _nscount, _arcount = struct.unpack(
             "!HHHHHH", payload[:12]
         )
-        if response_id != query_id or not (flags & 0x8000):
+        if response_id != query_id or not (flags & 0x8000) or flags & 0x0200:
             return None
-        if flags & 0x0200:
-            # A truncated reply cannot be trusted as a complete DNS answer.
+        if qdcount != 1:
+            return None
+
+        question_name, offset = _read_dns_name(payload, 12)
+        if offset + 4 > len(payload):
+            return None
+        question_type, question_class = struct.unpack("!HH", payload[offset:offset + 4])
+        offset += 4
+        if question_name != normalized_query or question_type != expected_type or question_class != 1:
             return None
 
         rcode = flags & 0x000F
-        offset = 12
-        for _ in range(qdcount):
-            offset = _skip_dns_name(payload, offset)
-            if offset + 4 > len(payload):
-                return None
-            offset += 4
-
-        addresses: set[str] = set()
-        expected_type = QUERY_TYPES[qtype]
-        expected_length = 4 if qtype == "A" else 16
+        records: list[dict[str, Any]] = []
         for _ in range(ancount):
-            offset = _skip_dns_name(payload, offset)
+            owner, offset = _read_dns_name(payload, offset)
             if offset + 10 > len(payload):
                 return None
-            rrtype, rrclass, _ttl, rdlength = struct.unpack(
+            rrtype, rrclass, ttl, rdlength = struct.unpack(
                 "!HHIH", payload[offset:offset + 10]
             )
             offset += 10
-            if offset + rdlength > len(payload):
+            rdata_offset = offset
+            rdata_end = offset + rdlength
+            if rdata_end > len(payload):
                 return None
-            rdata = payload[offset:offset + rdlength]
-            offset += rdlength
+            rdata = payload[rdata_offset:rdata_end]
+            record: dict[str, Any] = {
+                "owner": owner,
+                "type": rrtype,
+                "class": rrclass,
+                "ttl": ttl,
+            }
+            if rrtype == 5 and rrclass == 1:
+                cname_target, consumed = _read_dns_name(payload, rdata_offset)
+                if consumed > rdata_end:
+                    return None
+                record["target"] = cname_target
+            elif rrtype == expected_type and rrclass == 1 and rcode == 0:
+                if len(rdata) != expected_length:
+                    return None
+                address = ipaddress.ip_address(rdata)
+                record["address"] = str(address) if _is_usable_address(address) else None
+            records.append(record)
+            offset = rdata_end
 
-            if rcode != 0 or rrclass != 1 or rrtype != expected_type:
-                continue
-            if len(rdata) != expected_length:
-                return None
-            address = ipaddress.ip_address(rdata)
-            # Exclude sinkhole/placeholder and non-host addresses. Private
-            # unicast addresses remain valid IP answers; public DNS may serve
-            # legitimate private-use records too.
-            if (
-                address.is_unspecified
-                or address.is_multicast
-                or address.is_loopback
-                or address.is_link_local
-                or address.is_reserved
-            ):
-                continue
-            addresses.add(str(address))
+        if rcode != 0:
+            return {"rcode": rcode, "addresses": [], "ttl": None, "cname_chain": []}
 
-        return {"rcode": rcode, "addresses": sorted(addresses)}
+        # Only accept an address owned by the queried name or by a target reached
+        # through its CNAME chain. Unrelated A/AAAA records in Answer do not count.
+        current = normalized_query
+        visited_names = {current}
+        chain: list[str] = [current]
+        ttls: list[int] = []
+        for _hop in range(9):
+            cname_records = [
+                record for record in records
+                if record["owner"] == current
+                and record["type"] == 5
+                and record["class"] == 1
+            ]
+            if cname_records:
+                targets = {record.get("target") for record in cname_records}
+                if len(targets) != 1 or None in targets:
+                    return {"rcode": rcode, "addresses": [], "ttl": None, "cname_chain": chain}
+                target = next(iter(targets))
+                if target in visited_names:
+                    return {"rcode": rcode, "addresses": [], "ttl": None, "cname_chain": chain}
+                visited_names.add(target)
+                chain.append(target)
+                ttls.extend(int(record["ttl"]) for record in cname_records)
+                current = target
+                continue
+
+            matching = [
+                record for record in records
+                if record["owner"] == current
+                and record["type"] == expected_type
+                and record["class"] == 1
+                and record.get("address")
+            ]
+            addresses = sorted({record["address"] for record in matching})
+            if addresses:
+                ttls.extend(int(record["ttl"]) for record in matching)
+                return {
+                    "rcode": rcode,
+                    "addresses": addresses,
+                    "ttl": min(ttls) if ttls else None,
+                    "cname_chain": chain,
+                }
+            return {"rcode": rcode, "addresses": [], "ttl": None, "cname_chain": chain}
+
+        return {"rcode": rcode, "addresses": [], "ttl": None, "cname_chain": chain}
     except (ValueError, struct.error):
         return None
 
@@ -525,7 +549,10 @@ def _query_doh(
         _RATE_LIMITERS[provider].wait()
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                return parse_dns_response(response.read(), query_id, qtype)
+                content_type = response.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+                if content_type not in {"application/dns-message", "application/octet-stream"}:
+                    return None
+                return parse_dns_response(response.read(), query_id, qtype, domain)
         except urllib.error.HTTPError as exc:
             if exc.code not in {429, 500, 502, 503, 504} or attempt:
                 return None
@@ -545,7 +572,7 @@ def query_public_dns(
     try:
         return _query_doh(provider, domain, qtype, timeout)
     except Exception:
-        # A resolver/API/transport failure provides no usable IP answer.
+        # A resolver/API/transport failure provides no usable DNS result.
         return None
 
 
@@ -553,8 +580,12 @@ def classify_domain(
     domain: str,
     timeout: float,
     query_executor: concurrent.futures.Executor,
+    healthy_providers: set[str] | None = None,
+    min_healthy_resolvers: int = MIN_HEALTHY_RESOLVERS,
 ) -> dict[str, Any]:
-    """Keep a domain only when at least one query returns a usable IP address."""
+    """Classify without treating transport failure as proof of no DNS address."""
+    if healthy_providers is None:
+        healthy_providers = set(DNS_PROVIDERS)
     future_map = {
         query_executor.submit(query_public_dns, provider, domain, qtype, timeout):
             (provider, qtype)
@@ -574,35 +605,69 @@ def classify_domain(
         f"{provider}/{qtype}"
         for provider, responses in provider_responses.items()
         for qtype, response in responses.items()
-        if response and response["addresses"]
+        if response and response.get("addresses")
     ]
+    if ip_returning_queries:
+        status = "valid"
+    elif len(healthy_providers) < min_healthy_resolvers:
+        status = "temporary_failure"
+    else:
+        healthy_results = [
+            response
+            for provider in healthy_providers
+            for response in provider_responses.get(provider, {}).values()
+        ]
+        # NXDOMAIN and NOERROR-without-address are complete DNS answers.
+        # SERVFAIL, REFUSED, malformed replies and timeouts remain temporary.
+        if (
+            len(healthy_results) != len(healthy_providers) * len(QUERY_TYPES)
+            or any(
+                response is None or response.get("rcode") not in {0, 3}
+                for response in healthy_results
+            )
+        ):
+            status = "temporary_failure"
+        else:
+            status = "no_address"
+
     provider_results = {
         provider: (
             "resolved"
-            if any(response and response["addresses"] for response in responses.values())
-            else "no_usable_ip"
+            if any(response and response.get("addresses") for response in responses.values())
+            else "no_address"
+            if provider in healthy_providers and all(
+                response is not None and response.get("rcode") in {0, 3}
+                for response in responses.values()
+            ) and len(responses) == len(QUERY_TYPES)
+            else "unhealthy_or_failed"
         )
         for provider, responses in provider_responses.items()
     }
-    dns_rcodes = {
-        provider: {
-            qtype: response["rcode"] if response else None
-            for qtype, response in responses.items()
-        }
-        for provider, responses in provider_responses.items()
-    }
-    dns_addresses = {
-        provider: {
-            qtype: response["addresses"] if response else []
-            for qtype, response in responses.items()
-        }
-        for provider, responses in provider_responses.items()
-    }
     return {
-        "status": "valid" if ip_returning_queries else "invalid",
+        "status": status,
         "providers": provider_results,
-        "dns_rcodes": dns_rcodes,
-        "dns_addresses": dns_addresses,
+        "healthy_providers": sorted(healthy_providers),
+        "dns_rcodes": {
+            provider: {
+                qtype: response["rcode"] if response else None
+                for qtype, response in responses.items()
+            }
+            for provider, responses in provider_responses.items()
+        },
+        "dns_addresses": {
+            provider: {
+                qtype: response["addresses"] if response else []
+                for qtype, response in responses.items()
+            }
+            for provider, responses in provider_responses.items()
+        },
+        "dns_ttls": {
+            provider: {
+                qtype: response.get("ttl") if response else None
+                for qtype, response in responses.items()
+            }
+            for provider, responses in provider_responses.items()
+        },
         "ip_returning_queries": ip_returning_queries,
     }
 
@@ -610,20 +675,106 @@ def classify_domain(
 def verify_resolver_pool(
     timeout: float,
     query_executor: concurrent.futures.Executor,
-) -> None:
-    """Abort unless the known-good example.com canary returns a usable IP."""
-    checks = [
-        query_executor.submit(query_public_dns, provider, "example.com", qtype, timeout)
+    min_healthy_resolvers: int = MIN_HEALTHY_RESOLVERS,
+) -> set[str]:
+    """Return individually healthy resolvers; abort if the healthy quorum is too small."""
+    checks = {
+        query_executor.submit(query_public_dns, provider, "example.com", qtype, timeout):
+            (provider, qtype)
         for provider in DNS_PROVIDERS
         for qtype in QUERY_TYPES
-    ]
-    responses = [future.result() for future in checks]
-    if not any(response and response["addresses"] for response in responses):
+    }
+    responses: dict[str, dict[str, dict[str, Any] | None]] = {
+        provider: {} for provider in DNS_PROVIDERS
+    }
+    for future, (provider, qtype) in checks.items():
+        try:
+            responses[provider][qtype] = future.result()
+        except Exception:
+            responses[provider][qtype] = None
+
+    healthy = {
+        provider
+        for provider, answers in responses.items()
+        if any(answer and answer.get("addresses") for answer in answers.values())
+    }
+    if len(healthy) < min_healthy_resolvers:
+        details = {
+            provider: {
+                qtype: answer.get("rcode") if answer else None
+                for qtype, answer in answers.items()
+            }
+            for provider, answers in responses.items()
+        }
         raise RuntimeError(
-            "DNS validation aborted: none of the five resolvers returned a usable "
-            "IP address for the example.com A/AAAA canary. Existing Adblock output "
-            "was not modified."
+            "DNS validation aborted: only "
+            f"{len(healthy)}/{len(DNS_PROVIDERS)} resolvers passed the example.com "
+            f"A/AAAA IP-answer canary; at least {min_healthy_resolvers} are required. "
+            f"Canary RCODEs: {details}. Existing Adblock outputs were not modified."
         )
+    return healthy
+
+
+def apply_negative_confirmation(
+    result: dict[str, Any],
+    previous_result: dict[str, Any] | None,
+    now: float | None = None,
+) -> dict[str, Any]:
+    """Require three independent no-address observations before destructive removal."""
+    timestamp = time.time() if now is None else now
+    previous_observations = (
+        previous_result.get("negative_observations", [])
+        if isinstance(previous_result, dict)
+        else []
+    )
+    observations = [
+        float(value) for value in previous_observations
+        if isinstance(value, (int, float))
+        and timestamp - float(value) <= NEGATIVE_CONFIRMATION_WINDOW_SECONDS
+        and float(value) <= timestamp
+    ]
+
+    if result["status"] == "valid":
+        result["negative_observations"] = []
+        return result
+
+    if result["status"] == "no_address":
+        if not observations or timestamp - observations[-1] >= NEGATIVE_CONFIRMATION_INTERVAL_SECONDS:
+            observations.append(timestamp)
+        if (
+            len(observations) >= NEGATIVE_CONFIRMATIONS_REQUIRED
+            and observations[-1] - observations[0] >= 2 * NEGATIVE_CONFIRMATION_INTERVAL_SECONDS
+        ):
+            result["status"] = "invalid"
+        else:
+            result["status"] = "pending_confirmation"
+    elif result["status"] == "temporary_failure":
+        # A failed round neither confirms nor erases prior negative evidence.
+        pass
+
+    result["negative_observations"] = observations
+    return result
+
+
+def result_cache_ttl(result: dict[str, Any], maximum_ttl_seconds: int) -> int:
+    """Use answer TTLs for positive answers and short rechecks for negative states."""
+    status = result.get("status")
+    if status == "temporary_failure":
+        return 0
+    if status in {"no_address", "pending_confirmation", "invalid"}:
+        return min(15 * 60, maximum_ttl_seconds)
+
+    values = [
+        int(ttl)
+        for provider_values in result.get("dns_ttls", {}).values()
+        for ttl in provider_values.values()
+        if isinstance(ttl, (int, float)) and ttl > 0
+    ]
+    if not values:
+        return min(60, maximum_ttl_seconds)
+    return min(min(values), maximum_ttl_seconds)
+
+
 
 def _kind_for_path(path: Path) -> str | None:
     return MANAGED_OUTPUTS.get(path.name)
