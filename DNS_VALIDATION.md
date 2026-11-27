@@ -1,89 +1,191 @@
-# DNS 域名验证
+# DNS 域名验证与生成流水线
 
-本验证器**只在 Adblock 主版/精简版生成后运行一次**，位置为规则生成步骤之后、Git 提交之前。后续 DNS、Hosts、IPv6 Hosts、纯域名清单等产物均由清理后的 Adblock 规则生成，不再重复发起 DNS 查询。
+## 设计目标
 
-## 使用的公共 DNS
+DNS 验证作为 Adblock 生成流水线中的统一质量门，而不是独立的定时清理任务：
 
-验证器只使用以下五家**无过滤公共递归 DNS**。为了避免依赖 DNS 名称本身，文档及验证器配置均使用 **DoH 的 IP 地址形式**：
+1. 原有 Main / Lite 规则生成器按原参数分别生成规则；生成器源代码和规则编译逻辑不修改。
+2. 统一验证器收集 Main 与 Lite 中真正的拦截目标主机，规范化并去重。
+3. 每个唯一目标主机只验证一次，验证结果同时用于清理 Main 和 Lite。
+4. 只有验证流水线成功发布后，DNS、IPv4 Hosts、IPv6 Hosts、DOMAIN 衍生任务才启动。
+5. DNS 验证不在下游工作流重复运行。
 
-| 服务 | IPv4 DoH | IPv6 DoH | 过滤配置 |
-|---|---|---|---|
-| Google Public DNS | `https://8.8.8.8/dns-query`、`https://8.8.4.4/dns-query` | `https://[2001:4860:4860::8888]/dns-query`、`https://[2001:4860:4860::8844]/dns-query` | 标准公共解析器，不使用过滤变体 citeturn352213search2turn352213search9 |
-| Cloudflare 1.1.1.1 | `https://1.1.1.1/dns-query`、`https://1.0.0.1/dns-query` | `https://[2606:4700:4700::1111]/dns-query`、`https://[2606:4700:4700::1001]/dns-query` | 标准 unfiltered resolver；不使用 Malware / Families 变体 citeturn352213search0turn352213search4 |
-| Tencent Public DNS | `https://119.29.29.29/dns-query`、`https://1.12.12.12/dns-query` | `https://[2402:4e00::]/dns-query`、`https://[2402:4e00:1::]/dns-query` | Public DNS 免费版 |
-| Alibaba Public DNS | `https://223.5.5.5/dns-query`、`https://223.6.6.6/dns-query` | `https://[2400:3200::1]/dns-query`、`https://[2400:3200:baba::1]/dns-query` | Public DNS |
-| AdGuard DNS | `https://94.140.14.140/dns-query`、`https://94.140.14.141/dns-query` | `https://[2a10:50c0::1:ff]/dns-query`、`https://[2a10:50c0::2:ff]/dns-query` | **Non-filtering**；不使用 Default / Family Protection citeturn352213search1turn352213search6 |
+自动主流程位于 \`.github/workflows/Generate and Validate Adblock Collections.yml\`。原 Main / Lite 独立工作流保留 \`workflow_dispatch\` 手动入口；原生成器脚本及参数不变。
 
-> **注意：** IPv6 地址放入 URL 的 authority 部分时必须使用方括号，例如 `https://[2001:4860:4860::8888]/dns-query`，否则 URL 解析器无法正确区分 IPv6 地址中的冒号与端口分隔符。
+## 五家公共 DNS 与 DoH 连接方式
 
-AdGuard 的 Non-filtering 端点明确声明不会过滤 DNS 请求，其 IPv4 / IPv6 地址分别为 `94.140.14.140`、`94.140.14.141`、`2a10:50c0::1:ff`、`2a10:50c0::2:ff`。citeturn352213search1turn352213search6
+所有候选域名查询均使用 RFC 8484 DNS-over-HTTPS（DoH），不使用 UDP/53、TCP/53 或 DoT。只使用以下五家公共递归 DNS，不使用内容过滤变体：
 
+| 服务 | TLS SNI / HTTP Host | IPv4 DoH URL | IPv6 DoH URL | 说明 |
+|---|---|---|---|---|
+| Google Public DNS | \`dns.google\` | \`https://8.8.8.8/dns-query\`、\`https://8.8.4.4/dns-query\` | \`https://[2001:4860:4860::8888]/dns-query\`、\`https://[2001:4860:4860::8844]/dns-query\` | 标准公共解析服务 |
+| Cloudflare 1.1.1.1 | \`cloudflare-dns.com\` | \`https://1.1.1.1/dns-query\`、\`https://1.0.0.1/dns-query\` | \`https://[2606:4700:4700::1111]/dns-query\`、\`https://[2606:4700:4700::1001]/dns-query\` | 使用 unfiltered 解析器 |
+| Tencent Public DNS | \`doh.pub\` | \`https://119.29.29.29/dns-query\` | \`https://[2402:4e00::]/dns-query\`、\`https://[2402:4e00:1::]/dns-query\` | 免费公共解析服务 |
+| Alibaba Public DNS | \`dns.alidns.com\` | \`https://223.5.5.5/dns-query\`、\`https://223.6.6.6/dns-query\` | \`https://[2400:3200::1]/dns-query\`、\`https://[2400:3200:baba::1]/dns-query\` | 公共 DNS 的 DoH 服务 |
+| AdGuard DNS | \`unfiltered.adguard-dns.com\` | \`https://94.140.14.140/dns-query\`、\`https://94.140.14.141/dns-query\` | \`https://[2a10:50c0::1:ff]/dns-query\`、\`https://[2a10:50c0::2:ff]/dns-query\` | **Non-filtering**，不使用 Default / Family Protection |
 
-## 查询与判定规则
+### IP 直连与 TLS 身份验证
 
-每个待验证域名会向五家 DNS 分别发起两种查询：
+表格中的 URL 使用数字 IP 作为 HTTPS 连接目标。程序不会先通过系统 DNS 解析 DoH 服务主机名，而是：
 
-- `A`：IPv4 地址记录。
-- `AAAA`：IPv6 地址记录。
+- TCP socket 直接连接已配置的 IPv4 / IPv6 Bootstrap IP。
+- TLS SNI 使用表格中的服务主机名。
+- HTTP \`Host\` 使用相同的服务主机名。
+- 使用系统 CA 信任链进行证书校验，并校验服务主机名；不关闭 TLS 验证。
+- IPv6 URL 中必须将地址放在方括号内。
 
-因此每个域名有 **5 × 2 = 10 个逻辑 DNS 查询**。为处理瞬时网络错误，单个 DoH 请求最多尝试两次，因此实际 HTTP 请求数可能高于 10。
+因此，IP 负责确定网络连接目标，主机名负责 TLS 身份验证和 HTTP 虚拟主机路由。**不能为了 IP 直连而关闭证书验证，也不能把 IP 字符串作为证书主机名。**
 
-判定采用 OR 逻辑，但**必须收到真实可用的 IP 地址记录才算有效**：
+### 服务端点与配额边界
+
+- Google 的 RFC 8484 DoH 标准 URI 为 \`/dns-query\`，GET 请求使用 Base64URL 编码的 DNS Wire Format。Google 建议使用 \`dns.google\` 主机名；本项目通过 IP 连接并保留该主机名作为 SNI / Host。
+- Cloudflare 标准 unfiltered 解析器为 \`1.1.1.1\` / \`1.0.0.1\`，不使用 Malware 或 Families 地址。
+- Tencent 官方公布的 DoH URI 为 \`https://doh.pub/dns-query\`，免费版按单域名解析调用有 20 QPS 限制，且没有 SLA；本项目默认每个解析服务 15 QPS。
+- Alibaba 官方公共 DNS 网站公布 \`dns.alidns.com\` DoH 服务和对应的 IPv4 / IPv6 服务地址；免费服务可能进行智能流量控制，不承诺 SLA。
+- AdGuard 必须使用 Non-filtering 服务，不使用广告、跟踪器或家庭保护过滤端点。
+
+## 查询和有效性判定
+
+每个唯一目标主机向五家解析器各发两种查询：
+
+- \`A\`：查询 IPv4 地址记录。
+- \`AAAA\`：查询 IPv6 地址记录。
+
+总计 **5 × 2 = 10 个逻辑查询 / 域名**。单个解析器连接错误时可能轮换备用 IP 地址，因此实际 HTTPS 请求数可能高于 10。
+
+### 有效条件
+
+**只有 DNS Answer 中出现与查询类型匹配、属于目标主机或其 CNAME 链、且可用的 IP 地址时，才算有效。**
+
+- A 响应必须包含合法的 IPv4 地址记录。
+- AAAA 响应必须包含合法的 IPv6 地址记录。
+- 任意一家解析器的 A 或 AAAA 返回至少一个可用地址，即保留域名。
+- 不要求五家解析器返回相同 IP；CDN、Anycast 和地理调度可能返回不同的合法地址。
+- 支持 Answer 区中的 CNAME 链；只有链上最终存在 A / AAAA 地址才有效。
+- 不接受 Answer 中与当前查询主机及其 CNAME 链无关的地址记录。
+
+### 不计为有效 IP 的响应
+
+| 响应 | 处理 |
+|---|---|
+| \`NOERROR\`，Answer 为空（NODATA） | 无地址 |
+| 只有 CNAME，没有最终 A / AAAA 地址 | 无地址 |
+| Answer 中只有错误记录类型 | 无地址 |
+| \`NXDOMAIN\` | 无地址 |
+| \`0.0.0.0\`、\`::\` 等 unspecified | 不计地址 |
+| loopback、multicast、link-local、reserved 地址 | 不计地址 |
+| 私有单播地址 | 视为有效地址 |
+| SERVFAIL、REFUSED、HTTP 错误、超时、连接失败、格式错误 | 暂时失败，不作为失效证据 |
+
+## 状态机与删除门槛
+
+验证结果分为四种状态：
+
+| 状态 | 含义 | 本轮行为 |
+|---|---|---|
+| \`valid\` | 至少一个查询返回可用 IP | 保留规则并清除旧的负向确认记录 |
+| \`no_address\` | 健康解析器的 A / AAAA 查询均完整结束，但没有可用 IP | 记录一次负向观测，等待下一轮确认 |
+| \`pending_confirmation\` | 已有无地址观测，但尚未达到删除门槛 | 保留规则，等待复查 |
+| \`temporary_failure\` | 网络、服务、限流、协议或解析器健康状态异常 | 保留规则；不将故障当作失效证据 |
+
+删除必须同时满足：
+
+1. \`example.com\` A / AAAA 健康探针至少有 **3 家解析器**返回可用 IP。
+2. 目标域名在参与判定的健康解析器中，A / AAAA 查询均返回完整 DNS 结果（NXDOMAIN 或 NOERROR 无地址）。
+3. 没有任何一家解析器返回有效 IP。
+4. 在 24 小时观察窗口内，至少取得 **3 次独立的 no-address 观测**。
+5. 观测之间至少间隔 15 分钟，第一次与第三次至少间隔 30 分钟。
+
+如果解析器池少于 3 家健康服务，或候选域名查询中出现 SERVFAIL、REFUSED、超时、连接错误、格式错误等情况，则该轮为 \`temporary_failure\`，不得增加负向确认次数，也不得删除域名。
+
+这与“有一个可用 IP 就立即保留”并不矛盾：**通过条件立即生效，删除条件需要多轮充分证据。**
+
+## 规则语义范围
+
+验证器只识别真正的拦截目标，不把网站上下文误当成拦截域名。
+
+| 规则 | DNS 验证对象 |
+|---|---|
+| \`||ads.example.com^\` | \`ads.example.com\` |
+| \`|ads.example.com^\` | \`ads.example.com\` |
+| \`||tracker.example.net^$script,domain=site.example\` | 只验证 \`tracker.example.net\` |
+| \`site.example##.ad\` | 不验证 cosmetic 网站作用域 |
+| Hosts 行 | 验证行中的公开主机名 |
+| 通配符、URL / 路径、通用正则 | 无法安全提取目标时保留，不猜测 |
+
+\`$domain=\` 和 cosmetic 作用域代表规则适用的网站范围，不是被拦截请求的目标主机，因此不参与 DNS 验证，也不会被 DNS 验证器重写。无法无歧义解析的规则保持原样。
+
+## 缓存策略
+
+缓存按域名记录解析状态、每家解析器的 A / AAAA RCODE、地址、CNAME 链及 TTL：
+
+- **正向结果**：缓存期限取 CNAME 链和地址记录中最短的正 TTL，并受工作流配置的 6 小时上限约束。
+- **无地址 / 待确认**：15 分钟后重新查询，以便逐轮累计负向证据。
+- **暂时失败**：不缓存为无效，尽快重新查询。
+- **状态升级**：每次新的 no-address 观测才会更新负向确认状态；缓存命中不会重复累计确认次数。
+- **版本隔离**：缓存 schema 版本变更后旧缓存会被丢弃，避免沿用旧判定策略。
+
+## 工作流执行顺序
 
 \`\`\`text
-只要任意一家 DNS 的 A 查询返回可用 IPv4 地址，
-或 AAAA 查询返回可用 IPv6 地址
-    => 有效域名，保留
-十次查询均没有返回可用 IP 地址
-    => 无效域名，剔除
+原 Main 生成器 ─┐
+                ├─> 合并目标主机并去重 ─> 五家 DoH / A + AAAA
+原 Lite 生成器 ─┘                           |
+                                            v
+                                  状态判定 / 负向确认
+                                            |
+                                            v
+                             删除比例、规则数量质量门
+                                            |
+                                            v
+                              一次提交 Main + Lite
+                                            |
+                 ┌──────────────────────────┼───────────────────────┐
+                 v                          v                       v
+             DNS 规则                  IPv4 / IPv6 Hosts         DOMAIN 清单
 \`\`\`
 
-具体规则：
+自动生成工作流每 20 分钟运行一次。Main / Lite 先分别使用原有生成器生成，再由 \`--both-adblock\` 对两个列表的候选主机并集验证一次。下游工作流通过 \`workflow_run\` 等待上游成功完成后启动，不再各自使用独立的 20 分钟定时器。
 
-1. **必须在 DNS Answer 区取得与查询类型匹配的地址记录**：A 查询要求合法 IPv4 RDATA，AAAA 查询要求合法 IPv6 RDATA。
-2. **仅有 \`NOERROR\` 不够**。\`NOERROR/NODATA\`、Answer 为空、只有 CNAME 而没有最终 A/AAAA 地址记录，均不算有效。
-3. 排除 unspecified、multicast、loopback、link-local、reserved 等占位或特殊地址，例如 \`0.0.0.0\`、\`127.0.0.1\`、\`::\`、\`::1\`。私有单播地址仍是有效 IP 地址。
-4. NXDOMAIN、SERVFAIL、REFUSED、超时、连接错误、HTTP 错误、格式错误响应等均不提供有效 IP，按无效查询处理。
-5. 只要十次查询中的任意一次返回可用 IP，就保留域名；其余查询即使失败也不影响保留。
+Main / Lite 原始生成器脚本和命令行参数保持不变；独立手动工作流入口仍保留。手动分别运行 Main 或 Lite 时，仍沿用各自原有的单文件生成流程。
 
-**重要边界：** 如果域名只返回 CNAME，但该响应未附带最终 A/AAAA 地址，按本规则不保留；如果 CNAME 链在 Answer 区中包含最终可用 A/AAAA 记录，则保留。
+## 质量保护
 
-**误删风险提示：** 查询失败也无法提供 IP，因此当一个真实存在的域名在五家解析器的 A/AAAA 查询中全部超时、限流或发生服务故障时，该域名会被剔除。\`example.com\` 探针要求至少一家解析器返回可用 IP，能阻止 DNS 服务整体不可用时进行整批写入，但无法完全排除单个域名遭遇局部故障的风险。
-为避免整个网络或 DNS 服务同时不可用时清空订阅，批量处理前会查询 `example.com` 的 A/AAAA 作为连通性探针。如果五家解析器对探针全部无法返回可用 IP 地址，则本次流程直接失败，**不修改现有 Adblock 文件**。
+- 默认 dry-run，不传 \`--write\` 不修改 Adblock 文件。
+- 如果任一输出的拟删除活动行比例超过 20%，则质量门阻止所有 Adblock 文件写入。
+- 如果某个输出将被删成空文件，也阻止写入。
+- DNS 报告和验证缓存仍会写出，便于检查异常与继续负向确认。
+- 报告包含目标主机数量、缓存命中数、健康解析器、各状态计数、每家解析器的 RCODE / 地址 / TTL、文件删除比例和质量门错误。
+- 工作流上传兼容性审计和 DNS 报告作为 Artifact。
 
-## 规则处理范围
+## 本地使用
 
-命令行只接受以下两个文件名：
+对 Main 与 Lite 一次性执行 dry-run：
 
-- `ADBLOCK_RULE_COLLECTION.txt`
-- `ADBLOCK_RULE_COLLECTION_Lite.txt`
+\`\`\`bash
+python dns_domain_validator.py --both-adblock \
+  --cache .cache/dns-validation-state.json \
+  --report dns-validation-report.json
+\`\`\`
 
-识别可明确提取主机名的 ABP/Adblock 规则（例如 `||example.com^`、`|example.com^`）、显式 `$domain=` 作用域、带域名作用域的 cosmetic 规则，以及本仓库编译器为 Hosts/精确域名来源生成的固定 URL-authority 正则模板（仅当正则主体是单一字面主机名时）。
+应用清理：
 
-保留通配符主机名、URL/路径过滤器、通用正则表达式、注释、IP 字面量以及无法无歧义识别的规则。负向 `~domain` 作用域不作为待删除域名，也不会因其域名查询失败而被移除，避免意外扩大规则匹配范围。
+\`\`\`bash
+python dns_domain_validator.py --both-adblock --write \
+  --cache .cache/dns-validation-state.json \
+  --report dns-validation-report.json \
+  --qps 15 --timeout 8 \
+  --cache-ttl-hours 6 \
+  --min-healthy-resolvers 3 \
+  --max-removal-ratio 0.20
+\`\`\`
 
-## 运行方式
+## 官方资料
 
-默认 dry-run：
-
-```bash
-python dns_domain_validator.py ADBLOCK_RULE_COLLECTION.txt --report dns-validation.json
-```
-
-生成阶段实际应用清理：
-
-```bash
-python dns_domain_validator.py ADBLOCK_RULE_COLLECTION.txt --write \
-  --cache .cache/dns-validation-main.json \
-  --report dns-validation-main.json
-```
-
-验证缓存默认 15 分钟，用于避免短时间内重复工作流造成重复查询；缓存只在主版或 Lite 各自的 Adblock 生成流程使用，不会在下游工作流再次执行验证。每家 DNS 的请求启动速率默认限制为 18 QPS（低于腾讯 Public DNS 免费版文档标注的 20 QPS/域名调用上限）。
-
-## 官方端点资料
-
-- Google Public DNS：<https://developers.google.com/speed/public-dns/docs/doh>
-- Cloudflare 1.1.1.1：<https://developers.cloudflare.com/1.1.1.1/infrastructure/network-operators/>
-- Tencent Public DNS：<https://cloud.tencent.com/document/product/302/110786>
-- Alibaba DNS DoH：<https://static-aliyun-doc.oss-cn-hangzhou.aliyuncs.com/download/pdf/171662/API_Reference_intl_en-US.pdf>
-- AdGuard DNS：<https://adguard-dns.io/en/public-dns.html>
+- Google Public DNS DoH：<https://developers.google.com/speed/public-dns/docs/doh>
+- Google DoH IP / Bootstrap 迁移说明：<https://developers.google.com/speed/public-dns/docs/doh/migration>
+- Cloudflare 1.1.1.1 解析器与端点：<https://developers.cloudflare.com/1.1.1.1/infrastructure/network-operators/>
+- Tencent Public DNS 免费版及 DoH：<https://cloud.tencent.com/document/product/302/110786>
+- Alibaba Public DNS：<https://www.alidns.com/>
+- Alibaba DoH API 参考：<https://static-aliyun-doc.oss-cn-hangzhou.aliyuncs.com/download/pdf/171662/API_Reference_intl_en-US.pdf>
+- AdGuard DNS Non-filtering：<https://adguard-dns.io/en/public-dns.html>
