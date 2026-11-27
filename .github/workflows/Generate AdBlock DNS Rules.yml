@@ -1,13 +1,22 @@
 name: Generate AdBlock DNS Rules
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
     paths:
       - "ADBLOCK_RULE_COLLECTION.txt"
       - "ADBLOCK_RULE_COLLECTION_Lite.txt"
-  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Generate and Validate Adblock Collections
+      - Generate and Push Adblock Rule Collection
+      - Generate and Push Adblock Rule Collection Lite
+    types:
+      - completed
+    branches:
+      - main
 
 concurrency:
   group: generate-adblock-dns-rules
@@ -18,6 +27,7 @@ permissions:
 
 jobs:
   filter-rules:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
