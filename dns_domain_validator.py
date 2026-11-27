@@ -106,7 +106,7 @@ def parse_line(line: str) -> tuple[str | None, list[str]]:
         return ("single", [domain]) if domain else (None, [])
 
     domain = normalize_domain(body)
-    if domain and PLAIN_DOMAIN_RE.fullmatch(body):
+    if domain:
         return "single", [domain]
     return None, []
 
