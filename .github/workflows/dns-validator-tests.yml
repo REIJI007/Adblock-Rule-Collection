@@ -27,5 +27,9 @@ jobs:
           python -m py_compile dns_domain_validator.py
           python -m py_compile scripts/dns_live_smoke.py
 
+      - name: Validate GitHub Actions workflow YAML syntax
+        run: |
+          ruby -e 'require "yaml"; Dir.glob(".github/workflows/**/*.{yml,yaml}").sort.each { |file| YAML.parse_file(file); puts "YAML OK: #{file}" }'
+
       - name: Run validator unit tests (mock DNS; no live resolver queries)
         run: python -m unittest discover -s tests -p "test_dns_domain_validator.py" -v
