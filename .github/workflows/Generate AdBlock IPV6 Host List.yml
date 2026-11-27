@@ -2,8 +2,6 @@ name: Generate AdBlock IPv6 Host List
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/20 * * * *'
   push:
     branches:
       - main
