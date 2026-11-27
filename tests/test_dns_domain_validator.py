@@ -118,7 +118,7 @@ class FormatCoverageTests(unittest.TestCase):
             calls.append((provider, domain, qtype))
             return dns_result(
                 0,
-                ["203.0.113.53"] if qtype == "A" else ["2001:db8::53"],
+                ["104.20.23.154"] if qtype == "A" else ["2606:4700:4700::1111"],
                 ttl=120,
             )
 
@@ -135,7 +135,7 @@ class FormatCoverageTests(unittest.TestCase):
                 2,
             )
 
-        self.assertEqual(first, ["203.0.113.53", "2001:db8::53"])
+        self.assertEqual(first, ["104.20.23.154", "2606:4700:4700::1111"])
         self.assertEqual(second, first)
         self.assertTrue(calls)
         self.assertNotIn("tencent", {provider for provider, _, _ in calls})
@@ -146,7 +146,7 @@ class FormatCoverageTests(unittest.TestCase):
         import dns_domain_validator as validator
 
         validator._BOOTSTRAP_HOST_CACHE["doh.pub"] = {
-            "addresses": ["203.0.113.53", "2001:db8::53"],
+            "addresses": ["104.20.23.154", "2606:4700:4700::1111"],
             "expires_at": 9999999999,
         }
         config = validator.DNS_PROVIDERS["tencent"]
@@ -155,7 +155,7 @@ class FormatCoverageTests(unittest.TestCase):
         try:
             self.assertEqual(
                 validator._ordered_bootstrap_ips("tencent", 2),
-                ["203.0.113.53", "2001:db8::53"],
+                ["104.20.23.154", "2606:4700:4700::1111"],
             )
         finally:
             config["bootstrap_ipv4"] = original_v4
