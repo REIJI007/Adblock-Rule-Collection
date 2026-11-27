@@ -586,7 +586,7 @@ def main() -> int:
     parser.add_argument("--cache", type=Path, help="JSON cache path")
     parser.add_argument("--report", type=Path, help="JSON report path")
     parser.add_argument("--concurrency", type=int, default=12, help="concurrent domain checks (1-24)")
-    parser.add_argument("--qps", type=float, default=10.0, help="maximum query starts per provider per second (1-18)")
+    parser.add_argument("--qps", type=float, default=18.0, help="maximum query starts per provider per second (1-18)")
     parser.add_argument("--timeout", type=float, default=6.0, help="per-query timeout in seconds")
     parser.add_argument("--cache-ttl-hours", type=float, default=0.25, help="cache TTL in hours (default: 15 minutes)")
     args = parser.parse_args()
