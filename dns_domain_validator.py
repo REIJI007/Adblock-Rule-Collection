@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """Validate Adblock output once, immediately after the Main/Lite build.
 
-The five resolvers are unfiltered Google, Cloudflare, Tencent, Alibaba and
-AdGuard DNS. Both A (IPv4) and AAAA (IPv6) are queried at every resolver.
-A domain is valid if ANY query returns NOERROR (including NODATA). It is
-invalid only when NONE of the ten queries returns NOERROR: NXDOMAIN and
-query failures both count as unsuccessful answers, per the repository policy.
-A small canary check aborts the batch if the entire resolver pool is offline.
+The resolver pool contains Google, Cloudflare and AdGuard Non-filtering DNS.
+Both A (IPv4) and AAAA (IPv6) are queried at every resolver. A domain is
+valid only when an Answer-section A/AAAA record on the queried hostname or
+its CNAME chain contains a usable IP address. Negative classification requires
+a healthy resolver quorum and repeated independent no-address observations.
+A canary check aborts the batch if the resolver pool is unhealthy.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ import urllib.error
 from pathlib import Path
 from typing import Any
 
-CACHE_VERSION = 6
+CACHE_VERSION = 7
 MIN_HEALTHY_RESOLVERS = 3
 NEGATIVE_CONFIRMATIONS_REQUIRED = 3
 NEGATIVE_CONFIRMATION_INTERVAL_SECONDS = 15 * 60
@@ -55,25 +55,6 @@ DNS_PROVIDERS = {
         "path": "/dns-query",
         "bootstrap_ipv4": ["1.1.1.1", "1.0.0.1"],
         "bootstrap_ipv6": ["2606:4700:4700::1111", "2606:4700:4700::1001"],
-    },
-    "tencent": {
-        "transport": "doh",
-        "tls_server_name": "doh.pub",
-        "path": "/dns-query",
-        # Tencent no longer publishes a fixed-IP DoH template for its free
-        # public resolver. Bootstrap doh.pub over the other DoH providers,
-        # then pin the resulting numeric A/AAAA address for the HTTPS socket.
-        "bootstrap_hostname": "doh.pub",
-        "bootstrap_resolvers": ["google", "cloudflare", "alidns", "adguard_unfiltered"],
-        "bootstrap_ipv4": [],
-        "bootstrap_ipv6": [],
-    },
-    "alidns": {
-        "transport": "doh",
-        "tls_server_name": "dns.alidns.com",
-        "path": "/dns-query",
-        "bootstrap_ipv4": ["223.5.5.5", "223.6.6.6"],
-        "bootstrap_ipv6": ["2400:3200::1", "2400:3200:baba::1"],
     },
     "adguard_unfiltered": {
         "transport": "doh",
@@ -597,77 +578,10 @@ def _doh_url(bootstrap_ip: str, path: str, encoded_query: str) -> str:
     return f"https://{authority}{path}?dns={encoded_query}"
 
 
-_BOOTSTRAP_HOST_CACHE: dict[str, dict[str, Any]] = {}
-_BOOTSTRAP_HOST_CACHE_LOCK = threading.Lock()
-
-
-def _resolve_bootstrap_host(
-    hostname: str,
-    resolver_names: list[str],
-    timeout: float,
-) -> list[str]:
-    """Resolve a DoH service hostname using other DoH providers, never system DNS."""
-    now = time.time()
-    cached = _BOOTSTRAP_HOST_CACHE.get(hostname)
-    if cached and cached.get("expires_at", 0) > now:
-        return list(cached.get("addresses", []))
-
-    with _BOOTSTRAP_HOST_CACHE_LOCK:
-        now = time.time()
-        cached = _BOOTSTRAP_HOST_CACHE.get(hostname)
-        if cached and cached.get("expires_at", 0) > now:
-            return list(cached.get("addresses", []))
-
-        addresses: set[str] = set()
-        ttls: list[int] = []
-        for resolver in resolver_names:
-            for qtype in QUERY_TYPES:
-                try:
-                    answer = query_public_dns(resolver, hostname, qtype, timeout)
-                except Exception:
-                    answer = None
-                if not answer or answer.get("rcode") != 0:
-                    continue
-                for value in answer.get("addresses", []):
-                    try:
-                        ip = ipaddress.ip_address(value)
-                    except ValueError:
-                        continue
-                    if _is_usable_address(ip):
-                        addresses.add(str(ip))
-                ttl = answer.get("ttl")
-                if isinstance(ttl, int) and ttl > 0:
-                    ttls.append(ttl)
-            # Once a resolver yields A and/or AAAA addresses, continue to the
-            # next resolver too so Bootstrap can use independent answer sources.
-
-        ordered = sorted(
-            addresses,
-            key=lambda value: (ipaddress.ip_address(value).version, value),
-        )
-        if ordered:
-            ttl = min(ttls) if ttls else 60
-            ttl = max(30, min(ttl, 3600))
-            _BOOTSTRAP_HOST_CACHE[hostname] = {
-                "addresses": ordered,
-                "expires_at": now + ttl,
-            }
-        return ordered
-
-
-def _ordered_bootstrap_ips(provider: str, timeout: float) -> list[str]:
+def _ordered_bootstrap_ips(provider: str) -> list[str]:
     config = DNS_PROVIDERS[provider]
     ipv4 = list(config.get("bootstrap_ipv4", []))
     ipv6 = list(config.get("bootstrap_ipv6", []))
-
-    if not ipv4 and not ipv6 and config.get("bootstrap_hostname"):
-        dynamic = _resolve_bootstrap_host(
-            config["bootstrap_hostname"],
-            config["bootstrap_resolvers"],
-            timeout,
-        )
-        ipv4 = [value for value in dynamic if ipaddress.ip_address(value).version == 4]
-        ipv6 = [value for value in dynamic if ipaddress.ip_address(value).version == 6]
 
     with _BOOTSTRAP_ROTATION_LOCK:
         start = _BOOTSTRAP_ROTATION.get(provider, 0)
@@ -687,7 +601,7 @@ def _query_doh(
     packet, query_id = make_dns_query(domain, qtype)
     encoded = base64.urlsafe_b64encode(packet).rstrip(b"=").decode("ascii")
     config = DNS_PROVIDERS[provider]
-    addresses = _ordered_bootstrap_ips(provider, timeout)
+    addresses = _ordered_bootstrap_ips(provider)
 
     # The HTTPS URL authority is the numeric bootstrap IP. We construct the
     # HTTP request explicitly so exactly one Host header is sent; TLS SNI and
@@ -1022,7 +936,7 @@ def load_cache(path: Path | None) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(
         description=(
-            "Validate generated Main/Lite Adblock lists against five unfiltered "
+            "Validate generated Main/Lite Adblock lists against three unfiltered "
             "public DNS-over-HTTPS resolvers."
         )
     )
