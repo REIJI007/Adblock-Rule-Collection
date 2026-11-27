@@ -261,6 +261,7 @@ def _rewrite_domain_modifiers(line: str, invalid: set[str]) -> str | None:
         parsed = []
         original_positive = 0
         kept_positive = 0
+        unknown_positive = False
         for token in tokens:
             token = token.strip()
             negated = token.startswith("~")
@@ -268,16 +269,16 @@ def _rewrite_domain_modifiers(line: str, invalid: set[str]) -> str | None:
             domain = normalize_domain(raw)
             if not negated and domain:
                 original_positive += 1
+            elif not negated and raw != "*":
+                unknown_positive = True
             if domain and domain in invalid:
                 continue
             parsed.append(("~" if negated else "") + token.lstrip("~"))
             if not negated and domain:
                 kept_positive += 1
         # If all explicit positive scopes vanished, this rule can no longer
-        # match a real request. Wildcard/unknown scopes are not removed here.
-        if original_positive and kept_positive == 0 and not any(
-            token == "*" for token in parsed
-        ):
+        # match a real request. Unknown/wildcard scopes force a fail-open keep.
+        if original_positive and kept_positive == 0 and not unknown_positive:
             should_drop = True
         return prefix + "|".join(parsed)
 
@@ -333,8 +334,17 @@ def rewrite_line(line: str, invalid_domains: set[str], kind: str) -> str | None:
         new_scope = ",".join(neg + name for neg, name in kept_parts)
         return new_scope + body[position:] + newline
 
-    # An invalid primary host anchor makes the complete rule irrelevant.
+    # Bare DNS entries and pure-domain-list entries are themselves the domain.
     anchored = _extract_anchored_domain(body)
+    if kind == "domains":
+        return None
+    if kind == "dns" and not anchored:
+        bare = body.split("$", 1)[0].split("#", 1)[0].strip()
+        bare_domain = normalize_domain(bare)
+        if bare_domain and bare_domain in invalid:
+            return None
+
+    # An invalid primary host anchor makes the complete rule irrelevant.
     if anchored and anchored in invalid:
         return None
 
