@@ -120,7 +120,6 @@ class FormatCoverageTests(unittest.TestCase):
             bootstrap_ip="8.8.8.8",
             tls_server_name="dns.google",
             context=context,
-            check_hostname=True,
         )
         self.assertEqual(connection.tls_server_name, "dns.google")
         self.assertTrue(connection._context.check_hostname)
