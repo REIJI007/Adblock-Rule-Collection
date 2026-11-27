@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Test all five IP-pinned DoH endpoints
+      - name: Test all configured IP-pinned DoH endpoints
         run: python scripts/dns_live_smoke.py
 
       - name: Upload live DoH report
