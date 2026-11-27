@@ -93,10 +93,74 @@ class FormatCoverageTests(unittest.TestCase):
         )
         self.assertEqual(DNS_PROVIDERS["adguard_unfiltered"]["path"], "/dns-query")
         self.assertTrue(all(p["transport"] == "doh" for p in DNS_PROVIDERS.values()))
-        for provider in DNS_PROVIDERS.values():
-            self.assertTrue(provider["bootstrap_ipv4"])
-            self.assertTrue(provider["bootstrap_ipv6"])
+        for name, provider in DNS_PROVIDERS.items():
+            self.assertTrue(
+                provider["bootstrap_ipv4"]
+                or provider["bootstrap_ipv6"]
+                or provider.get("bootstrap_hostname"),
+                msg=f"{name} must have a numeric or DoH-bootstrapped endpoint",
+            )
+        tencent = DNS_PROVIDERS["tencent"]
+        self.assertEqual(tencent["bootstrap_hostname"], "doh.pub")
+        self.assertEqual(
+            set(tencent["bootstrap_resolvers"]),
+            {"google", "cloudflare", "alidns", "adguard_unfiltered"},
+        )
+        self.assertNotIn("tencent", tencent["bootstrap_resolvers"])
 
+
+    def test_tencent_bootstrap_resolves_only_via_other_doh_providers(self):
+        import dns_domain_validator as validator
+
+        calls = []
+
+        def fake_query(provider, domain, qtype, timeout):
+            calls.append((provider, domain, qtype))
+            return dns_result(
+                0,
+                ["203.0.113.53"] if qtype == "A" else ["2001:db8::53"],
+                ttl=120,
+            )
+
+        validator._BOOTSTRAP_HOST_CACHE.pop("doh.pub", None)
+        with patch("dns_domain_validator.query_public_dns", side_effect=fake_query):
+            first = validator._resolve_bootstrap_host(
+                "doh.pub",
+                ["google", "cloudflare"],
+                2,
+            )
+            second = validator._resolve_bootstrap_host(
+                "doh.pub",
+                ["google", "cloudflare"],
+                2,
+            )
+
+        self.assertEqual(first, ["203.0.113.53", "2001:db8::53"])
+        self.assertEqual(second, first)
+        self.assertTrue(calls)
+        self.assertNotIn("tencent", {provider for provider, _, _ in calls})
+        self.assertTrue(all(domain == "doh.pub" for _, domain, _ in calls))
+        self.assertEqual(len(calls), 4)
+
+    def test_tencent_bootstrap_returns_dynamic_numeric_addresses(self):
+        import dns_domain_validator as validator
+
+        validator._BOOTSTRAP_HOST_CACHE["doh.pub"] = {
+            "addresses": ["203.0.113.53", "2001:db8::53"],
+            "expires_at": 9999999999,
+        }
+        config = validator.DNS_PROVIDERS["tencent"]
+        original_v4 = config["bootstrap_ipv4"]
+        original_v6 = config["bootstrap_ipv6"]
+        try:
+            self.assertEqual(
+                validator._ordered_bootstrap_ips("tencent", 2),
+                ["203.0.113.53", "2001:db8::53"],
+            )
+        finally:
+            config["bootstrap_ipv4"] = original_v4
+            config["bootstrap_ipv6"] = original_v6
+            validator._BOOTSTRAP_HOST_CACHE.pop("doh.pub", None)
 
     def test_doh_url_uses_numeric_ip_and_brackets_ipv6(self):
         from dns_domain_validator import _doh_url
