@@ -95,7 +95,10 @@ _RATE_LIMITERS: dict[str, RateLimiter] = {}
 
 def normalize_domain(value: str) -> str | None:
     """Normalize a fully-qualified hostname to lowercase ASCII/IDNA."""
-    value = value.strip().rstrip(".").lower()
+    value = value.strip().lower()
+    if value.endswith(".."):
+        return None
+    value = value.rstrip(".")
     if not value or any(char in value for char in "*/\\:@?#"):
         return None
     try:
@@ -251,7 +254,7 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
         if not parsed:
             return None, []
         candidates = [
-            domain for host in parsed[1:]
+            domain for host in parsed[1]
             if (domain := normalize_domain(host)) is not None
         ]
         return ("hosts", candidates) if candidates else (None, [])
