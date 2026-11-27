@@ -2,12 +2,6 @@ name: Generate AdBlock DNS Rules
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - "ADBLOCK_RULE_COLLECTION.txt"
-      - "ADBLOCK_RULE_COLLECTION_Lite.txt"
   workflow_run:
     workflows:
       - Generate and Validate Adblock Collections
