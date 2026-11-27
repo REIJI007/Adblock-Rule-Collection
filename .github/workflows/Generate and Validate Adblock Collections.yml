@@ -76,7 +76,7 @@ jobs:
           --qps 15
           --timeout 8
           --cache-ttl-hours 6
-          --min-healthy-resolvers 3
+          --min-healthy-resolvers 2
           --max-removal-ratio 0.20
 
       - name: Save shared DNS validation state
