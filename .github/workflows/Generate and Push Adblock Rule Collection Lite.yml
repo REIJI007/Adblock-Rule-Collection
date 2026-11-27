@@ -1,12 +1,7 @@
 name: Generate and Push Adblock Rule Collection Lite
 
 on:
-  schedule:
-    - cron: "*/20 * * * *"  # 每20分钟运行一次
-  push:
-    branches:
-      - main  # 确保在main分支上运行
-  workflow_dispatch:  # 允许手动触发工作流
+  workflow_dispatch:  # 保留单独手动生成入口
 
 jobs:
   generate_and_push:
