@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Cross-check generated Adblock/DNS/Hosts/domain lists against seven public DNS providers.
+"""Validate Adblock output once, immediately after the Main/Lite build.
 
-Deletion is deliberately conservative: every configured resolver must return
-non-truncated NXDOMAIN for both A and AAAA. Any NOERROR response, resolver
-disagreement, transport error, SERVFAIL, REFUSED, or rate limit retains the
-entry. Wildcards, regular expressions, URL patterns, IP literals, comments,
-and unrecognized syntax are not rewritten.
+The five resolvers are unfiltered Google, Cloudflare, Tencent, Alibaba and
+AdGuard DNS. Both A (IPv4) and AAAA (IPv6) are queried at every resolver.
+A domain is valid if ANY query returns NOERROR (including NODATA). It is
+invalid only when NONE of the ten queries returns NOERROR: NXDOMAIN and
+query failures both count as unsuccessful answers, per the repository policy.
+A small canary check aborts the batch if the entire resolver pool is offline.
 """
 
 from __future__ import annotations
@@ -29,36 +30,41 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-CACHE_VERSION = 3
+CACHE_VERSION = 4
 QUERY_TYPES = {"A": 1, "AAAA": 28}
-UNKNOWN_CACHE_SECONDS = 900
 
-# Official DoH endpoints. Quad9's 9.9.9.10 service is intentionally used:
-# it is the documented "No Threat Blocking" profile.
+# Only non-filtering public recursive DNS endpoints are used.
+# AdGuard explicitly documents the unfiltered endpoint as not blocking any DNS
+# requests. Tencent and Alibaba endpoints below are their public DNS services.
 DNS_PROVIDERS = {
-    "google": {"transport": "doh", "endpoint": "https://dns.google/dns-query"},
-    "cloudflare": {"transport": "doh", "endpoint": "https://cloudflare-dns.com/dns-query"},
-    "cisco": {"transport": "doh", "endpoint": "https://dns.opendns.com/dns-query"},
-    "quad9": {"transport": "doh", "endpoint": "https://dns10.quad9.net/dns-query"},
-    "alidns": {"transport": "doh", "endpoint": "https://dns.alidns.com/dns-query"},
-    "tencent": {"transport": "doh", "endpoint": "https://doh.pub/dns-query"},
-    # Baidu's official public-DNS help page publishes this resolver IP.
-    # Its standard DNS protocol is used because an official DoH template
-    # is not listed in that public-DNS support page.
-    "baidu": {"transport": "udp", "address": "180.76.76.76"},
+    "google": {
+        "transport": "doh",
+        "endpoint": "https://dns.google/dns-query",
+    },
+    "cloudflare": {
+        "transport": "doh",
+        "endpoint": "https://cloudflare-dns.com/dns-query",
+    },
+    "tencent": {
+        "transport": "doh",
+        "endpoint": "https://doh.pub/dns-query",
+    },
+    "alidns": {
+        "transport": "doh",
+        "endpoint": "https://dns.alidns.com/dns-query",
+    },
+    "adguard_unfiltered": {
+        "transport": "doh",
+        "endpoint": "https://unfiltered.adguard-dns.com/dns-query",
+    },
 }
 
+# The validator intentionally accepts only the two upstream compiler outputs.
+# DNS/Hosts/domain feeds downstream are derived from these cleaned files and
+# must not be checked again.
 MANAGED_OUTPUTS = {
     "ADBLOCK_RULE_COLLECTION.txt": "adblock",
     "ADBLOCK_RULE_COLLECTION_Lite.txt": "adblock",
-    "ADBLOCK_RULE_COLLECTION_DNS.txt": "dns",
-    "ADBLOCK_RULE_COLLECTION_DNS_Lite.txt": "dns",
-    "ADBLOCK_RULE_COLLECTION_HOST.txt": "hosts",
-    "ADBLOCK_RULE_COLLECTION_HOST_Lite.txt": "hosts",
-    "ADBLOCK_RULE_COLLECTION_HOST_IPV6.txt": "hosts",
-    "ADBLOCK_RULE_COLLECTION_HOST_IPV6_Lite.txt": "hosts",
-    "ADBLOCK_RULE_COLLECTION_DOMAIN.txt": "domains",
-    "ADBLOCK_RULE_COLLECTION_DOMAIN_Lite.txt": "domains",
 }
 
 COMMENT_PREFIXES = ("!", "#", ";", "[", "//")
@@ -190,12 +196,13 @@ def _cosmetic_scope(line: str) -> tuple[int, str, list[tuple[str, str]]] | None:
 
 
 def _domain_modifier_domains(line: str) -> list[str]:
+    """Return only positive $domain= scopes; negative scopes must be preserved."""
     domains: list[str] = []
     for match in DOMAIN_MODIFIER_RE.finditer(line):
         for token in match.group(2).split("|"):
             name = token.strip()
             if name.startswith("~"):
-                name = name[1:]
+                continue
             domain = normalize_domain(name)
             if domain:
                 domains.append(domain)
@@ -227,7 +234,10 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
 
     cosmetic = _cosmetic_scope(value)
     if cosmetic:
-        candidates = [name for _, name in cosmetic[2] if name != "*"]
+        candidates = [
+            name for negated, name in cosmetic[2]
+            if not negated and name != "*"
+        ]
         return ("cosmetic", candidates) if candidates else (None, [])
 
     candidates = []
@@ -271,7 +281,7 @@ def _rewrite_domain_modifiers(line: str, invalid: set[str]) -> str | None:
                 original_positive += 1
             elif not negated and raw != "*":
                 unknown_positive = True
-            if domain and domain in invalid:
+            if not negated and domain and domain in invalid:
                 continue
             parsed.append(("~" if negated else "") + token.lstrip("~"))
             if not negated and domain:
@@ -327,7 +337,7 @@ def rewrite_line(line: str, invalid_domains: set[str], kind: str) -> str | None:
         positive = [name for neg, name in parts if not neg and name != "*"]
         kept_parts = [
             (neg, name) for neg, name in parts
-            if name == "*" or name not in invalid
+            if neg or name == "*" or name not in invalid
         ]
         if positive and not any(not neg and name != "*" for neg, name in kept_parts):
             return None
@@ -372,7 +382,8 @@ def parse_dns_response(payload: bytes, query_id: int) -> int | None:
         return None
     rcode = flags & 0x000F
     truncated = bool(flags & 0x0200)
-    if truncated and rcode == 3:
+    if truncated:
+        # Incomplete UDP-style replies are not treated as a resolution result.
         return None
     return rcode
 
@@ -434,7 +445,7 @@ def classify_domain(
     timeout: float,
     query_executor: concurrent.futures.Executor,
 ) -> dict[str, Any]:
-    """Require unanimous NXDOMAIN from all seven resolvers for A and AAAA."""
+    """A single NOERROR from any of the ten queries is enough to keep a domain."""
     future_map = {
         query_executor.submit(query_public_dns, provider, domain, qtype, timeout):
             (provider, qtype)
@@ -450,28 +461,45 @@ def classify_domain(
         except Exception:
             provider_codes[provider][qtype] = None
 
-    provider_results: dict[str, str] = {}
-    for provider, codes in provider_codes.items():
-        values = [codes.get("A"), codes.get("AAAA")]
-        if 0 in values:
-            provider_results[provider] = "valid"
-        elif values == [3, 3]:
-            provider_results[provider] = "nxdomain"
-        else:
-            provider_results[provider] = "unknown"
-
-    if "valid" in provider_results.values():
-        status = "valid"
-    elif all(value == "nxdomain" for value in provider_results.values()):
-        status = "nxdomain"
-    else:
-        status = "unknown"
-
+    # A DNS NOERROR (RCODE=0), including NODATA (no A/AAAA answer), proves
+    # that at least one selected resolver successfully answered the query.
+    # Only when all ten queries return a non-zero RCODE or fail is the domain
+    # classified invalid. This intentionally implements the requested policy.
+    successful_queries = [
+        f"{provider}/{qtype}"
+        for provider, codes in provider_codes.items()
+        for qtype, rcode in codes.items()
+        if rcode == 0
+    ]
+    provider_results = {
+        provider: ("resolved" if any(code == 0 for code in codes.values()) else "no_success")
+        for provider, codes in provider_codes.items()
+    }
     return {
-        "status": status,
+        "status": "valid" if successful_queries else "invalid",
         "providers": provider_results,
         "dns_rcodes": provider_codes,
+        "successful_queries": successful_queries,
     }
+
+
+def verify_resolver_pool(
+    timeout: float,
+    query_executor: concurrent.futures.Executor,
+) -> None:
+    """Abort if the entire resolver pool fails the known-good example.com canary."""
+    checks = [
+        query_executor.submit(query_public_dns, provider, "example.com", qtype, timeout)
+        for provider in DNS_PROVIDERS
+        for qtype in QUERY_TYPES
+    ]
+    responses = [future.result() for future in checks]
+    if not any(response == 0 for response in responses):
+        raise RuntimeError(
+            "DNS validation aborted: none of the five resolvers successfully "
+            "answered the example.com A/AAAA canary. Existing Adblock output "
+            "was not modified."
+        )
 
 
 def _kind_for_path(path: Path) -> str | None:
@@ -531,20 +559,20 @@ def load_cache(path: Path | None) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Cross-check generated Adblock, DNS, Hosts, and domain lists."
+        description="Validate generated Main/Lite Adblock lists against five unfiltered public DNS resolvers."
     )
-    parser.add_argument("files", nargs="*", help="managed rule-list paths")
+    parser.add_argument("files", nargs="*", help="ADBLOCK_RULE_COLLECTION.txt and/or its Lite output")
     parser.add_argument(
-        "--all-generated", action="store_true",
-        help="validate the repository's ten generated subscription files",
+        "--both-adblock", action="store_true",
+        help="validate both generated Adblock output files",
     )
     parser.add_argument("--write", action="store_true", help="apply removals; default is dry-run")
     parser.add_argument("--cache", type=Path, help="JSON cache path")
     parser.add_argument("--report", type=Path, help="JSON report path")
     parser.add_argument("--concurrency", type=int, default=12, help="concurrent domain checks (1-24)")
-    parser.add_argument("--qps", type=float, default=12.0, help="maximum query starts per provider per second (1-18)")
+    parser.add_argument("--qps", type=float, default=10.0, help="maximum query starts per provider per second (1-18)")
     parser.add_argument("--timeout", type=float, default=6.0, help="per-query timeout in seconds")
-    parser.add_argument("--cache-ttl-hours", type=float, default=24.0, help="cache TTL for valid/NXDOMAIN")
+    parser.add_argument("--cache-ttl-hours", type=float, default=0.25, help="cache TTL in hours (default: 15 minutes)")
     args = parser.parse_args()
 
     if not (1 <= args.concurrency <= 24):
@@ -559,12 +587,12 @@ def main() -> int:
     global _RATE_LIMITERS
     _RATE_LIMITERS = {name: RateLimiter(args.qps) for name in DNS_PROVIDERS}
 
-    if args.all_generated:
+    if args.both_adblock:
         paths = discover_managed_outputs(Path.cwd())
     elif args.files:
         paths = [Path(value).resolve() for value in args.files]
     else:
-        parser.error("provide file paths or use --all-generated")
+        parser.error("provide an Adblock output path or use --both-adblock")
 
     files: dict[Path, tuple[str, list[str]]] = {}
     candidates: set[str] = set()
@@ -603,7 +631,7 @@ def main() -> int:
         if not isinstance(checked_at, (int, float)):
             pending.append(domain)
             continue
-        ttl = UNKNOWN_CACHE_SECONDS if status == "unknown" else args.cache_ttl_hours * 3600
+        ttl = args.cache_ttl_hours * 3600
         if now - checked_at <= ttl:
             cached[domain] = entry["result"]
         else:
@@ -619,6 +647,8 @@ def main() -> int:
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=args.concurrency * len(DNS_PROVIDERS) * 2
         ) as query_pool:
+            if pending:
+                verify_resolver_pool(args.timeout, query_pool)
             future_map = {
                 domain_pool.submit(classify_domain, domain, args.timeout, query_pool): domain
                 for domain in pending
@@ -643,7 +673,7 @@ def main() -> int:
             "result": results[domain],
         }
 
-    invalid = {domain for domain, result in results.items() if result["status"] == "nxdomain"}
+    invalid = {domain for domain, result in results.items() if result["status"] == "invalid"}
     file_summaries: dict[str, Any] = {}
     output_documents: dict[Path, str] = {}
     total_removed = 0
@@ -682,14 +712,16 @@ def main() -> int:
 
     counts = {
         "valid": sum(result["status"] == "valid" for result in results.values()),
-        "nxdomain": len(invalid),
-        "unknown": sum(result["status"] == "unknown" for result in results.values()),
+        "invalid": len(invalid),
     }
     report = {
         "policy": {
-            "delete_only_if_all_seven_providers_return_nxdomain_for_A_and_AAAA": True,
             "providers": list(DNS_PROVIDERS),
-            "unknown_is_fail_open": True,
+            "query_types": ["A", "AAAA"],
+            "valid_if_any_query_returns_NOERROR": True,
+            "invalid_if_all_ten_queries_return_nonzero_rcode_or_fail": True,
+            "noerror_NODATA_counts_as_a_successful_DNS_response": True,
+            "resolver_pool_canary": "example.com A/AAAA; abort if all five resolvers fail",
         },
         "summary": {
             "files_scanned": len(files),
@@ -718,8 +750,8 @@ def main() -> int:
 
     print(
         "Summary: "
-        f"valid={counts['valid']}, confirmed_NXDOMAIN={counts['nxdomain']}, "
-        f"unknown_kept={counts['unknown']}, removed_lines={total_removed}"
+        f"valid={counts['valid']}, invalid={counts['invalid']}, "
+        f"removed_lines={total_removed}"
     )
     if not args.write and total_removed:
         print("Dry run only; re-run with --write to apply removals.")
