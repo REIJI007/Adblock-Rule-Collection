@@ -29,7 +29,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-CACHE_VERSION = 4
+CACHE_VERSION = 5
 QUERY_TYPES = {"A": 1, "AAAA": 28}
 
 # Only non-filtering public recursive DNS endpoints are used.
@@ -409,22 +409,111 @@ def make_dns_query(domain: str, qtype: str) -> tuple[bytes, int]:
     return header + question, query_id
 
 
-def parse_dns_response(payload: bytes, query_id: int) -> int | None:
-    """Return DNS RCODE, rejecting malformed, mismatched, non-response packets."""
-    if len(payload) < 12:
-        return None
-    response_id, flags, _qd, _an, _ns, _ar = struct.unpack("!HHHHHH", payload[:12])
-    if response_id != query_id or not (flags & 0x8000):
-        return None
-    rcode = flags & 0x000F
-    truncated = bool(flags & 0x0200)
-    if truncated:
-        # Incomplete UDP-style replies are not treated as a resolution result.
-        return None
-    return rcode
+def _skip_dns_name(payload: bytes, offset: int) -> int:
+    """Skip a DNS-encoded name, following compression pointers safely."""
+    cursor = offset
+    resume_offset: int | None = None
+    visited: set[int] = set()
+    while True:
+        if cursor >= len(payload):
+            raise ValueError("DNS name extends beyond packet")
+        length = payload[cursor]
+        if length & 0xC0 == 0xC0:
+            if cursor + 1 >= len(payload):
+                raise ValueError("truncated DNS compression pointer")
+            pointer = ((length & 0x3F) << 8) | payload[cursor + 1]
+            if pointer >= len(payload) or cursor in visited or len(visited) > len(payload):
+                raise ValueError("invalid DNS compression pointer")
+            visited.add(cursor)
+            if resume_offset is None:
+                resume_offset = cursor + 2
+            cursor = pointer
+            continue
+        if length & 0xC0:
+            raise ValueError("unsupported DNS label encoding")
+        if length == 0:
+            return resume_offset if resume_offset is not None else cursor + 1
+        if length > 63 or cursor + 1 + length > len(payload):
+            raise ValueError("invalid or truncated DNS label")
+        cursor += length + 1
 
 
-def _query_doh(provider: str, domain: str, qtype: str, timeout: float) -> int | None:
+def parse_dns_response(
+    payload: bytes,
+    query_id: int,
+    qtype: str,
+) -> dict[str, Any] | None:
+    """Parse a DoH response and collect usable IPs from its Answer section.
+
+    NOERROR alone is not proof of a usable DNS answer. The response must contain
+    at least one IN-class A/AAAA RDATA matching the requested record type and
+    representing a usable unicast IP address.
+    """
+    if qtype not in QUERY_TYPES or len(payload) < 12:
+        return None
+    try:
+        response_id, flags, qdcount, ancount, _nscount, _arcount = struct.unpack(
+            "!HHHHHH", payload[:12]
+        )
+        if response_id != query_id or not (flags & 0x8000):
+            return None
+        if flags & 0x0200:
+            # A truncated reply cannot be trusted as a complete DNS answer.
+            return None
+
+        rcode = flags & 0x000F
+        offset = 12
+        for _ in range(qdcount):
+            offset = _skip_dns_name(payload, offset)
+            if offset + 4 > len(payload):
+                return None
+            offset += 4
+
+        addresses: set[str] = set()
+        expected_type = QUERY_TYPES[qtype]
+        expected_length = 4 if qtype == "A" else 16
+        for _ in range(ancount):
+            offset = _skip_dns_name(payload, offset)
+            if offset + 10 > len(payload):
+                return None
+            rrtype, rrclass, _ttl, rdlength = struct.unpack(
+                "!HHIH", payload[offset:offset + 10]
+            )
+            offset += 10
+            if offset + rdlength > len(payload):
+                return None
+            rdata = payload[offset:offset + rdlength]
+            offset += rdlength
+
+            if rcode != 0 or rrclass != 1 or rrtype != expected_type:
+                continue
+            if len(rdata) != expected_length:
+                return None
+            address = ipaddress.ip_address(rdata)
+            # Exclude sinkhole/placeholder and non-host addresses. Private
+            # unicast addresses remain valid IP answers; public DNS may serve
+            # legitimate private-use records too.
+            if (
+                address.is_unspecified
+                or address.is_multicast
+                or address.is_loopback
+                or address.is_link_local
+                or address.is_reserved
+            ):
+                continue
+            addresses.add(str(address))
+
+        return {"rcode": rcode, "addresses": sorted(addresses)}
+    except (ValueError, struct.error):
+        return None
+
+
+def _query_doh(
+    provider: str,
+    domain: str,
+    qtype: str,
+    timeout: float,
+) -> dict[str, Any] | None:
     packet, query_id = make_dns_query(domain, qtype)
     encoded = base64.urlsafe_b64encode(packet).rstrip(b"=").decode("ascii")
     endpoint = DNS_PROVIDERS[provider]["endpoint"]
@@ -436,7 +525,7 @@ def _query_doh(provider: str, domain: str, qtype: str, timeout: float) -> int | 
         _RATE_LIMITERS[provider].wait()
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
-                return parse_dns_response(response.read(), query_id)
+                return parse_dns_response(response.read(), query_id, qtype)
         except urllib.error.HTTPError as exc:
             if exc.code not in {429, 500, 502, 503, 504} or attempt:
                 return None
@@ -447,12 +536,16 @@ def _query_doh(provider: str, domain: str, qtype: str, timeout: float) -> int | 
     return None
 
 
-def query_public_dns(provider: str, domain: str, qtype: str, timeout: float) -> int | None:
+def query_public_dns(
+    provider: str,
+    domain: str,
+    qtype: str,
+    timeout: float,
+) -> dict[str, Any] | None:
     try:
         return _query_doh(provider, domain, qtype, timeout)
     except Exception:
-        # A resolver/API/transport failure counts as an unsuccessful query
-        # under the user-defined validity policy.
+        # A resolver/API/transport failure provides no usable IP answer.
         return None
 
 
@@ -461,41 +554,56 @@ def classify_domain(
     timeout: float,
     query_executor: concurrent.futures.Executor,
 ) -> dict[str, Any]:
-    """A single NOERROR from any of the ten queries is enough to keep a domain."""
+    """Keep a domain only when at least one query returns a usable IP address."""
     future_map = {
         query_executor.submit(query_public_dns, provider, domain, qtype, timeout):
             (provider, qtype)
         for provider in DNS_PROVIDERS
         for qtype in QUERY_TYPES
     }
-    provider_codes: dict[str, dict[str, int | None]] = {
+    provider_responses: dict[str, dict[str, dict[str, Any] | None]] = {
         provider: {} for provider in DNS_PROVIDERS
     }
     for future, (provider, qtype) in future_map.items():
         try:
-            provider_codes[provider][qtype] = future.result()
+            provider_responses[provider][qtype] = future.result()
         except Exception:
-            provider_codes[provider][qtype] = None
+            provider_responses[provider][qtype] = None
 
-    # A DNS NOERROR (RCODE=0), including NODATA (no A/AAAA answer), proves
-    # that at least one selected resolver successfully answered the query.
-    # Only when all ten queries return a non-zero RCODE or fail is the domain
-    # classified invalid. This intentionally implements the requested policy.
-    successful_queries = [
+    ip_returning_queries = [
         f"{provider}/{qtype}"
-        for provider, codes in provider_codes.items()
-        for qtype, rcode in codes.items()
-        if rcode == 0
+        for provider, responses in provider_responses.items()
+        for qtype, response in responses.items()
+        if response and response["addresses"]
     ]
     provider_results = {
-        provider: ("resolved" if any(code == 0 for code in codes.values()) else "no_success")
-        for provider, codes in provider_codes.items()
+        provider: (
+            "resolved"
+            if any(response and response["addresses"] for response in responses.values())
+            else "no_usable_ip"
+        )
+        for provider, responses in provider_responses.items()
+    }
+    dns_rcodes = {
+        provider: {
+            qtype: response["rcode"] if response else None
+            for qtype, response in responses.items()
+        }
+        for provider, responses in provider_responses.items()
+    }
+    dns_addresses = {
+        provider: {
+            qtype: response["addresses"] if response else []
+            for qtype, response in responses.items()
+        }
+        for provider, responses in provider_responses.items()
     }
     return {
-        "status": "valid" if successful_queries else "invalid",
+        "status": "valid" if ip_returning_queries else "invalid",
         "providers": provider_results,
-        "dns_rcodes": provider_codes,
-        "successful_queries": successful_queries,
+        "dns_rcodes": dns_rcodes,
+        "dns_addresses": dns_addresses,
+        "ip_returning_queries": ip_returning_queries,
     }
 
 
@@ -503,20 +611,19 @@ def verify_resolver_pool(
     timeout: float,
     query_executor: concurrent.futures.Executor,
 ) -> None:
-    """Abort if the entire resolver pool fails the known-good example.com canary."""
+    """Abort unless the known-good example.com canary returns a usable IP."""
     checks = [
         query_executor.submit(query_public_dns, provider, "example.com", qtype, timeout)
         for provider in DNS_PROVIDERS
         for qtype in QUERY_TYPES
     ]
     responses = [future.result() for future in checks]
-    if not any(response == 0 for response in responses):
+    if not any(response and response["addresses"] for response in responses):
         raise RuntimeError(
-            "DNS validation aborted: none of the five resolvers successfully "
-            "answered the example.com A/AAAA canary. Existing Adblock output "
+            "DNS validation aborted: none of the five resolvers returned a usable "
+            "IP address for the example.com A/AAAA canary. Existing Adblock output "
             "was not modified."
         )
-
 
 def _kind_for_path(path: Path) -> str | None:
     return MANAGED_OUTPUTS.get(path.name)
@@ -736,10 +843,12 @@ def main() -> int:
         "policy": {
             "providers": list(DNS_PROVIDERS),
             "query_types": ["A", "AAAA"],
-            "valid_if_any_query_returns_NOERROR": True,
-            "invalid_if_all_ten_queries_return_nonzero_rcode_or_fail": True,
-            "noerror_NODATA_counts_as_a_successful_DNS_response": True,
-            "resolver_pool_canary": "example.com A/AAAA; abort if all five resolvers fail",
+            "valid_if_any_A_or_AAAA_answer_contains_usable_unicast_ip": True,
+            "invalid_if_no_query_returns_a_usable_ip_address": True,
+            "noerror_NODATA_counts_as_valid": False,
+            "CNAME_without_final_A_or_AAAA_answer_counts_as_valid": False,
+            "usable_ip_policy": "exclude unspecified, multicast, loopback, link-local and reserved addresses",
+            "resolver_pool_canary": "example.com A/AAAA; abort unless a resolver returns a usable IP address",
         },
         "summary": {
             "files_scanned": len(files),
