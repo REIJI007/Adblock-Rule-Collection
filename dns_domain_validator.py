@@ -179,8 +179,8 @@ def _extract_generated_exact_regex_domain(line: str) -> str | None:
     hostname is eligible for DNS validation.
     """
     body = line[2:] if line.startswith("@@") else line
-    prefix = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?"
-    suffix = r"(?::[0-9]+)?(?:[\\/?#]|$)/"
+    prefix = r"/^https?:\/\/(?:[^\/?#@]+@)?"
+    suffix = r"(?::[0-9]+)?(?:[\/?#]|$)/"
     if not body.startswith(prefix) or not body.endswith(suffix):
         return None
     escaped_host = body[len(prefix):-len(suffix)]
