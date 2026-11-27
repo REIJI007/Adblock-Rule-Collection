@@ -1,0 +1,29 @@
+name: DNS Validator Unit Tests
+
+on:
+  pull_request:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Compile validator
+        run: python -m py_compile dns_domain_validator.py
+
+      - name: Run validator unit tests (mock DNS; no live resolver queries)
+        run: python -m unittest discover -s tests -p "test_dns_domain_validator.py" -v
