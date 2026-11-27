@@ -46,7 +46,7 @@ jobs:
         restore-keys: |
           dns-validation-main-${{ runner.os }}-
 
-    - name: Validate generated Adblock domains (five unfiltered DNS resolvers)
+    - name: Validate generated Adblock domains (three unfiltered DNS resolvers)
       run: >-
         python dns_domain_validator.py ADBLOCK_RULE_COLLECTION.txt
         --write
