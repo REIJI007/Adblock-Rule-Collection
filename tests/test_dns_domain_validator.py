@@ -153,7 +153,7 @@ class FilteringTests(unittest.TestCase):
                 {"dead.example.com"},
                 "adblock",
             ),
-            "keep.example.com##.ad\n",
+            "keep.example.com,~dead.example.com##.ad\n",
         )
         self.assertIsNone(
             rewrite_line(
