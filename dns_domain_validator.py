@@ -181,11 +181,14 @@ def _extract_generated_exact_regex_domain(line: str) -> str | None:
     if not body.startswith(prefix) or not body.endswith(suffix):
         return None
     escaped_host = body[len(prefix):-len(suffix)]
-    # re.escape() renders dots as \\. Any additional regex metacharacter
-    # means this is not an exact literal-host pattern.
-    if not re.fullmatch(r"[A-Za-z0-9-]+(?:\\\\.[A-Za-z0-9-]+)*", escaped_host):
+    # re.escape() renders dots as a backslash-dot pair. Reject every other
+    # regex operator instead of trying to interpret a general regular expression.
+    labels = escaped_host.split(r"\.")
+    if not labels or any(
+        not re.fullmatch(r"[A-Za-z0-9-]+", label) for label in labels
+    ):
         return None
-    return normalize_domain(escaped_host.replace(r"\\.", "."))
+    return normalize_domain(".".join(labels))
 
 
 def _cosmetic_scope(line: str) -> tuple[int, str, list[tuple[str, str]]] | None:
