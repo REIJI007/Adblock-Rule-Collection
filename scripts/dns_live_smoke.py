@@ -26,7 +26,7 @@ def main() -> int:
     }
 
     query_map = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(\n        max_workers=len(validator.DNS_PROVIDERS) * len(validator.QUERY_TYPES)\n    ) as executor:
         for provider in validator.DNS_PROVIDERS:
             for qtype in validator.QUERY_TYPES:
                 future = executor.submit(
