@@ -51,9 +51,9 @@
 - `ADBLOCK_RULE_COLLECTION.txt`
 - `ADBLOCK_RULE_COLLECTION_Lite.txt`
 
-识别可明确提取主机名的 ABP/Adblock 规则（例如 `||example.com^`、`|example.com^`）、显式 `$domain=` 作用域和带域名作用域的 cosmetic 规则。
+识别可明确提取主机名的 ABP/Adblock 规则（例如 `||example.com^`、`|example.com^`）、显式 `$domain=` 作用域、带域名作用域的 cosmetic 规则，以及本仓库编译器为 Hosts/精确域名来源生成的固定 URL-authority 正则模板（仅当正则主体是单一字面主机名时）。
 
-保留通配符主机名、URL/路径过滤器、正则表达式、注释、IP 字面量以及无法无歧义识别的规则。负向 `~domain` 作用域不作为待删除域名，也不会因其域名查询失败而被移除，避免意外扩大规则匹配范围。
+保留通配符主机名、URL/路径过滤器、通用正则表达式、注释、IP 字面量以及无法无歧义识别的规则。负向 `~domain` 作用域不作为待删除域名，也不会因其域名查询失败而被移除，避免意外扩大规则匹配范围。
 
 ## 运行方式
 
