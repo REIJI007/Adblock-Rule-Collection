@@ -8,7 +8,15 @@ on:
     paths:
       - "ADBLOCK_RULE_COLLECTION.txt"
       - "ADBLOCK_RULE_COLLECTION_Lite.txt"
-      - ".github/workflows/Generate AdBlock IPV6 Host List.yml"
+  workflow_run:
+    workflows:
+      - Generate and Validate Adblock Collections
+      - Generate and Push Adblock Rule Collection
+      - Generate and Push Adblock Rule Collection Lite
+    types:
+      - completed
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -19,6 +27,7 @@ concurrency:
 
 jobs:
   generate:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
