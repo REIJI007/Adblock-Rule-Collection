@@ -71,7 +71,7 @@ python dns_domain_validator.py ADBLOCK_RULE_COLLECTION.txt --write \
   --report dns-validation-main.json
 ```
 
-验证缓存默认 15 分钟，用于避免同一轮工作流内重复查询；缓存只在主版或 Lite 各自的 Adblock 生成流程使用，不会在下游工作流再次执行验证。每家 DNS 的请求启动速率默认限制为 10 QPS。
+验证缓存默认 15 分钟，用于避免同一轮工作流内重复查询；缓存只在主版或 Lite 各自的 Adblock 生成流程使用，不会在下游工作流再次执行验证。每家 DNS 的请求启动速率默认限制为 18 QPS（低于腾讯 Public DNS 免费版文档标注的 20 QPS/域名调用上限）。
 
 ## 官方端点资料
 
