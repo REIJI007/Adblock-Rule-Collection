@@ -590,6 +590,8 @@ class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
         context = ssl.create_default_context()
         context.minimum_version = ssl.TLSVersion.TLSv1_2
         super().__init__(context=context, check_hostname=True)
+        # Keep this explicit across supported Python urllib implementations.
+        self._check_hostname = True
         self.bootstrap_ip = bootstrap_ip
         self.tls_server_name = tls_server_name
 
