@@ -242,6 +242,14 @@ def main() -> int:
         help="optional JSON report path"
     )
     parser.add_argument(
+        "--cache", type=Path,
+        help="optional JSON cache file for previously checked domains"
+    )
+    parser.add_argument(
+        "--cache-ttl-hours", type=float, default=24.0,
+        help="cache lifetime for valid/NXDOMAIN results (default: 24 hours)"
+    )
+    parser.add_argument(
         "--concurrency", type=int, default=DEFAULT_CONCURRENCY,
         help=f"maximum concurrent domain checks (default: {DEFAULT_CONCURRENCY})"
     )
@@ -283,13 +291,42 @@ def main() -> int:
             domains.update(candidates)
 
     print(f"Files: {len(file_lines)} | unique domains: {len(domains)}")
-    results: dict[str, dict[str, Any]] = {}
+    if args.cache_ttl_hours <= 0:
+        parser.error("--cache-ttl-hours must be greater than zero")
+
+    # Cached transport failures expire quickly; conclusive results live longer.
+    cache_entries: dict[str, dict[str, Any]] = {}
+    cached_results: dict[str, dict[str, Any]] = {}
+    now = time.time()
+    if args.cache and args.cache.is_file():
+        try:
+            loaded_cache = json.loads(args.cache.read_text(encoding="utf-8"))
+            if isinstance(loaded_cache, dict):
+                cache_entries = loaded_cache
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            print("Ignoring unreadable DNS cache.", file=sys.stderr)
+
+    for domain in domains:
+        entry = cache_entries.get(domain)
+        if not isinstance(entry, dict) or not isinstance(entry.get("result"), dict):
+            continue
+        checked_at = entry.get("checked_at")
+        status = entry["result"].get("status")
+        if not isinstance(checked_at, (int, float)):
+            continue
+        ttl = 900 if status == "unknown" else args.cache_ttl_hours * 3600
+        if now - checked_at <= ttl:
+            cached_results[domain] = entry["result"]
+
+    results: dict[str, dict[str, Any]] = dict(cached_results)
+    pending_domains = sorted(domains - set(cached_results))
+    print(f"DNS cache hits: {len(cached_results)} | queries required: {len(pending_domains)}")
     with concurrent.futures.ThreadPoolExecutor(
         max_workers=args.concurrency
     ) as executor:
         future_map = {
             executor.submit(classify_domain, domain, args.timeout): domain
-            for domain in sorted(domains)
+            for domain in pending_domains
         }
         completed = 0
         for future in concurrent.futures.as_completed(future_map):
@@ -304,6 +341,16 @@ def main() -> int:
             completed += 1
             if completed % 100 == 0 or completed == len(future_map):
                 print(f"DNS checked: {completed}/{len(future_map)}")
+
+    if args.cache:
+        for domain, result in results.items():
+            if domain not in cached_results:
+                cache_entries[domain] = {"checked_at": time.time(), "result": result}
+        args.cache.parent.mkdir(parents=True, exist_ok=True)
+        args.cache.write_text(
+            json.dumps(cache_entries, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
 
     invalid_domains = {
         domain for domain, result in results.items()
