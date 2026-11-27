@@ -1,4 +1,6 @@
 import concurrent.futures
+import ipaddress
+import struct
 import unittest
 from unittest.mock import patch
 
@@ -26,6 +28,24 @@ class InlineExecutor:
         return future
 
 
+def dns_answer_response(qtype, answers=(), flags=0x8180):
+    """Build a minimal DNS packet with optional answer-section RRs for tests."""
+    query, query_id = make_dns_query("example.com", qtype)
+    packet = bytearray(
+        struct.pack("!HHHHHH", query_id, flags, 1, len(answers), 0, 0)
+    )
+    packet.extend(query[12:])
+    for rrtype, rdata in answers:
+        packet.extend(b"\xc0\x0c")  # compressed owner name: example.com
+        packet.extend(struct.pack("!HHIH", rrtype, 1, 60, len(rdata)))
+        packet.extend(rdata)
+    return bytes(packet), query_id
+
+
+def dns_result(rcode, addresses=()):
+    return {"rcode": rcode, "addresses": list(addresses)}
+
+
 class DomainNormalizationTests(unittest.TestCase):
     def test_normalizes_ascii_and_idna(self):
         self.assertEqual(normalize_domain("Ads.Example.com."), "ads.example.com")
@@ -50,6 +70,7 @@ class FormatCoverageTests(unittest.TestCase):
             "https://unfiltered.adguard-dns.com/dns-query",
             DNS_PROVIDERS["adguard_unfiltered"]["endpoint"],
         )
+        self.assertTrue(all(p["transport"] == "doh" for p in DNS_PROVIDERS.values()))
 
     def test_only_adblock_main_and_lite_outputs_are_accepted(self):
         self.assertEqual(
@@ -61,15 +82,12 @@ class FormatCoverageTests(unittest.TestCase):
         line = "||ads.example.com^$script,domain=site.example|~allow.example"
         self.assertEqual(
             parse_line(line, "adblock"),
-            (
-                "single",
-                ["ads.example.com", "site.example"],
-            ),
+            ("single", ["ads.example.com", "site.example"]),
         )
 
     def test_compiler_generated_exact_host_regex_is_dns_validated(self):
-        exact = r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"
-        wrapped = r"/^https?:\/\/(?:[^\/?#@]+@)?(?:ads\.example\.com)(?::[0-9]+)?(?:[\/?#]|$)/"
+        exact = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?ads\\.example\\.com(?::[0-9]+)?(?:[\\/?#]|$)/"
+        wrapped = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?(?:ads\\.example\\.com)(?::[0-9]+)?(?:[\\/?#]|$)/"
         self.assertEqual(parse_line(exact, "adblock"), ("single", ["ads.example.com"]))
         self.assertEqual(parse_line(wrapped, "adblock"), ("single", ["ads.example.com"]))
         self.assertIsNone(
@@ -105,7 +123,7 @@ class FormatCoverageTests(unittest.TestCase):
     def test_wildcards_regex_url_patterns_and_comments_are_not_candidates(self):
         examples = [
             ("||*.example.com^", "adblock"),
-            ("/^https?:\\/\\/ads\\.example\\.com/", "adblock"),
+            (r"/^https?:\\/\\/ads\\.example\\.com/", "adblock"),
             ("|https://ads.example.com/path|", "adblock"),
             ("||ads.example.com^", "adblock"),
             ("! comment", "adblock"),
@@ -193,7 +211,7 @@ class FilteringTests(unittest.TestCase):
         for line, kind in [
             ("! comment\n", "adblock"),
             ("||*.example.com^\n", "adblock"),
-            ("/^https?:\\/\\/dead\\.example\\.com/", "adblock"),
+            (r"/^https?:\\/\\/dead\\.example\\.com/", "adblock"),
             ("|https://dead.example.com/path|", "adblock"),
         ]:
             self.assertEqual(rewrite_line(line, {"dead.example.com"}, kind), line)
@@ -204,28 +222,84 @@ class DnsWireFormatTests(unittest.TestCase):
         query, query_id = make_dns_query("example.com", "A")
         self.assertEqual(int.from_bytes(query[:2], "big"), query_id)
         response = bytearray(query[:12])
-        flags = 0x8183  # QR=1, RD=1, RA=1, NXDOMAIN
-        response[2:4] = flags.to_bytes(2, "big")
-        self.assertEqual(parse_dns_response(bytes(response), query_id), 3)
+        response[2:4] = (0x8183).to_bytes(2, "big")  # QR=1, NXDOMAIN
+        response[4:6] = (0).to_bytes(2, "big")  # no echoed question section
+        self.assertEqual(
+            parse_dns_response(bytes(response), query_id, "A"),
+            {"rcode": 3, "addresses": []},
+        )
+
+    def test_parses_ipv4_address_from_a_answer(self):
+        packet, query_id = dns_answer_response(
+            "A", [(1, ipaddress.ip_address("93.184.216.34").packed)]
+        )
+        self.assertEqual(
+            parse_dns_response(packet, query_id, "A"),
+            {"rcode": 0, "addresses": ["93.184.216.34"]},
+        )
+
+    def test_parses_ipv6_address_from_aaaa_answer(self):
+        address = "2606:4700:4700::1111"
+        packet, query_id = dns_answer_response(
+            "AAAA", [(28, ipaddress.ip_address(address).packed)]
+        )
+        self.assertEqual(
+            parse_dns_response(packet, query_id, "AAAA"),
+            {"rcode": 0, "addresses": [address]},
+        )
+
+    def test_noerror_with_empty_answer_is_not_an_ip_resolution(self):
+        packet, query_id = dns_answer_response("A")
+        self.assertEqual(
+            parse_dns_response(packet, query_id, "A"),
+            {"rcode": 0, "addresses": []},
+        )
+
+    def test_cname_only_answer_is_not_an_ip_resolution(self):
+        cname_target = b"\x05alias\x07example\x03com\x00"
+        packet, query_id = dns_answer_response("A", [(5, cname_target)])
+        self.assertEqual(
+            parse_dns_response(packet, query_id, "A"),
+            {"rcode": 0, "addresses": []},
+        )
+
+    def test_wrong_record_type_does_not_count(self):
+        packet, query_id = dns_answer_response(
+            "A", [(28, ipaddress.ip_address("2606:4700:4700::1111").packed)]
+        )
+        self.assertEqual(
+            parse_dns_response(packet, query_id, "A"),
+            {"rcode": 0, "addresses": []},
+        )
+
+    def test_sinkhole_and_non_host_addresses_do_not_count(self):
+        for value in ("0.0.0.0", "127.0.0.1", "224.0.0.1", "255.255.255.255"):
+            packet, query_id = dns_answer_response(
+                "A", [(1, ipaddress.ip_address(value).packed)]
+            )
+            with self.subTest(address=value):
+                self.assertEqual(
+                    parse_dns_response(packet, query_id, "A"),
+                    {"rcode": 0, "addresses": []},
+                )
 
     def test_truncated_response_is_treated_as_query_failure(self):
-        query, query_id = make_dns_query("example.com", "A")
-        response = bytearray(query[:12])
-        response[2:4] = (0x8380).to_bytes(2, "big")  # QR=1, TC=1, NOERROR
-        self.assertIsNone(parse_dns_response(bytes(response), query_id))
+        response = bytearray(12)
+        response[0:2] = (1234).to_bytes(2, "big")
+        response[2:4] = (0x8380).to_bytes(2, "big")  # QR=1, TC=1
+        self.assertIsNone(parse_dns_response(bytes(response), 1234, "A"))
 
     def test_mismatched_transaction_id_is_rejected(self):
-        query, query_id = make_dns_query("example.com", "AAAA")
-        response = bytearray(query[:12])
-        response[0:2] = ((query_id + 1) % 65536).to_bytes(2, "big")
-        response[2:4] = (0x8180).to_bytes(2, "big")
-        self.assertIsNone(parse_dns_response(bytes(response), query_id))
+        packet, query_id = dns_answer_response(
+            "AAAA", [(28, ipaddress.ip_address("2606:4700:4700::1111").packed)]
+        )
+        self.assertIsNone(parse_dns_response(packet, (query_id + 1) % 65536, "AAAA"))
 
 
 class ConsensusTests(unittest.TestCase):
     @patch("dns_domain_validator.query_public_dns")
     def test_all_five_nxdomain_for_both_types_marks_domain_invalid(self, query):
-        query.return_value = 3
+        query.return_value = dns_result(3)
         result = classify_domain("missing.example", 2, InlineExecutor())
         self.assertEqual(result["status"], "invalid")
         self.assertEqual(len(result["providers"]), 5)
@@ -239,31 +313,54 @@ class ConsensusTests(unittest.TestCase):
         self.assertEqual(query.call_count, 10)
 
     @patch("dns_domain_validator.query_public_dns")
-    def test_any_noerror_prevents_deletion(self, query):
+    def test_any_provider_returning_ipv4_address_keeps_domain(self, query):
         def answer(provider, domain, qtype, timeout):
-            return 0 if (provider, qtype) == ("cloudflare", "A") else 3
+            return dns_result(0, ["8.8.8.8"]) if (provider, qtype) == ("cloudflare", "A") else dns_result(3)
 
         query.side_effect = answer
         result = classify_domain("existing.example", 2, InlineExecutor())
         self.assertEqual(result["status"], "valid")
+        self.assertEqual(result["ip_returning_queries"], ["cloudflare/A"])
 
     @patch("dns_domain_validator.query_public_dns")
-    def test_one_successful_noerror_response_is_enough_even_with_other_failures(self, query):
+    def test_any_provider_returning_ipv6_address_keeps_domain(self, query):
+        def answer(provider, domain, qtype, timeout):
+            return dns_result(0, ["2606:4700:4700::1111"]) if (provider, qtype) == ("adguard_unfiltered", "AAAA") else dns_result(3)
+
+        query.side_effect = answer
+        result = classify_domain("existing.example", 2, InlineExecutor())
+        self.assertEqual(result["status"], "valid")
+        self.assertEqual(result["ip_returning_queries"], ["adguard_unfiltered/AAAA"])
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_noerror_nodata_from_all_resolvers_does_not_keep_domain(self, query):
+        query.return_value = dns_result(0)
+        result = classify_domain("nodata.example", 2, InlineExecutor())
+        self.assertEqual(result["status"], "invalid")
+        self.assertEqual(result["ip_returning_queries"], [])
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_cname_or_other_noerror_without_ip_does_not_keep_domain(self, query):
+        def answer(provider, domain, qtype, timeout):
+            if provider == "tencent":
+                return dns_result(0)
+            return dns_result(3)
+
+        query.side_effect = answer
+        result = classify_domain("cname-only.example", 2, InlineExecutor())
+        self.assertEqual(result["status"], "invalid")
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_one_ip_answer_is_enough_even_with_other_failures(self, query):
         def answer(provider, domain, qtype, timeout):
             if (provider, qtype) == ("adguard_unfiltered", "AAAA"):
-                return 0
+                return dns_result(0, ["2606:4700:4700::1111"])
             if provider == "tencent":
                 return None
-            return 3
+            return dns_result(3)
 
         query.side_effect = answer
         result = classify_domain("uncertain.example", 2, InlineExecutor())
-        self.assertEqual(result["status"], "valid")
-
-    @patch("dns_domain_validator.query_public_dns")
-    def test_noerror_nodata_is_a_successful_dns_response(self, query):
-        query.return_value = 0
-        result = classify_domain("nodata.example", 2, InlineExecutor())
         self.assertEqual(result["status"], "valid")
 
 
