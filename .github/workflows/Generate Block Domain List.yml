@@ -8,9 +8,19 @@ on:
       - "ADBLOCK_RULE_COLLECTION.txt"
       - "ADBLOCK_RULE_COLLECTION_Lite.txt"
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Generate and Validate Adblock Collections
+      - Generate and Push Adblock Rule Collection
+      - Generate and Push Adblock Rule Collection Lite
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   filter-rules:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
