@@ -30,7 +30,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.TOKEN || github.token }}
+          token: ${{ github.token }}
 
       - name: Synchronize main
         shell: bash
@@ -80,6 +80,7 @@ jobs:
           --max-removal-ratio 0.20
 
       - name: Save shared DNS validation state
+        if: always()
         uses: actions/cache/save@v4
         with:
           path: .cache/dns-validation-state.json
@@ -100,7 +101,7 @@ jobs:
       - name: Commit and safely publish both validated lists
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
