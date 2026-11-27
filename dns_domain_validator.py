@@ -833,30 +833,48 @@ def load_cache(path: Path | None) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Validate generated Main/Lite Adblock lists against five unfiltered public DNS resolvers."
+        description=(
+            "Validate generated Main/Lite Adblock lists against five unfiltered "
+            "public DNS-over-HTTPS resolvers."
+        )
     )
     parser.add_argument("files", nargs="*", help="ADBLOCK_RULE_COLLECTION.txt and/or its Lite output")
     parser.add_argument(
         "--both-adblock", action="store_true",
-        help="validate both generated Adblock output files",
+        help="validate both generated Adblock output files using one shared domain set",
     )
     parser.add_argument("--write", action="store_true", help="apply removals; default is dry-run")
-    parser.add_argument("--cache", type=Path, help="JSON cache path")
+    parser.add_argument("--cache", type=Path, help="JSON cache/state path")
     parser.add_argument("--report", type=Path, help="JSON report path")
     parser.add_argument("--concurrency", type=int, default=12, help="concurrent domain checks (1-24)")
-    parser.add_argument("--qps", type=float, default=18.0, help="maximum query starts per provider per second (1-18)")
-    parser.add_argument("--timeout", type=float, default=6.0, help="per-query timeout in seconds")
-    parser.add_argument("--cache-ttl-hours", type=float, default=0.25, help="cache TTL in hours (default: 15 minutes)")
+    parser.add_argument("--qps", type=float, default=15.0, help="maximum query starts per resolver per second (1-18)")
+    parser.add_argument("--timeout", type=float, default=8.0, help="per-query timeout in seconds")
+    parser.add_argument(
+        "--cache-ttl-hours", type=float, default=6.0,
+        help="maximum positive-answer cache TTL in hours; actual DNS TTL may shorten it",
+    )
+    parser.add_argument(
+        "--min-healthy-resolvers", type=int, default=MIN_HEALTHY_RESOLVERS,
+        help=f"minimum healthy resolvers required before confirming no-address (default: {MIN_HEALTHY_RESOLVERS})",
+    )
+    parser.add_argument(
+        "--max-removal-ratio", type=float, default=0.20,
+        help="abort without writing if DNS would remove more than this fraction of active lines (0-1)",
+    )
     args = parser.parse_args()
 
     if not (1 <= args.concurrency <= 24):
         parser.error("--concurrency must be between 1 and 24")
     if not (1 <= args.qps <= 18):
-        parser.error("--qps must be between 1 and 18 (Tencent Public DNS documents a 20 QPS per-domain limit)")
+        parser.error("--qps must be between 1 and 18")
     if args.timeout <= 0 or args.timeout > 60:
         parser.error("--timeout must be > 0 and <= 60")
     if args.cache_ttl_hours <= 0:
         parser.error("--cache-ttl-hours must be greater than zero")
+    if not (1 <= args.min_healthy_resolvers <= len(DNS_PROVIDERS)):
+        parser.error(f"--min-healthy-resolvers must be between 1 and {len(DNS_PROVIDERS)}")
+    if not (0 <= args.max_removal_ratio <= 1):
+        parser.error("--max-removal-ratio must be between 0 and 1")
 
     global _RATE_LIMITERS
     _RATE_LIMITERS = {name: RateLimiter(args.qps) for name in DNS_PROVIDERS}
@@ -891,50 +909,76 @@ def main() -> int:
         return 0
 
     cache = load_cache(args.cache)
+    cache_domains = cache["domains"]
     cached: dict[str, dict[str, Any]] = {}
+    previous_results: dict[str, dict[str, Any] | None] = {}
     pending: list[str] = []
     now = time.time()
-    cache_domains = cache["domains"]
+    maximum_ttl_seconds = int(args.cache_ttl_hours * 3600)
+
     for domain in sorted(candidates):
         entry = cache_domains.get(domain)
-        if not isinstance(entry, dict) or not isinstance(entry.get("result"), dict):
+        previous_result = entry.get("result") if isinstance(entry, dict) else None
+        previous_results[domain] = previous_result if isinstance(previous_result, dict) else None
+        if not isinstance(entry, dict) or not isinstance(previous_result, dict):
             pending.append(domain)
             continue
         checked_at = entry.get("checked_at")
         if not isinstance(checked_at, (int, float)):
             pending.append(domain)
             continue
-        ttl = args.cache_ttl_hours * 3600
-        if now - checked_at <= ttl:
-            cached[domain] = entry["result"]
+        ttl = result_cache_ttl(previous_result, maximum_ttl_seconds)
+        if ttl > 0 and now - checked_at <= ttl:
+            cached[domain] = previous_result
         else:
             pending.append(domain)
 
     print(
-        f"Files: {len(files)} | candidate domains: {len(candidates)} | "
+        f"Files: {len(files)} | unique target hosts: {len(candidates)} | "
         f"cache hits: {len(cached)} | to query: {len(pending)}"
     )
 
     results = dict(cached)
+    healthy_providers: set[str] = set()
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as domain_pool:
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=args.concurrency * len(DNS_PROVIDERS) * 2
         ) as query_pool:
-            if candidates:
-                verify_resolver_pool(args.timeout, query_pool)
+            if pending:
+                healthy_providers = verify_resolver_pool(
+                    args.timeout,
+                    query_pool,
+                    args.min_healthy_resolvers,
+                )
+                print(
+                    "Healthy DoH resolvers: "
+                    + ", ".join(sorted(healthy_providers))
+                    + f" ({len(healthy_providers)}/{len(DNS_PROVIDERS)})"
+                )
+
             future_map = {
-                domain_pool.submit(classify_domain, domain, args.timeout, query_pool): domain
+                domain_pool.submit(
+                    classify_domain,
+                    domain,
+                    args.timeout,
+                    query_pool,
+                    healthy_providers,
+                    args.min_healthy_resolvers,
+                ): domain
                 for domain in pending
             }
             completed = 0
             for future in concurrent.futures.as_completed(future_map):
                 domain = future_map[future]
                 try:
-                    results[domain] = future.result()
+                    fresh_result = future.result()
+                    results[domain] = apply_negative_confirmation(
+                        fresh_result,
+                        previous_results.get(domain),
+                    )
                 except Exception as exc:
-                    # An internal validator error is not a DNS result. Abort
-                    # before writing rather than silently retaining or deleting
-                    # a domain on a broken classification path.
+                    # Internal errors abort the run; they must never become
+                    # negative DNS evidence or cause a destructive rewrite.
                     raise RuntimeError(
                         f"internal error while classifying {domain}: "
                         f"{type(exc).__name__}: {exc}"
@@ -943,18 +987,31 @@ def main() -> int:
                 if completed % 100 == 0 or completed == len(future_map):
                     print(f"DNS checked: {completed}/{len(future_map)}")
 
+    checked_at = time.time()
     for domain in pending:
         cache_domains[domain] = {
-            "checked_at": time.time(),
+            "checked_at": checked_at,
             "result": results[domain],
         }
 
-    invalid = {domain for domain, result in results.items() if result["status"] == "invalid"}
+    # Keep the cache bounded to names still referenced by the current outputs.
+    cache["domains"] = {
+        domain: cache_domains[domain]
+        for domain in candidates
+        if domain in cache_domains
+    }
+
+    invalid = {
+        domain for domain, result in results.items()
+        if result.get("status") == "invalid"
+    }
     file_summaries: dict[str, Any] = {}
     output_documents: dict[Path, str] = {}
     total_removed = 0
+    quality_issues: list[str] = []
+
     for path, (kind, lines) in files.items():
-        rewritten = []
+        rewritten: list[str] = []
         removed = 0
         for line in lines:
             replacement = rewrite_line(line, invalid, kind)
@@ -966,10 +1023,15 @@ def main() -> int:
         rewritten = update_count_metadata(rewritten, kind)
         before_count = _active_line_count(lines)
         after_count = _active_line_count(rewritten)
+        ratio = removed / before_count if before_count else 0.0
         if before_count > 0 and after_count == 0:
-            raise RuntimeError(
-                f"{path}: DNS validation would remove every active line; "
-                "refusing to replace the existing subscription."
+            quality_issues.append(
+                f"{path.name}: DNS validation would remove every active line"
+            )
+        if ratio > args.max_removal_ratio:
+            quality_issues.append(
+                f"{path.name}: proposed removal ratio {ratio:.2%} exceeds "
+                f"the configured {args.max_removal_ratio:.2%} safety limit"
             )
         total_removed += removed
         file_summaries[path.name] = {
@@ -977,42 +1039,50 @@ def main() -> int:
             "active_lines_before": before_count,
             "active_lines_after": after_count,
             "removed_lines": removed,
+            "removal_ratio": round(ratio, 6),
         }
         output_documents[path] = "".join(rewritten)
 
-    if args.write:
-        for path, document in output_documents.items():
-            original = path.read_text(encoding="utf-8-sig")
-            if original != document:
-                atomic_write(path, document)
-
-    counts = {
-        "valid": sum(result["status"] == "valid" for result in results.values()),
-        "invalid": len(invalid),
+    status_counts = {
+        status: sum(result.get("status") == status for result in results.values())
+        for status in (
+            "valid",
+            "pending_confirmation",
+            "invalid",
+            "temporary_failure",
+        )
     }
     report = {
         "policy": {
             "providers": list(DNS_PROVIDERS),
+            "transport": "DoH only",
             "query_types": ["A", "AAAA"],
-            "valid_if_any_A_or_AAAA_answer_contains_usable_unicast_ip": True,
-            "invalid_if_no_query_returns_a_usable_ip_address": True,
-            "noerror_NODATA_counts_as_valid": False,
-            "CNAME_without_final_A_or_AAAA_answer_counts_as_valid": False,
-            "usable_ip_policy": "exclude unspecified, multicast, loopback, link-local and reserved addresses",
-            "resolver_pool_canary": "example.com A/AAAA; abort unless a resolver returns a usable IP address",
+            "valid_if_any_query_returns_usable_chain_ip": True,
+            "negative_requires_three_observations_over_at_least_30_minutes": True,
+            "temporary_failures_are_not_negative_evidence": True,
+            "minimum_healthy_resolvers_for_negative_confirmation": args.min_healthy_resolvers,
+            "target_host_only": "Adblock $domain= and cosmetic scopes are not treated as blocked targets",
+            "cname": "follow Answer-section CNAME chain; only chain-owned A/AAAA addresses count",
+        },
+        "health": {
+            "healthy_resolvers": sorted(healthy_providers),
+            "healthy_count": len(healthy_providers),
         },
         "summary": {
             "files_scanned": len(files),
-            "candidate_domains": len(candidates),
+            "candidate_target_hosts": len(candidates),
             "cache_hits": len(cached),
             "queried_domains": len(pending),
-            **counts,
+            **status_counts,
             "lines_removed": total_removed,
             "write_mode": args.write,
+            "quality_issues": quality_issues,
         },
         "files": file_summaries,
         "results": results,
     }
+
+    # Reports and cache are saved even when the safety gate blocks file writes.
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
         args.report.write_text(
@@ -1026,9 +1096,24 @@ def main() -> int:
             encoding="utf-8",
         )
 
+    if quality_issues:
+        for issue in quality_issues:
+            print(f"QUALITY GATE: {issue}", file=sys.stderr)
+        print("Safety gate blocked all Adblock file writes.", file=sys.stderr)
+        return 3
+
+    if args.write:
+        for path, document in output_documents.items():
+            original = path.read_text(encoding="utf-8-sig")
+            if original != document:
+                atomic_write(path, document)
+
     print(
         "Summary: "
-        f"valid={counts['valid']}, invalid={counts['invalid']}, "
+        f"valid={status_counts['valid']}, "
+        f"pending_confirmation={status_counts['pending_confirmation']}, "
+        f"invalid={status_counts['invalid']}, "
+        f"temporary_failure={status_counts['temporary_failure']}, "
         f"removed_lines={total_removed}"
     )
     if not args.write and total_removed:
