@@ -1,0 +1,43 @@
+name: DNS Resolver Live Smoke
+
+on:
+  pull_request:
+    paths:
+      - "dns_domain_validator.py"
+      - "scripts/dns_live_smoke.py"
+      - ".github/workflows/dns-live-smoke.yml"
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dns-live-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-doh-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Test all five IP-pinned DoH endpoints
+        run: python scripts/dns_live_smoke.py
+
+      - name: Upload live DoH report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dns-live-smoke-report
+          path: dns-live-smoke-report.json
+          if-no-files-found: warn
+          retention-days: 14
