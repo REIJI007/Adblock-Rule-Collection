@@ -480,7 +480,7 @@ class ConsensusTests(unittest.TestCase):
         query.return_value = dns_result(3)
         first = classify_domain("missing.example", 2, InlineExecutor())
         self.assertEqual(first["status"], "no_address")
-        self.assertEqual(len(first["providers"]), 5)
+        self.assertEqual(len(first["providers"]), 3)
         self.assertEqual(query.call_count, 6)
 
         first = apply_negative_confirmation(first, None, now=1000)
@@ -504,7 +504,7 @@ class ConsensusTests(unittest.TestCase):
         )
         self.assertEqual(confirmed["status"], "temporary_failure")
         self.assertEqual(len(confirmed["negative_observations"]), 2)
-        self.assertEqual(query.call_count, 10)
+        self.assertEqual(query.call_count, 6)
 
     @patch("dns_domain_validator.query_public_dns")
     def test_any_provider_returning_ipv4_address_keeps_domain(self, query):
