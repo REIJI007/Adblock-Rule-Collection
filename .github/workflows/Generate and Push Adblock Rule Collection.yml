@@ -3,6 +3,9 @@ name: Generate and Push Adblock Rule Collection
 on:
   workflow_dispatch:  # 保留单独手动生成入口
 
+permissions:
+  contents: write
+
 jobs:
   generate_and_push:
     runs-on: ubuntu-latest  # 使用最新的Ubuntu环境
@@ -11,6 +14,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3  # 签出仓库的代码
+      with:
+        token: ${{ github.token }}
 
     - name: 同步远程分支
       shell: bash
@@ -110,4 +115,4 @@ jobs:
         echo "::error::多次尝试后仍无法推送。"
         exit 1
       env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        GITHUB_TOKEN: ${{ github.token }}
