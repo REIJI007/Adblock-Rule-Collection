@@ -19,7 +19,6 @@ import ipaddress
 import json
 import os
 import re
-import socket
 import struct
 import sys
 import tempfile
@@ -411,32 +410,12 @@ def _query_doh(provider: str, domain: str, qtype: str, timeout: float) -> int | 
     return None
 
 
-def _query_baidu(domain: str, qtype: str, timeout: float) -> int | None:
-    packet, query_id = make_dns_query(domain, qtype)
-    for attempt in range(2):
-        _RATE_LIMITERS["baidu"].wait()
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                sock.settimeout(timeout)
-                sock.sendto(packet, (DNS_PROVIDERS["baidu"]["address"], 53))
-                response, _ = sock.recvfrom(4096)
-            rcode = parse_dns_response(response, query_id)
-            if rcode is not None:
-                return rcode
-        except (OSError, TimeoutError):
-            pass
-        if attempt == 0:
-            time.sleep(0.25)
-    return None
-
-
 def query_public_dns(provider: str, domain: str, qtype: str, timeout: float) -> int | None:
     try:
-        if DNS_PROVIDERS[provider]["transport"] == "udp":
-            return _query_baidu(domain, qtype, timeout)
         return _query_doh(provider, domain, qtype, timeout)
     except Exception:
-        # Every unexpected resolver-specific error is fail-open.
+        # A resolver/API/transport failure counts as an unsuccessful query
+        # under the user-defined validity policy.
         return None
 
 
@@ -627,7 +606,6 @@ def main() -> int:
             pending.append(domain)
             continue
         checked_at = entry.get("checked_at")
-        status = entry["result"].get("status")
         if not isinstance(checked_at, (int, float)):
             pending.append(domain)
             continue
@@ -647,7 +625,7 @@ def main() -> int:
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=args.concurrency * len(DNS_PROVIDERS) * 2
         ) as query_pool:
-            if pending:
+            if candidates:
                 verify_resolver_pool(args.timeout, query_pool)
             future_map = {
                 domain_pool.submit(classify_domain, domain, args.timeout, query_pool): domain
@@ -659,10 +637,13 @@ def main() -> int:
                 try:
                     results[domain] = future.result()
                 except Exception as exc:
-                    results[domain] = {
-                        "status": "unknown",
-                        "error": f"{type(exc).__name__}: {exc}",
-                    }
+                    # An internal validator error is not a DNS result. Abort
+                    # before writing rather than silently retaining or deleting
+                    # a domain on a broken classification path.
+                    raise RuntimeError(
+                        f"internal error while classifying {domain}: "
+                        f"{type(exc).__name__}: {exc}"
+                    ) from exc
                 completed += 1
                 if completed % 100 == 0 or completed == len(future_map):
                     print(f"DNS checked: {completed}/{len(future_map)}")
