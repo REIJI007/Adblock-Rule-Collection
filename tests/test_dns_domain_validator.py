@@ -86,8 +86,8 @@ class FormatCoverageTests(unittest.TestCase):
         )
 
     def test_compiler_generated_exact_host_regex_is_dns_validated(self):
-        exact = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?ads\\.example\\.com(?::[0-9]+)?(?:[\\/?#]|$)/"
-        wrapped = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?(?:ads\\.example\\.com)(?::[0-9]+)?(?:[\\/?#]|$)/"
+        exact = r"/^https?:\/\/(?:[^\/?#@]+@)?ads\.example\.com(?::[0-9]+)?(?:[\/?#]|$)/"
+        wrapped = r"/^https?:\/\/(?:[^\/?#@]+@)?(?:ads\.example\.com)(?::[0-9]+)?(?:[\/?#]|$)/"
         self.assertEqual(parse_line(exact, "adblock"), ("single", ["ads.example.com"]))
         self.assertEqual(parse_line(wrapped, "adblock"), ("single", ["ads.example.com"]))
         self.assertIsNone(
@@ -362,6 +362,27 @@ class ConsensusTests(unittest.TestCase):
         query.side_effect = answer
         result = classify_domain("uncertain.example", 2, InlineExecutor())
         self.assertEqual(result["status"], "valid")
+
+
+class CanaryTests(unittest.TestCase):
+    @patch("dns_domain_validator.query_public_dns")
+    def test_canary_rejects_noerror_without_usable_ip(self, query):
+        from dns_domain_validator import verify_resolver_pool
+
+        query.return_value = dns_result(0)
+        with self.assertRaises(RuntimeError):
+            verify_resolver_pool(2, InlineExecutor())
+
+    @patch("dns_domain_validator.query_public_dns")
+    def test_canary_accepts_usable_ip_answer(self, query):
+        from dns_domain_validator import verify_resolver_pool
+
+        query.side_effect = lambda provider, domain, qtype, timeout: (
+            dns_result(0, ["93.184.216.34"])
+            if (provider, qtype) == ("google", "A")
+            else dns_result(3)
+        )
+        verify_resolver_pool(2, InlineExecutor())
 
 
 if __name__ == "__main__":
