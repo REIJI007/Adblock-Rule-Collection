@@ -167,6 +167,27 @@ def _extract_anchored_domain(line: str) -> str | None:
     return normalize_domain(host)
 
 
+def _extract_generated_exact_regex_domain(line: str) -> str | None:
+    """Recognize only this repository compiler's exact-host URL-authority regex.
+
+    Hosts and exact-domain sources are compiled into this anchored pattern,
+    rather than a simple ||domain^ rule. Generic/complex regex rules are left
+    untouched; only the compiler's fixed wrapper plus an escaped literal
+    hostname is eligible for DNS validation.
+    """
+    body = line[2:] if line.startswith("@@") else line
+    prefix = r"/^https?:\\/\\/(?:[^\\/?#@]+@)?"
+    suffix = r"(?::[0-9]+)?(?:[\\/?#]|$)/"
+    if not body.startswith(prefix) or not body.endswith(suffix):
+        return None
+    escaped_host = body[len(prefix):-len(suffix)]
+    # re.escape() renders dots as \\. Any additional regex metacharacter
+    # means this is not an exact literal-host pattern.
+    if not re.fullmatch(r"[A-Za-z0-9-]+(?:\\\\.[A-Za-z0-9-]+)*", escaped_host):
+        return None
+    return normalize_domain(escaped_host.replace(r"\\.", "."))
+
+
 def _cosmetic_scope(line: str) -> tuple[int, str, list[tuple[str, str]]] | None:
     """Extract explicit domains from an ABP/AdGuard cosmetic-rule scope."""
     marker = next((m for m in COSMETIC_MARKERS if m in line), None)
@@ -243,6 +264,9 @@ def parse_line(line: str, kind: str) -> tuple[str | None, list[str]]:
     anchored = _extract_anchored_domain(value)
     if anchored:
         candidates.append(anchored)
+    exact_regex_domain = _extract_generated_exact_regex_domain(value)
+    if exact_regex_domain:
+        candidates.append(exact_regex_domain)
 
     # $domain= scopes are explicit DNS hostnames too. They can be removed
     # independently without broadening a rule's scope.
@@ -345,6 +369,9 @@ def rewrite_line(line: str, invalid_domains: set[str], kind: str) -> str | None:
 
     # Bare DNS entries and pure-domain-list entries are themselves the domain.
     anchored = _extract_anchored_domain(body)
+    exact_regex_domain = _extract_generated_exact_regex_domain(body)
+    if exact_regex_domain and exact_regex_domain in invalid:
+        return None
     if kind == "domains":
         return None
     if kind == "dns" and not anchored:
