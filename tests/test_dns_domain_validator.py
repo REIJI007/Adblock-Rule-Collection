@@ -82,11 +82,13 @@ class DomainNormalizationTests(unittest.TestCase):
 
 
 class FormatCoverageTests(unittest.TestCase):
-    def test_exactly_five_unfiltered_providers_are_configured(self):
+    def test_exactly_three_unfiltered_providers_are_configured(self):
         self.assertEqual(
             set(DNS_PROVIDERS),
-            {"google", "cloudflare", "tencent", "alidns", "adguard_unfiltered"},
+            {"google", "cloudflare", "adguard_unfiltered"},
         )
+        self.assertNotIn("tencent", DNS_PROVIDERS)
+        self.assertNotIn("alidns", DNS_PROVIDERS)
         self.assertEqual(
             DNS_PROVIDERS["adguard_unfiltered"]["tls_server_name"],
             "unfiltered.adguard-dns.com",
@@ -95,72 +97,9 @@ class FormatCoverageTests(unittest.TestCase):
         self.assertTrue(all(p["transport"] == "doh" for p in DNS_PROVIDERS.values()))
         for name, provider in DNS_PROVIDERS.items():
             self.assertTrue(
-                provider["bootstrap_ipv4"]
-                or provider["bootstrap_ipv6"]
-                or provider.get("bootstrap_hostname"),
-                msg=f"{name} must have a numeric or DoH-bootstrapped endpoint",
+                provider["bootstrap_ipv4"] or provider["bootstrap_ipv6"],
+                msg=f"{name} must have a numeric DoH endpoint",
             )
-        tencent = DNS_PROVIDERS["tencent"]
-        self.assertEqual(tencent["bootstrap_hostname"], "doh.pub")
-        self.assertEqual(
-            set(tencent["bootstrap_resolvers"]),
-            {"google", "cloudflare", "alidns", "adguard_unfiltered"},
-        )
-        self.assertNotIn("tencent", tencent["bootstrap_resolvers"])
-
-
-    def test_tencent_bootstrap_resolves_only_via_other_doh_providers(self):
-        import dns_domain_validator as validator
-
-        calls = []
-
-        def fake_query(provider, domain, qtype, timeout):
-            calls.append((provider, domain, qtype))
-            return dns_result(
-                0,
-                ["104.20.23.154"] if qtype == "A" else ["2606:4700:4700::1111"],
-                ttl=120,
-            )
-
-        validator._BOOTSTRAP_HOST_CACHE.pop("doh.pub", None)
-        with patch("dns_domain_validator.query_public_dns", side_effect=fake_query):
-            first = validator._resolve_bootstrap_host(
-                "doh.pub",
-                ["google", "cloudflare"],
-                2,
-            )
-            second = validator._resolve_bootstrap_host(
-                "doh.pub",
-                ["google", "cloudflare"],
-                2,
-            )
-
-        self.assertEqual(first, ["104.20.23.154", "2606:4700:4700::1111"])
-        self.assertEqual(second, first)
-        self.assertTrue(calls)
-        self.assertNotIn("tencent", {provider for provider, _, _ in calls})
-        self.assertTrue(all(domain == "doh.pub" for _, domain, _ in calls))
-        self.assertEqual(len(calls), 4)
-
-    def test_tencent_bootstrap_returns_dynamic_numeric_addresses(self):
-        import dns_domain_validator as validator
-
-        validator._BOOTSTRAP_HOST_CACHE["doh.pub"] = {
-            "addresses": ["104.20.23.154", "2606:4700:4700::1111"],
-            "expires_at": 9999999999,
-        }
-        config = validator.DNS_PROVIDERS["tencent"]
-        original_v4 = config["bootstrap_ipv4"]
-        original_v6 = config["bootstrap_ipv6"]
-        try:
-            self.assertEqual(
-                validator._ordered_bootstrap_ips("tencent", 2),
-                ["104.20.23.154", "2606:4700:4700::1111"],
-            )
-        finally:
-            config["bootstrap_ipv4"] = original_v4
-            config["bootstrap_ipv6"] = original_v6
-            validator._BOOTSTRAP_HOST_CACHE.pop("doh.pub", None)
 
     def test_doh_url_uses_numeric_ip_and_brackets_ipv6(self):
         from dns_domain_validator import _doh_url
@@ -277,7 +216,7 @@ class FormatCoverageTests(unittest.TestCase):
         self.assertIs(connection.sock, tls_socket)
 
     def test_cache_schema_was_bumped_after_policy_change(self):
-        self.assertEqual(CACHE_VERSION, 6)
+        self.assertEqual(CACHE_VERSION, 7)
 
     def test_only_adblock_main_and_lite_outputs_are_accepted(self):
         self.assertEqual(
@@ -542,7 +481,7 @@ class ConsensusTests(unittest.TestCase):
         first = classify_domain("missing.example", 2, InlineExecutor())
         self.assertEqual(first["status"], "no_address")
         self.assertEqual(len(first["providers"]), 5)
-        self.assertEqual(query.call_count, 10)
+        self.assertEqual(query.call_count, 6)
 
         first = apply_negative_confirmation(first, None, now=1000)
         self.assertEqual(first["status"], "pending_confirmation")
@@ -616,8 +555,6 @@ class ConsensusTests(unittest.TestCase):
         def answer(provider, domain, qtype, timeout):
             if (provider, qtype) == ("adguard_unfiltered", "AAAA"):
                 return dns_result(0, ["2606:4700:4700::1111"])
-            if provider == "tencent":
-                return None
             return dns_result(3)
 
         query.side_effect = answer
@@ -665,12 +602,12 @@ class CanaryTests(unittest.TestCase):
     def test_canary_returns_individually_healthy_resolvers(self, query):
         query.side_effect = lambda provider, domain, qtype, timeout: (
             dns_result(0, ["93.184.216.34"])
-            if provider in {"google", "cloudflare", "tencent"}
+            if provider in {"google", "cloudflare", "adguard_unfiltered"}
             else dns_result(3)
         )
         self.assertEqual(
             verify_resolver_pool(2, InlineExecutor()),
-            {"google", "cloudflare", "tencent"},
+            {"google", "cloudflare", "adguard_unfiltered"},
         )
 
 
