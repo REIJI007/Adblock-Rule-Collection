@@ -87,11 +87,37 @@ class FormatCoverageTests(unittest.TestCase):
             set(DNS_PROVIDERS),
             {"google", "cloudflare", "tencent", "alidns", "adguard_unfiltered"},
         )
-        self.assertIn(
-            "https://unfiltered.adguard-dns.com/dns-query",
-            DNS_PROVIDERS["adguard_unfiltered"]["endpoint"],
+        self.assertEqual(
+            DNS_PROVIDERS["adguard_unfiltered"]["tls_server_name"],
+            "unfiltered.adguard-dns.com",
         )
+        self.assertEqual(DNS_PROVIDERS["adguard_unfiltered"]["path"], "/dns-query")
         self.assertTrue(all(p["transport"] == "doh" for p in DNS_PROVIDERS.values()))
+        for provider in DNS_PROVIDERS.values():
+            self.assertTrue(provider["bootstrap_ipv4"])
+            self.assertTrue(provider["bootstrap_ipv6"])
+
+
+    def test_doh_url_uses_numeric_ip_and_brackets_ipv6(self):
+        from dns_domain_validator import _doh_url
+
+        self.assertEqual(
+            _doh_url("8.8.8.8", "/dns-query", "abc"),
+            "https://8.8.8.8/dns-query?dns=abc",
+        )
+        self.assertEqual(
+            _doh_url("2001:4860:4860::8888", "/dns-query", "abc"),
+            "https://[2001:4860:4860::8888]/dns-query?dns=abc",
+        )
+
+    def test_pinned_transport_keeps_tls_hostname_and_verification(self):
+        from dns_domain_validator import _PinnedHTTPSHandler
+
+        handler = _PinnedHTTPSHandler("8.8.8.8", "dns.google")
+        self.assertEqual(handler.tls_server_name, "dns.google")
+        self.assertTrue(handler._check_hostname)
+        self.assertTrue(handler._context.check_hostname)
+        self.assertTrue(handler._context.verify_mode)
 
     def test_cache_schema_was_bumped_after_policy_change(self):
         self.assertEqual(CACHE_VERSION, 6)
