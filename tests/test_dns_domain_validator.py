@@ -564,9 +564,9 @@ class ConsensusTests(unittest.TestCase):
     @patch("dns_domain_validator.query_public_dns")
     def test_too_few_healthy_resolvers_prevents_negative_confirmation(self, query):
         def answer(provider, domain, qtype, timeout):
-            if domain == "example.com" and provider in {"google", "cloudflare"}:
+            if domain == "example.com" and provider == "google":
                 return dns_result(0, ["93.184.216.34"])
-            if domain == "missing.example" and provider in {"google", "cloudflare"}:
+            if domain == "missing.example" and provider == "google":
                 return dns_result(3)
             return None
 
@@ -575,8 +575,8 @@ class ConsensusTests(unittest.TestCase):
             "missing.example",
             2,
             InlineExecutor(),
-            healthy_providers={"google", "cloudflare"},
-            min_healthy_resolvers=3,
+            healthy_providers={"google"},
+            min_healthy_resolvers=2,
         )
         self.assertEqual(result["status"], "temporary_failure")
 
@@ -589,10 +589,10 @@ class CanaryTests(unittest.TestCase):
             verify_resolver_pool(2, InlineExecutor())
 
     @patch("dns_domain_validator.query_public_dns")
-    def test_canary_requires_three_healthy_resolvers_by_default(self, query):
+    def test_canary_requires_two_healthy_resolvers_by_default(self, query):
         query.side_effect = lambda provider, domain, qtype, timeout: (
             dns_result(0, ["93.184.216.34"])
-            if provider in {"google", "cloudflare"}
+            if provider == "google"
             else dns_result(3)
         )
         with self.assertRaises(RuntimeError):
