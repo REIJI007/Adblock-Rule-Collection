@@ -632,7 +632,6 @@ def _query_doh(
                 tls_server_name=config["tls_server_name"],
                 timeout=timeout,
                 context=context,
-                check_hostname=True,
             )
             connection.putrequest(
                 "GET",
