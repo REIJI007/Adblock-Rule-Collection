@@ -20,7 +20,7 @@ DNS 验证作为 Adblock 生成流水线中的统一质量门，而不是独立�
 |---|---|---|---|---|
 | Google Public DNS | \`dns.google\` | \`https://8.8.8.8/dns-query\`、\`https://8.8.4.4/dns-query\` | \`https://[2001:4860:4860::8888]/dns-query\`、\`https://[2001:4860:4860::8844]/dns-query\` | 标准公共解析服务 |
 | Cloudflare 1.1.1.1 | \`cloudflare-dns.com\` | \`https://1.1.1.1/dns-query\`、\`https://1.0.0.1/dns-query\` | \`https://[2606:4700:4700::1111]/dns-query\`、\`https://[2606:4700:4700::1001]/dns-query\` | 使用 unfiltered 解析器 |
-| Tencent Public DNS | \`doh.pub\` | \`https://119.29.29.29/dns-query\` | \`https://[2402:4e00::]/dns-query\`、\`https://[2402:4e00:1::]/dns-query\` | 免费公共解析服务 |
+| Tencent Public DNS | `doh.pub` | `https://<动态 IPv4>/dns-query` | `https://[<动态 IPv6>]/dns-query` | 通过其他四家 DoH 解析 `doh.pub` 的 A/AAAA 获取 Bootstrap IP；Host/SNI 固定为 `doh.pub` |
 | Alibaba Public DNS | \`dns.alidns.com\` | \`https://223.5.5.5/dns-query\`、\`https://223.6.6.6/dns-query\` | \`https://[2400:3200::1]/dns-query\`、\`https://[2400:3200:baba::1]/dns-query\` | 公共 DNS 的 DoH 服务 |
 | AdGuard DNS | \`unfiltered.adguard-dns.com\` | \`https://94.140.14.140/dns-query\`、\`https://94.140.14.141/dns-query\` | \`https://[2a10:50c0::1:ff]/dns-query\`、\`https://[2a10:50c0::2:ff]/dns-query\` | **Non-filtering**，不使用 Default / Family Protection |
 
@@ -40,9 +40,21 @@ DNS 验证作为 Adblock 生成流水线中的统一质量门，而不是独立�
 
 - Google 的 RFC 8484 DoH 标准 URI 为 \`/dns-query\`，GET 请求使用 Base64URL 编码的 DNS Wire Format。Google 建议使用 \`dns.google\` 主机名；本项目通过 IP 连接并保留该主机名作为 SNI / Host。
 - Cloudflare 标准 unfiltered 解析器为 \`1.1.1.1\` / \`1.0.0.1\`，不使用 Malware 或 Families 地址。
-- Tencent 官方公布的 DoH URI 为 \`https://doh.pub/dns-query\`，免费版按单域名解析调用有 20 QPS 限制，且没有 SLA；本项目默认每个解析服务 15 QPS。
+- Tencent 官方公布的公共 DoH URI 为 \`https://doh.pub/dns-query\`；其免费版当前不再提供固定 IP 形式的 DoH 接入模板，因此本项目通过 Google、Cloudflare、AliDNS、AdGuard 的 DoH 查询 \`doh.pub\` 的 A/AAAA，再用所得数值 IP 连接 HTTPS，Host/SNI 和证书校验仍使用 \`doh.pub\`。不使用系统 DNS 或 UDP/53 引导。免费版按单域名解析调用有 20 QPS 限制且不承诺 SLA；本项目对 Tencent DoH 请求限制为 15 QPS。
 - Alibaba 官方公共 DNS 网站公布 \`dns.alidns.com\` DoH 服务和对应的 IPv4 / IPv6 服务地址；免费服务可能进行智能流量控制，不承诺 SLA。
 - AdGuard 必须使用 Non-filtering 服务，不使用广告、跟踪器或家庭保护过滤端点。
+
+### Tencent DoH 动态 Bootstrap
+
+Tencent 的 DoH 主机名必须先取得数值连接地址。验证器不会调用操作系统的 DNS 解析器来完成这一步，而是通过另外四家固定 IP Bootstrap 的 DoH 服务查询 \`doh.pub\` 的 A 和 AAAA：
+
+1. 依次向 Google、Cloudflare、AliDNS、AdGuard Non-filtering 查询 \`doh.pub\` 的 A/AAAA。
+2. 收集返回的可用 IPv4 / IPv6 地址，并按 DNS TTL 缓存。
+3. TCP socket 直接连接这些数值 IP 的 443 端口。
+4. TLS SNI、证书主机名验证和唯一的 HTTP \`Host\` 头仍然使用 \`doh.pub\`。
+5. Bootstrap 地址过期或连接失败时，重新经由其他 DoH 服务发现地址；不回退到系统 DNS、UDP/53 或未经验证的 TLS。
+
+Tencent 免费公共 DNS 仍以 \`doh.pub\` 作为官方 DoH 主机名；官方文档说明免费 IP-based DoH/DoT 模板已停止公开提供，因此不再把 \`119.29.29.29\`、\`2402:4e00::\` 等传统公共 DNS 地址误写成可直接访问的 DoH HTTPS 服务地址。
 
 ## 查询和有效性判定
 
