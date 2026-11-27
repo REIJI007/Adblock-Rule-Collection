@@ -444,8 +444,10 @@ class ConsensusTests(unittest.TestCase):
     @patch("dns_domain_validator.query_public_dns")
     def test_too_few_healthy_resolvers_prevents_negative_confirmation(self, query):
         def answer(provider, domain, qtype, timeout):
-            if provider in {"google", "cloudflare"}:
+            if domain == "example.com" and provider in {"google", "cloudflare"}:
                 return dns_result(0, ["93.184.216.34"])
+            if domain == "missing.example" and provider in {"google", "cloudflare"}:
+                return dns_result(3)
             return None
 
         query.side_effect = answer
