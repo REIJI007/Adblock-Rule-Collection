@@ -52,7 +52,7 @@ jobs:
         --write
         --cache .cache/dns-validation-main.json
         --report dns-validation-main.json
-        --qps 10
+        --qps 18
         --timeout 8
         --cache-ttl-hours 0.25
 
