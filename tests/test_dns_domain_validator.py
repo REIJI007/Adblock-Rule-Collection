@@ -111,13 +111,74 @@ class FormatCoverageTests(unittest.TestCase):
         )
 
     def test_pinned_transport_keeps_tls_hostname_and_verification(self):
-        from dns_domain_validator import _PinnedHTTPSHandler
+        import ssl
+        from dns_domain_validator import _PinnedHTTPSConnection
 
-        handler = _PinnedHTTPSHandler("8.8.8.8", "dns.google")
-        self.assertEqual(handler.tls_server_name, "dns.google")
-        self.assertTrue(handler._check_hostname)
-        self.assertTrue(handler._context.check_hostname)
-        self.assertTrue(handler._context.verify_mode)
+        context = ssl.create_default_context()
+        connection = _PinnedHTTPSConnection(
+            "8.8.8.8",
+            bootstrap_ip="8.8.8.8",
+            tls_server_name="dns.google",
+            context=context,
+            check_hostname=True,
+        )
+        self.assertEqual(connection.tls_server_name, "dns.google")
+        self.assertTrue(connection._context.check_hostname)
+        self.assertEqual(connection._context.verify_mode, ssl.CERT_REQUIRED)
+
+    def test_doh_request_sends_one_hostname_host_header_to_ip_connection(self):
+        import base64
+        import dns_domain_validator as validator
+
+        validator._RATE_LIMITERS["google"] = validator.RateLimiter(1000)
+        fake_connection = MagicMock()
+        fake_response = MagicMock()
+        fake_response.status = 200
+        fake_response.getheader.side_effect = lambda name, default=None: (
+            "application/dns-message" if name == "Content-Type" else default
+        )
+        fake_response.read.return_value = b"dns-response"
+        fake_connection.getresponse.return_value = fake_response
+
+        with patch(
+            "dns_domain_validator.make_dns_query",
+            return_value=(b"dns-query-packet", 1234),
+        ):
+            with patch(
+                "dns_domain_validator._PinnedHTTPSConnection",
+                return_value=fake_connection,
+            ) as connection_factory:
+                with patch(
+                    "dns_domain_validator.parse_dns_response",
+                    return_value={"rcode": 0, "addresses": ["93.184.216.34"]},
+                ):
+                    result = validator._query_doh(
+                        "google",
+                        "example.com",
+                        "A",
+                        2,
+                    )
+
+        self.assertEqual(result["addresses"], ["93.184.216.34"])
+        self.assertEqual(connection_factory.call_args.args[0], "8.8.8.8")
+        self.assertEqual(
+            fake_connection.putrequest.call_args.args,
+            (
+                "GET",
+                "/dns-query?dns=" + base64.urlsafe_b64encode(b"dns-query-packet").rstrip(b"=").decode("ascii"),
+            ),
+        )
+        self.assertEqual(
+            fake_connection.putrequest.call_args.kwargs,
+            {"skip_host": True, "skip_accept_encoding": True},
+        )
+        host_headers = [
+            call.args[1]
+            for call in fake_connection.putheader.call_args_list
+            if call.args[0].lower() == "host"
+        ]
+        self.assertEqual(host_headers, ["dns.google"])
+        fake_connection.close.assert_called_once()
 
     def test_pinned_connection_uses_numeric_socket_target_and_hostname_sni(self):
         from dns_domain_validator import _PinnedHTTPSConnection
