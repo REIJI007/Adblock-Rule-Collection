@@ -28,7 +28,6 @@ import tempfile
 import threading
 import time
 import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -583,37 +582,6 @@ class _PinnedHTTPSConnection(http.client.HTTPSConnection):
             raise
 
 
-class _PinnedHTTPSHandler(urllib.request.HTTPSHandler):
-    """urllib handler that keeps TLS SNI/certificate validation while pinning IP."""
-
-    def __init__(self, bootstrap_ip: str, tls_server_name: str) -> None:
-        context = ssl.create_default_context()
-        context.minimum_version = ssl.TLSVersion.TLSv1_2
-        super().__init__(context=context, check_hostname=True)
-        # Keep this explicit across supported Python urllib implementations.
-        self._check_hostname = True
-        self.bootstrap_ip = bootstrap_ip
-        self.tls_server_name = tls_server_name
-
-    def https_open(self, request: urllib.request.Request):
-        def connection_factory(host: str, **kwargs: Any):
-            return _PinnedHTTPSConnection(
-                host,
-                bootstrap_ip=self.bootstrap_ip,
-                tls_server_name=self.tls_server_name,
-                **kwargs,
-            )
-
-        return self.do_open(
-            connection_factory,
-            request,
-            context=self._context,
-            check_hostname=self._check_hostname,
-        )
-
-
-_PINNED_OPENERS: dict[tuple[str, str], urllib.request.OpenerDirector] = {}
-_PINNED_OPENERS_LOCK = threading.Lock()
 _BOOTSTRAP_ROTATION: dict[str, int] = {}
 _BOOTSTRAP_ROTATION_LOCK = threading.Lock()
 
@@ -637,23 +605,6 @@ def _ordered_bootstrap_ips(provider: str) -> list[str]:
     return ipv4 + ipv6
 
 
-def _pinned_opener(provider: str, bootstrap_ip: str) -> urllib.request.OpenerDirector:
-    key = (provider, bootstrap_ip)
-    with _PINNED_OPENERS_LOCK:
-        opener = _PINNED_OPENERS.get(key)
-        if opener is None:
-            config = DNS_PROVIDERS[provider]
-            opener = urllib.request.build_opener(
-                urllib.request.ProxyHandler({}),
-                _PinnedHTTPSHandler(
-                    bootstrap_ip,
-                    config["tls_server_name"],
-                ),
-            )
-            _PINNED_OPENERS[key] = opener
-        return opener
-
-
 def _query_doh(
     provider: str,
     domain: str,
@@ -665,47 +616,67 @@ def _query_doh(
     config = DNS_PROVIDERS[provider]
     addresses = _ordered_bootstrap_ips(provider)
 
-    # Try IPv4 addresses first, then IPv6 as a network-family fallback.
-    # Each URL contains a numeric IP; Host/SNI and certificate verification
-    # continue to use the provider's canonical DoH hostname.
+    # The HTTPS URL authority is the numeric bootstrap IP. We construct the
+    # HTTP request explicitly so exactly one Host header is sent; TLS SNI and
+    # certificate hostname verification continue to use the provider name.
+    request_target = f'{config["path"]}?dns={encoded}'
     for attempt, bootstrap_ip in enumerate(addresses[:3]):
-        request = urllib.request.Request(
-            _doh_url(bootstrap_ip, config["path"], encoded),
-            headers={
-                "Accept": "application/dns-message",
-                "Host": config["tls_server_name"],
-            },
-        )
+        connection: _PinnedHTTPSConnection | None = None
         _RATE_LIMITERS[provider].wait()
         try:
-            with _pinned_opener(provider, bootstrap_ip).open(
-                request,
+            context = ssl.create_default_context()
+            context.minimum_version = ssl.TLSVersion.TLSv1_2
+            connection = _PinnedHTTPSConnection(
+                bootstrap_ip,
+                bootstrap_ip=bootstrap_ip,
+                tls_server_name=config["tls_server_name"],
                 timeout=timeout,
-            ) as response:
-                content_type = (
-                    response.headers.get("Content-Type", "")
-                    .split(";", 1)[0]
-                    .strip()
-                    .lower()
-                )
-                if content_type not in {"application/dns-message", "application/octet-stream"}:
-                    return None
-                return parse_dns_response(response.read(), query_id, qtype, domain)
-        except urllib.error.HTTPError as exc:
-            if exc.code == 429:
+                context=context,
+                check_hostname=True,
+            )
+            connection.putrequest(
+                "GET",
+                request_target,
+                skip_host=True,
+                skip_accept_encoding=True,
+            )
+            connection.putheader("Host", config["tls_server_name"])
+            connection.putheader("Accept", "application/dns-message")
+            connection.putheader("Connection", "close")
+            connection.endheaders()
+            response = connection.getresponse()
+
+            if response.status == 429:
                 # Respect provider-side throttling rather than switching IPs
                 # to evade a rate limit.
-                retry_after = exc.headers.get("Retry-After")
+                retry_after = response.getheader("Retry-After")
                 if retry_after and retry_after.isdigit():
                     time.sleep(min(int(retry_after), 10))
                 return None
-            if exc.code not in {500, 502, 503, 504} or attempt >= 2:
+            if response.status in {500, 502, 503, 504} and attempt < 2:
+                time.sleep(0.2 * (attempt + 1))
+                continue
+            if response.status != 200:
                 return None
-        except (urllib.error.URLError, TimeoutError, OSError, ssl.SSLError):
+
+            content_type = (
+                response.getheader("Content-Type", "")
+                .split(";", 1)[0]
+                .strip()
+                .lower()
+            )
+            if content_type not in {"application/dns-message", "application/octet-stream"}:
+                return None
+            return parse_dns_response(response.read(), query_id, qtype, domain)
+        except (OSError, TimeoutError, ssl.SSLError, http.client.HTTPException):
             if attempt >= 2:
                 return None
-        time.sleep(0.2 * (attempt + 1))
+            time.sleep(0.2 * (attempt + 1))
+        finally:
+            if connection is not None:
+                connection.close()
     return None
+
 
 
 def query_public_dns(
