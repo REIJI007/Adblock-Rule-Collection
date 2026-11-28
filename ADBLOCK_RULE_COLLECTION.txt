@@ -3,8 +3,8 @@
 ! Homepage: https://github.com/REIJI007/Adblock-Rule-Collection
 ! LICENSE1: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-GPL 3.0
 ! LICENSE2: https://github.com/REIJI007/Adblock-Rule-Collection/blob/main/LICENSE-CC-BY-NC-SA 4.0
-! Generated: 2026-11-28 19:21:17 (UTC+8)
-! Total rules: 1501528
+! Generated: 2026-11-28 20:31:18 (UTC+8)
+! Total rules: 1501549
 
 ###-CookieConsentContainer
 ###ACCETTA_COOKIES
@@ -59337,6 +59337,7 @@
 /reklama4.png$image
 /reklame/*$~xmlhttprequest
 /release100009ts?$script,third-party
+/relevanceapi/visitorinfo
 /remix_banner.gif
 /remodal.min.js$domain=biotechusa.com|biotechusa.hu
 /remote-weblab-triggers/*
@@ -84049,6 +84050,7 @@
 5pillarsuk.com##.ulp-overlay
 5pillarsuk.com,babeltechreviews.com,cybersecuritynews.com,techviral.net,thestonedsociety.com,weekendspecial.co.za##.td-header-sp-recs
 5pillarsuk.com,raya.com##.wpcf7
+5play.org##.nx-ad
 5rclzihbb.cc.rs6.net
 5se76r8dt7vy8ouo96ik8j5rneyhtbwsrdmnczw4ihgfwei.teemill.com
 5sew2kxqx4qb-pages-dev.translate.goog
@@ -550134,7 +550136,6 @@ zzzyk.com###Tinfo
 ||126web-wwww7nodepage.net.daraz.com^
 ||127-partneradmin2.net.daraz.com^
 ||127-w3-vpntr5.net.daraz.com^
-||127.0.0.1^$third-party,domain=53.com|ameriprise.com|beachbody.com|chick-fil-a.com|citi.com|ebay.at|ebay.be|ebay.ca|ebay.ch|ebay.cn|ebay.co.uk|ebay.com|ebay.com.au|ebay.com.hk|ebay.com.my|ebay.com.sg|ebay.de|ebay.es|ebay.fr|ebay.ie|ebay.it|ebay.nl|ebay.ph|ebay.pl|equifax.ca|equifax.com|globo.com|gumtree.com|kleinanzeigen.de|lendup.com|mbna.ca|rusneb.ru|sciencedirect.com|sky.com|spectrum.net|td.com|tiaa.org|vedacheck.com|wepay.com|whatleaks.com
 ||127.0.0.1^$third-party,domain=53.com|ameriprise.com|chick-fil-a.com|citi.com|ebay.at|ebay.be|ebay.ca|ebay.ch|ebay.cn|ebay.co.uk|ebay.com|ebay.com.au|ebay.com.hk|ebay.com.my|ebay.com.sg|ebay.de|ebay.es|ebay.fr|ebay.ie|ebay.it|ebay.nl|ebay.ph|ebay.pl|equifax.ca|equifax.com|globo.com|gumtree.com|kleinanzeigen.de|lendup.com|mbna.ca|rusneb.ru|sciencedirect.com|sky.com|spectrum.net|td.com|tiaa.org|vedacheck.com|wepay.com
 ||127.10foxnews.hb.tt.omtrdc.net^
 ||127.net/2018/08/15/71ee02b5b61c4090b3ce0116306596c2.jpeg
@@ -615344,6 +615345,7 @@ zzzyk.com###Tinfo
 ||5egof67t2y5yo5wp.net.daraz.com^
 ||5ei3kxr8xk6te1eu.net.daraz.com^
 ||5emailvision.web.csr24.ext.net.daraz.com.net.daraz.com^
+||5empv3m11j28y7.rest^
 ||5enhjla7z.com^
 ||5etvlz5v8xcoxnwh.lib-oa-1.net.daraz.com^
 ||5etvlz5v8xcoxnwh.lib-oa-2.net.daraz.com^
@@ -691224,6 +691226,7 @@ zzzyk.com###Tinfo
 ||canadiantire.alpha.tt.omtrdc.net^
 ||canadiantire.ca.ssl.sc.tt.omtrdc.net^
 ||canadiantire.ca/aiq/analytics_ctr_prod.js
+||canadiantire.ca/metrix/
 ||canadiantire.tt.omtrdc.net^
 ||canadiantire6.tt.tt.tt.omtrdc.net^
 ||canadiantourismcommi.tt.omtrdc.net^
@@ -696796,6 +696799,7 @@ zzzyk.com###Tinfo
 ||caririlawmen.com^
 ||cariyosiculi.com^
 ||carlavirgos.wixstudio.com^
+||carlibrawnrappe.cyou^
 ||carlinsresumes.com^
 ||carlisleit.actonservice.com^
 ||carloforward.com^
@@ -731560,6 +731564,7 @@ zzzyk.com###Tinfo
 ||cqksjgbfntbpk.site^
 ||cqlonl.spartoo.cz^
 ||cqloud.com/measurements/
+||cqmaiamqsqeda.site^
 ||cqmodiigwrolu.site^
 ||cqnehbxviuboz.space^
 ||cqnkz.bestpoolsupplies.com.au^
@@ -777709,6 +777714,7 @@ zzzyk.com###Tinfo
 ||eaglegroup-legal.praca.tt.omtrdc.net^
 ||eaglehubpartners.jetnet.tt.omtrdc.net^
 ||eaglekartal.tt.omtrdc.net^
+||eaglequartz.pro^
 ||eagles.sonymobcomm.tt.omtrdc.net^
 ||eagletech57.shop.shopping.tt.omtrdc.net^
 ||eagletechtoefit.shop.tt.omtrdc.net^
@@ -1085975,6 +1085981,7 @@ zzzyk.com###Tinfo
 ||f8phvntohv.tpetry.me^
 ||f8t61ilbfcyi4ntnkm4.rest^
 ||f8testlib-ln-1.net.daraz.com^
+||f8uwo9ikbk2coh.cfd^
 ||f90jv6neqiwedvrl.emailvision.authenticate.net.daraz.com^
 ||f921e4caa3.com^
 ||f925caf3.eulerian.io^
@@ -1096622,6 +1096629,7 @@ zzzyk.com###Tinfo
 ||formaciones.arin-innovation.com^
 ||formafore.com^
 ||formalhood.com^
+||formalytics.dev^
 ||formalyzer.com^
 ||formalyzer.com^$3p
 ||formalyzer.com^$third-party
@@ -1100430,6 +1100438,7 @@ zzzyk.com###Tinfo
 ||fsugco.rcn.nl^
 ||fsuooh.cc^
 ||fsuwiwvhtcfzm.space^
+||fsuxrfkirvpru.website^
 ||fsw02.iad03.iad.tt.omtrdc.net^
 ||fswposlete.firebaseapp.com^
 ||fswposlete.web.app^
@@ -1146903,6 +1146912,7 @@ zzzyk.com###Tinfo
 ||hcdh9cikwf780l1n.support.net.daraz.com^
 ||hcdnpe.iareduceri.ro^
 ||hcecde.dieti-natura.com^
+||hcefethgwvivy.space^
 ||hcegngzriixcl.site^
 ||hceofhekgmpu.com^
 ||hcf.tt.omtrdc.net^
@@ -1151080,6 +1151090,7 @@ zzzyk.com###Tinfo
 ||hjyfhi.misterspex.fi^
 ||hjyhqbgodfdzg.website^
 ||hjyqz.faceplantdreams.com^
+||hjyrxugsafxvo.site^
 ||hjyxt.hotdiamonds.co.uk^
 ||hjzfncxfojt.com^
 ||hjzgu.patternbeauty.com^
@@ -1176828,6 +1176839,7 @@ zzzyk.com###Tinfo
 ||ironport1.sftpa.tt.omtrdc.net^
 ||ironport2.tt.omtrdc.net^
 ||ironportnatst2.parts.tt.omtrdc.net^
+||ironrainstorm.me^
 ||ironscepter.tt.omtrdc.net^
 ||ironside.tt.omtrdc.net^
 ||ironsrc-citesciencesvertes.net.daraz.com^
@@ -1177386,6 +1177398,7 @@ zzzyk.com###Tinfo
 ||iswgoktjsknme.space^
 ||iswinoujscie.pl/gfx/banery/
 ||iswm.schulte.fr^
+||iswwenhzdfmat.website^
 ||isxkokwwwzvkp.space^
 ||isxrjjfdwdbrr.site^
 ||isy.chez-pierre.com^
@@ -1195635,6 +1195648,7 @@ zzzyk.com###Tinfo
 ||kxtszslwanvgl.site^
 ||kxtzixtkfdihg.space^
 ||kxuingylmnoxo.space^
+||kxvqoctjpdvzy.space^
 ||kxxyhjamtwozu.space^
 ||kxysrmpkrvekx.site^
 ||kxzxqu.lojadointer.com.br^
@@ -1266688,6 +1266702,7 @@ zzzyk.com###Tinfo
 ||nice264.com/data?$third-party
 ||nicefollows.com^
 ||nicehuh.com^
+||niceincontact.com/logger-public
 ||nicely888wooden222.com^$document
 ||nicelyeven.com^
 ||nicelymodulo.com^
@@ -1287549,6 +1287564,7 @@ zzzyk.com###Tinfo
 ||ojixrv.recordrentacar.com^
 ||ojixvasjuzngy.site^
 ||ojklhghuj.nordicoil.fi^
+||ojkrmeocm.in^
 ||ojlsxt.pigment.co.kr^
 ||ojm4.palladiumhotelgroup.com^
 ||ojmeujydictlu.site^
@@ -1331568,6 +1331584,7 @@ zzzyk.com###Tinfo
 ||rqkmnr.ifemme.co.kr^
 ||rqkswuggaymyt.site^
 ||rqlezwobrltdu.online^
+||rqlimwprbnyah.website^
 ||rqlvvvpmmbexb.online^
 ||rqmgessslopfy.online^
 ||rqmim.missionmercantile.com^
@@ -1367098,6 +1367115,7 @@ zzzyk.com###Tinfo
 ||sportcarauto34.tt.omtrdc.net^
 ||sportcarauto5.tt.omtrdc.net^
 ||sportchek.ca.d1.sc.tt.omtrdc.net^
+||sportchek.ca/metrix/
 ||sportcoaching.co.nz/wp-content/uploads/*/*/Miivita_top-*-*-*-px.jpg
 ||sportcsr41.application.net.daraz.com^
 ||sportdevs.ns2.cl.bellsouth.net.daraz.com^
@@ -1428741,6 +1428759,7 @@ zzzyk.com###Tinfo
 ||tsdjz.clarins.co.uk^
 ||tsdm39.com/img01/MP3/GG/
 ||tsdmxbhvbznxq.online^
+||tsdrs.schwab.com/risk-collect/device/events
 ||tsdtvcx579.com^
 ||tsdzydflyst.biolane.fr^
 ||tse.telerama.fr^
@@ -1494415,6 +1494434,7 @@ zzzyk.com###Tinfo
 ||yxxuyo.nintendo.co.za^
 ||yxykanwovbzfr.site^
 ||yxynbs.phone.com^
+||yxypbcixbjvuy.space^
 ||yxzfdl.550909.com^
 ||yxzp.net/left.js
 ||yxzsrazzpbqek.website^
@@ -1495367,6 +1495387,7 @@ zzzyk.com###Tinfo
 ||zaxid.net/assets/lib/pushSubscription.js
 ||zaxortpispal.in^
 ||zaxxigefrdixn.online^
+||zaxztkmnpfjwb.site^
 ||zaycev.net/clickmeter_
 ||zayg.net.daraz.com^
 ||zaytung.com/images/radore
